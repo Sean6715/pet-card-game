@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>萌寵冒險：動物魔法卡牌對決</title>
+    <style>
+        /* 頁面基本樣式：溫馨、簡潔 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e0f2fe, #f0fdf4);
+            color: #1e293b;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 650px;
+            width: 100%;
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+        h1 {
+            text-align: center;
+            color: #0284c7;
+            margin-bottom: 5px;
+        }
+        .desc {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        /* 狀態面板 */
+        .status-panel {
+            display: flex;
+            justify-content: space-around;
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .status-item {
+            text-align: center;
+            font-size: 14px;
+            color: #475569;
+        }
+        .status-item span {
+            display: block;
+            font-size: 20px;
+            font-weight: bold;
+            color: #0ea5e9;
+        }
+        /* 戰鬥日誌 */
+        .battle-log {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 15px;
+            border-radius: 10px;
+            height: 120px;
+            overflow-y: auto;
+            font-size: 13px;
+            color: #334155;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        /* 卡牌區 */
+        .card-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: #38bdf8;
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            width: 130px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            background: #0284c7;
+        }
+        .card h3 {
+            margin: 0 0 8px 0;
+            font-size: 15px;
+        }
+        .card p {
+            margin: 0;
+            font-size: 11px;
+            color: #f0fdf4;
+        }
+        /* 重新開始按鈕 */
+        .btn-reset {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: #22c55e;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-reset:hover {
+            background: #16a34a;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🦊 萌寵冒險：動物魔法卡牌對決</h1>
+    <div class="desc">運用魔法卡牌擊退森林小怪獸，展開你的冒險之旅！</div>
+
+    <!-- 狀態面板 -->
+    <div class="status-panel">
+        <div class="status-item">玩家生命 (HP)<span id="player-hp">100</span></div>
+        <div class="status-item">怪獸生命 (HP)<span id="monster-hp">100</span></div>
+        <div class="status-item">當前回合數<span id="turn-count">1</span></div>
+    </div>
+
+    <!-- 戰鬥紀錄 -->
+    <div class="battle-log" id="log-box">
+        [系統] 冒險開始！請從下方選擇一張魔法卡牌進行攻擊...<br>
+    </div>
+
+    <!-- 卡牌選擇區 -->
+    <div class="card-container" id="card-selection">
+        <!-- 動態產生卡牌 -->
+    </div>
+
+    <!-- 重新開始按鈕 -->
+    <button class="btn-reset" id="reset-btn" onclick="initGame()" style="display:none;">重新開始冒險</button>
+</div>
+
+<script>
+    // 遊戲狀態變數
+    let playerHP = 100;
+    let monsterHP = 100;
+    let turn = 1;
+    let gameOver = false;
+
+    // 魔法卡牌資料庫
+    const cardPool = [
+        { name: "小火狐烈焰", type: "attack", value: 18, desc: "造成 18 點火焰傷害。" },
+        { name: "森林治癒術", type: "heal", value: 12, desc: "恢復 12 點生命值。" },
+        { name: "巨熊重擊", type: "attack", value: 22, desc: "強力攻擊，造成 22 點傷害。" },
+        { name: "靈貓迅捷閃", type: "attack", value: 14, desc: "敏捷攻擊，造成 14 點傷害。" },
+        { name: "自然庇護", type: "heal", value: 15, desc: "穩定恢復 15 點生命值。" }
+    ];
+
+    // 初始化遊戲
+    function initGame() {
+        playerHP = 100;
+        monsterHP = 100;
+        turn = 1;
+        gameOver = false;
+        document.getElementById("reset-btn").style.display = "none";
+        logMessage("<b>[系統] 新的冒險旅程展開！</b>");
+        updateStatus();
+        renderCards();
+    }
+
+    // 更新介面數值
+    function updateStatus() {
+        document.getElementById("player-hp").innerText = playerHP > 0 ? playerHP : 0;
+        document.getElementById("monster-hp").innerText = monsterHP > 0 ? monsterHP : 0;
+        document.getElementById("turn-count").innerText = turn;
+    }
+
+    // 新增日誌訊息
+    function logMessage(msg) {
+        const logBox = document.getElementById("log-box");
+        logBox.innerHTML += msg + "<br>";
+        logBox.scrollTop = logBox.scrollHeight; // 自動捲動到底部
+    }
+
+    // 隨機抽 3 張卡牌
+    function renderCards() {
+        if (gameOver) return;
+        const container = document.getElementById("card-selection");
+        container.innerHTML = "";
+
+        // 隨機洗牌並取前 3 張
+        let shuffled = [...cardPool].sort(() => 0.5 - Math.random());
+        let selectedCards = shuffled.slice(0, 3);
+
+        selectedCards.forEach(card => {
+            let cardDiv = document.createElement("div");
+            cardDiv.className = "card";
+            cardDiv.innerHTML = `<h3>${card.name}</h3><p>${card.desc}</p>`;
+            cardDiv.onclick = () => playCard(card);
+            container.appendChild(cardDiv);
+        });
+    }
+
+    // 玩家出牌邏輯（包含數學計算與舉例）
+    function playCard(card) {
+        if (gameOver) return;
+
+        // 數學計算與效果處理
+        if (card.type === "attack") {
+            // 計算公式：實際傷害 = 卡牌數值 - 怪獸隨機防禦值 (例如 2~5 點)
+            let monsterDefense = Math.floor(Math.random() * 4) + 2;
+            let netDamage = card.value - monsterDefense;
+            if (netDamage < 5) netDamage = 5; // 最低保底傷害
+
+            monsterHP -= netDamage;
+            logMessage(`第 ${turn} 回合：你使用了 <b>${card.name}</b>（基礎 ${card.value} 點 - 敵方防禦 ${monsterDefense} 點），造成了 <b>${netDamage}</b> 點傷害！`);
+        } else if (card.type === "heal") {
+            playerHP += card.value;
+            if (playerHP > 100) playerHP = 100; // 上限 100
+            logMessage(`第 ${turn} 回合：你使用了 <b>${card.name}</b>，成功恢復了 <b>${card.value}</b> 點生命值！`);
+        }
+
+        // 檢查怪獸是否戰敗
+        if (monsterHP <= 0) {
+            monsterHP = 0;
+            updateStatus();
+            logMessage("🎉 <b>太棒了！你成功擊敗了森林小怪獸，贏得勝利！</b>");
+            endGame();
+            return;
+        }
+
+        // 怪獸反擊（隨機傷害 8 ~ 14 點）
+        let monsterDamage = Math.floor(Math.random() * 7) + 8;
+        playerHP -= monsterDamage;
+        logMessage(`🐾 森林怪獸反擊！對你造成了 ${monsterDamage} 點傷害。`);
+
+        // 檢查玩家是否戰敗
+        if (playerHP <= 0) {
+            playerHP = 0;
+            updateStatus();
+            logMessage("❌ <b>哎呀...生命歸零，挑戰失敗！請點擊下方按鈕重試。</b>");
+            endGame();
+            return;
+        }
+
+        turn++;
+        updateStatus();
+        renderCards(); // 進入下一輪抽牌
+    }
+
+    // 遊戲結束處理
+    function endGame() {
+        gameOver = true;
+        document.getElementById("card-selection").innerHTML = "";
+        document.getElementById("reset-btn").style.display = "block";
+    }
+
+    // 網頁載入時啟動遊戲
+    window.onload = initGame;
+</script>
+
+</body>
+</html>
