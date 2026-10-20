@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>萌寵冒險：進階策略卡牌對決</title>
+    <title>萌寵冒險：進階策略對決</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -198,7 +198,7 @@
             <select id="hero-select">
                 <option value="random">🎲 隨機決定</option>
                 <option value="ignis">🔥 火狂小狐 (Ignis) - 爆發輸出型</option>
-                <option value="turtlo">🛡️ 堅甲龜 (Turtlo) - 防禦反擊型</option>
+                <option value="turtlo">🛡️ 堅甲龜 (Turtlo) - 受傷反擊防禦型</option>
                 <option value="shadow">🐱 影爪貓 (Shadow) - 異常毒傷型</option>
             </select>
         </div>
@@ -233,7 +233,7 @@
         <div class="modal-header"><h2>🐱 萌寵英雄天賦與列表</h2><button class="btn-close" onclick="toggleHeroModal()">關閉</button></div>
         <div id="hero-body">
             <div class="effect-item hero-item"><b>🔥 火狂小狐 (Ignis) - 爆發輸出型</b><p><b>初始血量：</b>92 HP<br><b>被動天賦【烈焰血脈】：</b>打出攻擊型卡牌時，有 30% 機率額外追加 <b>+5 點烈焰傷害</b>！</p></div>
-            <div class="effect-item hero-item"><b>🛡️ 堅甲龜 (Turtlo) - 防禦反擊型</b><p><b>初始血量：</b>108 HP<br><b>被動天賦【重甲庇護】：</b>每回合開始時<b>自動獲得 4 點護盾</b>；且獲得護盾的效果提升 <b>+15%</b>！</p></div>
+            <div class="effect-item hero-item"><b>🛡️ 堅甲龜 (Turtlo) - 防禦反擊型</b><p><b>初始血量：</b>100 HP<br><b>被動天賦【堅甲防禦】：</b>每當在敵方回合受到傷害時，獲得 <b>3 點護盾</b>；獲得護盾效果提升 <b>+10%</b>。</p></div>
             <div class="effect-item hero-item"><b>🐱 影爪貓 (Shadow) - 異常毒傷型</b><p><b>初始血量：</b>100 HP<br><b>被動天賦【劇毒爪痕】：</b>對魔王造成的【中毒】與【冰霜虛弱】效果持續回合數<b>額外 +1 回合</b>！</p></div>
         </div>
     </div>
@@ -264,7 +264,7 @@
             <div class="effect-item"><b>🔥 狂暴磁場</b><p>雙方所有攻擊傷害增加 20%，但每回合結束時，雙方各自承受 4 點環境扣血。</p></div>
             <div class="effect-item"><b>💧 治療枯竭</b><p>雙方所有的生命回復效果減少 40%。</p></div>
             <div class="effect-item"><b>🛡️ 鐵壁防線</b><p>戰鬥開局時，雙方皆會獲得 20 點防禦護盾。</p></div>
-            <div class="effect-item"><b>🌫️ 迷霧選擇</b><p>視野受阻！每回合僅能從卡庫隨機抽出 2 張卡牌供選擇。</p></div>
+            <div class="effect-item"><b>🌫️ 迷霧選擇</b><p>視野受阻!每回合僅能從卡庫隨機抽出 2 張卡牌供選擇。</p></div>
         </div>
     </div>
 </div>
@@ -276,7 +276,7 @@
         <div id="boss-body">
             <div class="effect-item boss-item"><b>👹 深淵霸主（咆哮壓制型）</b><p>血量 120。每隔 3 回合（第 3、6、9...回合）必定釋放 **【深淵咆哮】**，造成 18 點傷害並施加【壓制】（使玩家下回合視野受阻僅剩 1 張卡可選）！</p></div>
             <div class="effect-item boss-item"><b>☠️ 不死魔王·巴洛克（復活特化）</b><p>初始血量 100。當血量歸零時會觸發被動，<b>原地滿血復活一次（恢復 50 點血量）</b>並進入永久狂暴！</p></div>
-            <div class="effect-item boss-item"><b>🥷 幽影刺客·影魔（閃避特化）</b><p>血量 110。身手矯健，擁有 <b>25% 的閃避率</b>，當閃避成功時會完全躲開你的攻擊。</p></div>
+            <div class="effect-item boss-item"><b>🥷 幽影刺客·影魔（閃避特化）</b><p>血量 110。身手矯健，擁有 <b>20% 的閃避率</b>，當閃避成功時會完全躲開你的攻擊。</p></div>
             <div class="effect-item boss-item"><b>🧛 吸血鬼王·德古拉（吸血特化）</b><p>血量 115。每次對你造成傷害時，會<b>同步吸取等同傷害 30% 的生命值</b>來治療自己。</p></div>
         </div>
     </div>
@@ -313,14 +313,14 @@
 
     const heroes = [
         { id: "ignis", name: "火狂小狐 (Ignis)", hp: 92, trait: "ignis", desc: "【烈焰血脈】打出攻擊卡牌時，30% 機率額外追加 +5 點烈焰傷害！" },
-        { id: "turtlo", name: "堅甲龜 (Turtlo)", hp: 108, trait: "turtlo", desc: "【重甲庇護】每回合自動獲得 4 點護盾，且獲得護盾的效果提升 +15%！" },
+        { id: "turtlo", name: "堅甲龜 (Turtlo)", hp: 100, trait: "turtlo", desc: "【堅甲防禦】受傷時獲得 3 點反擊護盾，且護盾提升 +10%！" },
         { id: "shadow", name: "影爪貓 (Shadow)", hp: 100, trait: "shadow", desc: "【劇毒爪痕】對魔王造成的中毒與冰霜虛弱持續回合數額外 +1 回合！" }
     ];
 
     const bossTypes = [
         { id: "standard", name: "深淵霸主", hp: 120, trait: "standard", desc: "【咆哮壓制型】每隔 3 回合（第 3、6、9...回合）必定釋放【深淵咆哮】，造成 18 點傷害並施加【壓制】！" },
         { id: "undying", name: "不死魔王·巴洛克", hp: 100, trait: "undying", desc: "【不滅死靈】當首次遭到擊殺時，會觸發【不滅之魂】原地復活（恢復 50 血量）並進入【永久狂暴】！" },
-        { id: "evasion", name: "幽影刺客·影魔", hp: 110, trait: "evasion", desc: "【鬼魅刺客】被動擁有 25% 閃避率，能夠完全躲開玩家的主動攻擊傷害。" },
+        { id: "evasion", name: "幽影刺客·影魔", hp: 110, trait: "evasion", desc: "【鬼魅刺客】被動擁有 20% 閃避率，能夠完全躲開玩家的主動攻擊傷害。" },
         { id: "vampire", name: "吸血鬼王·德古拉", hp: 115, trait: "vampire", desc: "【永夜君王】每次命中時發動【嗜血吸取】，偷取攻擊總傷害 30% 轉化為自身血量。" }
     ];
 
@@ -343,7 +343,7 @@
         { id: 15, name: "元素引爆", type: "attack", subType: "detonate", category: "攻擊型", value: 10, desc: "造成 10 點傷害。若魔王帶有【中毒】或【虛弱】，額外追加 22 點傷害！" },
         
         { id: 5, name: "瞬間大回復", type: "heal", subType: "burst", category: "回復防禦型", value: 20, desc: "瞬間恢復 20 點生命值。" },
-        { id: 6, name: "聖光護盾", type: "heal", subType: "shield", category: "回復防禦型", value: 12, shieldVal: 15, desc: "恢復 12 點生命並獲得 15 點護盾值。" },
+        { id: 6, name: "聖光護盾", type: "heal", subType: "shield", category: "回復防禦型", value: 10, shieldVal: 12, desc: "恢復 10 點生命並獲得 12 點護盾值。" },
         { id: 10, name: "自然泉源", type: "heal", subType: "regen", category: "回復防禦型", value: 0, desc: "獲得持續 3 回合的泉源祝福，每回合自動回復 7 點生命值。" },
         
         { id: 7, name: "血之狂熱", type: "special", subType: "sacrifice", category: "特殊戰術型", value: 18, costHP: 10, buffVal: 15, desc: "犧牲 10 點自身血量，下一次攻擊傷害固定 +15 點！" },
@@ -367,7 +367,6 @@
         tutorialStep = 1;
         document.getElementById("tutorial-banner").style.display = "flex";
         
-        // 戰術教學關卡配置：影爪貓 vs 深淵霸主 (狂暴磁場)
         let tutHero = heroes.find(h => h.id === "shadow");
         let tutBoss = bossTypes.find(b => b.id === "standard");
         let tutMod = battlefieldModifiers.find(m => m.effect === "berserk");
@@ -421,7 +420,7 @@
 
         playerHP = currentHero.hp;
         maxPlayerHP = currentHero.hp;
-        monsterHP = isTutorialMode ? 50 : currentBoss.hp; // 教學關將魔王血量調為50，方便一局教學結束
+        monsterHP = isTutorialMode ? 50 : currentBoss.hp;
         maxMonsterHP = currentBoss.hp;
         turn = 1;
         gameOver = false;
@@ -439,8 +438,6 @@
 
         document.getElementById("player-title-hp").innerText = `${currentHero.name.split(' ')[0]} 血量`;
         document.getElementById("boss-title-hp").innerText = `${currentBoss.name} 血量`;
-        
-        // 修正語法：戰場寫成「戰場效果」
         document.getElementById("battlefield-banner").innerText = `英雄：【${currentHero.name}】 | 魔王：【${currentBoss.name}】 | 戰場效果：${currentModifier.name}`;
 
         if (currentModifier.effect === "iron_wall") { 
@@ -490,7 +487,7 @@
         }
         let bossSpecificInfo = "";
         if (currentBoss.trait === "standard") {
-            bossSpecificInfo = `<div class="effect-item current-item"><b>📢 專屬大招：深淵咆哮</b><p>每隔 3 回合（第 3、6、9...回合）發動！造成 <b>18 點傷害</b>，並施加【壓制】使玩家下一回合<b>僅剩 1 張卡牌可選</b>！</p></div>`;
+            bossSpecificInfo = `<div class="effect-item current-item"><b>📢 專屬大招：深淵咆哮</b><p>每隔 3 回合發動！造成 <b>18 點傷害</b>，並施加【壓制】使玩家下一回合<b>僅剩 1 張卡牌可選</b>！</p></div>`;
         }
 
         body.innerHTML = `
@@ -505,8 +502,8 @@
                 <p><b>效果數值：</b>造成 <b>12 ~ 22 點</b>的隨機基礎傷害。</p>
             </div>
             <div class="effect-item boss-item">
-                <b>🔥 招式 2：暗影狂暴</b>
-                <p><b>效果數值：</b>使<b>接下來 2 次攻擊</b>固定額外附加 <b>+8 點傷害</b>！</p>
+                <b>🔥 招式 2：暗影狂暴（含 30% 破甲打擊）</b>
+                <p><b>效果數值：</b>使<b>接下來 2 次攻擊</b>固定額外附加 <b>+8 點傷害</b>，且攻擊時有 30% 機率強行毀壞玩家 50% 的現有護盾！</p>
             </div>
             <div class="effect-item boss-item">
                 <b>🛡️ 招式 3：暗黑護盾</b>
@@ -528,11 +525,6 @@
     function startNewTurn() {
         if (gameOver) return;
         actionsLeft = (currentModifier.effect === "double_action") ? 2 : 1;
-
-        if (currentHero && currentHero.trait === "turtlo") {
-            playerShield += 4;
-            logMessage(`&nbsp;&nbsp;🛡️ 堅甲龜【重甲庇護】生效：自動獲得了 4 點防禦護盾！`);
-        }
 
         if (monsterPoison > 0) { 
             applyDamageToMonster(6, false, null, false);
@@ -572,7 +564,6 @@
         if (playerSuppressedNextTurn) playerBuffText += ` | ⚠️遭到壓制`;
         document.getElementById("player-buff").innerText = playerBuffText;
         
-        // 精準標註虛弱層數與回合數
         let monsterBuffText = `護盾：${monsterShield}`;
         if (currentBoss) monsterBuffText += ` | ${currentBoss.name}`;
         if (monsterPoison > 0) monsterBuffText += ` | 中毒(${monsterPoison}T)`;
@@ -595,23 +586,22 @@
 
         let cardsToRender = [];
 
-        // 實戰教學模式的手牌固定引導
         if (isTutorialMode) {
             if (tutorialStep === 1) {
                 cardsToRender = [
-                    cardPool.find(c => c.subType === "poison"), // 劇毒飛刀 (引導發動天賦)
+                    cardPool.find(c => c.subType === "poison"),
                     cardPool.find(c => c.subType === "normal"),
                     cardPool.find(c => c.subType === "crit")
                 ];
             } else if (tutorialStep === 2) {
                 cardsToRender = [
-                    cardPool.find(c => c.subType === "burst"), // 瞬間大回復 (引導回血)
+                    cardPool.find(c => c.subType === "burst"),
                     cardPool.find(c => c.subType === "normal"),
                     cardPool.find(c => c.subType === "shield")
                 ];
             } else if (tutorialStep === 3) {
                 cardsToRender = [
-                    cardPool.find(c => c.subType === "detonate"), // 元素引爆 (引導引爆Combo)
+                    cardPool.find(c => c.subType === "detonate"),
                     cardPool.find(c => c.subType === "normal"),
                     cardPool.find(c => c.subType === "crit")
                 ];
@@ -631,7 +621,6 @@
             let cardDiv = document.createElement("div"); 
             cardDiv.className = `card ${card.type}`;
             
-            // 教學模式高亮關鍵卡牌
             if (isTutorialMode) {
                 if (tutorialStep === 1 && card.subType === "poison") cardDiv.classList.add("highlight");
                 if (tutorialStep === 2 && card.subType === "burst") cardDiv.classList.add("highlight");
@@ -645,7 +634,7 @@
     }
 
     function applyDamageToMonster(dmg, ignoreShield, cardName, canEvade = true) {
-        if (canEvade && currentBoss && currentBoss.trait === "evasion" && Math.random() < 0.25) {
+        if (canEvade && currentBoss && currentBoss.trait === "evasion" && Math.random() < 0.20) {
             logMessage(`&nbsp;&nbsp;💨 <b>【閃避成功】影魔身形一閃，完全躲開了你的 ${cardName ? `<b>${cardName}</b>` : "攻擊"}！</b>`);
             return false;
         }
@@ -667,7 +656,6 @@
     function playCard(card) {
         if (gameOver || actionsLeft <= 0) return;
 
-        // 新手教學進度推進行動
         if (isTutorialMode) {
             if (tutorialStep === 1 && card.subType === "poison") tutorialStep = 2;
             else if (tutorialStep === 2 && card.subType === "burst") tutorialStep = 3;
@@ -739,7 +727,7 @@
                     monsterPoison = 3 + extraTurns; 
                     logMessage(`&nbsp;&nbsp;🧪 劇毒命中：魔王已中毒，將持續 ${monsterPoison} 回合扣血！`); 
                 } else if (card.subType === "frost") {
-                    monsterWeakTurns = 1 + extraTurns; // 影爪貓時會正確寫入 2 回合
+                    monsterWeakTurns = 1 + extraTurns;
                     logMessage(`&nbsp;&nbsp;❄️ 寒冰凍結：魔王遭到【冰霜虛弱】(${monsterWeakTurns} 回合)，攻擊傷害降低 40%！`);
                 }
             }
@@ -759,7 +747,7 @@
                 logMessage(`&nbsp;&nbsp;💚 你使用了 <b>${card.name}</b>，回復了 <b style="color:#4ade80;">${healAmount}</b> 點生命！`);
                 
                 if (card.subType === "shield") { 
-                    let addedShield = (currentHero && currentHero.trait === "turtlo") ? Math.round(card.shieldVal * 1.15) : card.shieldVal;
+                    let addedShield = (currentHero && currentHero.trait === "turtlo") ? Math.round(card.shieldVal * 1.1) : card.shieldVal;
                     playerShield += addedShield; 
                     logMessage(`&nbsp;&nbsp;🛡️ 獲得額外護盾 +${addedShield} 點！`); 
                 }
@@ -780,7 +768,7 @@
                 logMessage(`&nbsp;&nbsp;🔒 <b>禁錮咒語強效驅散！成功淨化魔王身上所有狀態與護盾，並使其停止行動 1 回合！</b>`); 
             }
             else if (card.subType === "reflect") { 
-                let addedShield = (currentHero && currentHero.trait === "turtlo") ? 12 : 10;
+                let addedShield = (currentHero && currentHero.trait === "turtlo") ? 11 : 10;
                 playerShield += addedShield; 
                 playerReflectActive = true; 
                 logMessage(`&nbsp;&nbsp;🛡️ 獲得 ${addedShield} 點防禦護盾，並準備在下回合反彈傷害！`); 
@@ -804,7 +792,7 @@
                     playerHP = Math.min(maxPlayerHP, playerHP + 18);
                     logMessage(`🎰 <b>命運之輪：轉到了「生機庇護」！回復 18 點生命，並將生命上限擴充至 ${maxPlayerHP}！</b>`);
                 } else if (roll < 0.66) {
-                    let addedShield = (currentHero && currentHero.trait === "turtlo") ? 21 : 18;
+                    let addedShield = (currentHero && currentHero.trait === "turtlo") ? 20 : 18;
                     playerShield += addedShield;
                     logMessage(`🎰 <b>命運之輪：轉到了「絕對防禦」！獲得了 ${addedShield} 點堅固護盾！</b>`);
                 } else {
@@ -857,7 +845,7 @@
                     if (playerShield >= damageToPlayerBody) {
                         playerShield -= damageToPlayerBody; 
                         damageToPlayerBody = 0; 
-                        logMessage(`&nbsp;&nbsp;🛡️ 護盾完全擋下了魔王的深淵咆哮！`);
+                        logMessage(`&nbsp;&nbsp;🛡️ 護盾擋下了魔王的深淵咆哮！`);
                     } else {
                         damageToPlayerBody -= playerShield; 
                         playerShield = 0; 
@@ -866,6 +854,12 @@
                 }
                 playerHP -= damageToPlayerBody;
                 playerSuppressedNextTurn = true;
+                
+                if (currentHero && currentHero.trait === "turtlo" && damageToPlayerBody > 0) {
+                    playerShield += 3;
+                    logMessage(`&nbsp;&nbsp;🛡️ 堅甲龜觸發【堅甲防禦】：受到傷害後反擊獲得 3 點護盾！`);
+                }
+
                 logMessage(`&nbsp;&nbsp;📢💥 <b>【深淵咆哮】霸主釋放毀滅音波，對你造成了 ${roarDmg} 點傷害，並施加【壓制】！</b>`);
 
                 if (playerReflectActive && roarDmg > 0) {
@@ -893,10 +887,12 @@
                 } 
                 else {
                     let rawMonsterDmg = Math.floor(Math.random() * 11) + 12;
-                    
+                    let isBreakArmor = false;
+
                     if (monsterAtkBuffTurns > 0) {
                         rawMonsterDmg += 8;
                         monsterAtkBuffTurns--; 
+                        if (Math.random() < 0.3) isBreakArmor = true;
                         logMessage(`&nbsp;&nbsp;💥 魔王帶有【暗影狂暴】加成，本次攻擊傷害增加 +8 點！`);
                     }
 
@@ -908,13 +904,19 @@
                         logMessage(`&nbsp;&nbsp;❄️ 魔王受【冰霜虛弱】影響，攻擊威力減弱 40%！`);
                     }
 
+                    if (isBreakArmor && playerShield > 0) {
+                        let destroyedShield = Math.floor(playerShield * 0.5);
+                        playerShield -= destroyedShield;
+                        logMessage(`&nbsp;&nbsp;🗡️💥 <b>魔王施展【破甲打擊】！強行毀壞了你 ${destroyedShield} 點護盾！</b>`);
+                    }
+
                     let damageToPlayerBody = rawMonsterDmg;
                     
                     if (playerShield > 0) {
                         if (playerShield >= damageToPlayerBody) {
                             playerShield -= damageToPlayerBody; 
                             damageToPlayerBody = 0; 
-                            logMessage(`&nbsp;&nbsp;🛡️ 護盾完全擋下了魔王的攻擊！`);
+                            logMessage(`&nbsp;&nbsp;🛡️ 護盾擋下了魔王的攻擊！`);
                         } else {
                             damageToPlayerBody -= playerShield; 
                             playerShield = 0; 
@@ -923,6 +925,12 @@
                     }
 
                     playerHP -= damageToPlayerBody;
+
+                    if (currentHero && currentHero.trait === "turtlo" && damageToPlayerBody > 0) {
+                        playerShield += 3;
+                        logMessage(`&nbsp;&nbsp;🛡️ 堅甲龜觸發【堅甲防禦】：受到傷害後反擊獲得 3 點護盾！`);
+                    }
+
                     logMessage(`&nbsp;&nbsp;⚠️ 魔王發動猛擊，造成了 <b style="color:#f87171;">${rawMonsterDmg}</b> 點總傷害。`);
 
                     if (currentBoss && currentBoss.trait === "vampire" && rawMonsterDmg > 0) {
@@ -1002,7 +1010,7 @@
     function checkFirstTimeVisit() {
         if (!localStorage.getItem("hasVisitedPetAdventureStep")) {
             localStorage.setItem("hasVisitedPetAdventureStep", "true");
-            startTutorialStage(); // 首次進入直接展開「實戰新手教學關卡」
+            startTutorialStage();
         }
     }
 
