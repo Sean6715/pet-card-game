@@ -42,6 +42,8 @@
         .btn-info:hover { background: #0284c7; }
         .btn-battlefield { background: #8b5cf6; }
         .btn-battlefield:hover { background: #7c3aed; }
+        .btn-boss { background: #ef4444; }
+        .btn-boss:hover { background: #dc2626; }
         
         .desc { color: #94a3b8; margin-bottom: 15px; font-size: 13px; }
         .battlefield-banner {
@@ -106,7 +108,9 @@
         .compendium-card b { display: block; margin-bottom: 4px; color: #38bdf8; }
         
         .effect-item { background: #334155; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #8b5cf6; }
+        .effect-item.boss-item { border-left-color: #ef4444; }
         .effect-item b { color: #c084fc; font-size: 14px; display: block; margin-bottom: 4px; }
+        .effect-item.boss-item b { color: #f87171; }
         .effect-item p { margin: 0; font-size: 12px; color: #cbd5e1; }
     </style>
 </head>
@@ -116,6 +120,7 @@
     <div class="header-top">
         <h1>⚔️ 萌寵冒險：進階策略卡牌對決</h1>
         <div class="header-buttons">
+            <button class="btn-info btn-boss" onclick="toggleBossModal()">👹 魔王情報</button>
             <button class="btn-info btn-battlefield" onclick="toggleBattlefieldModal()">⚡ 戰場效果</button>
             <button class="btn-info" onclick="toggleCompendium()">📖 卡牌圖鑑</button>
         </div>
@@ -125,7 +130,7 @@
     <div class="status-panel">
         <div class="status-item">玩家血量 (HP)<span id="player-hp">100</span><div class="buff-info" id="player-buff">狀態：正常</div></div>
         <div class="status-item">魔王血量 (HP)<span id="monster-hp">120</span><div class="buff-info" id="monster-buff">狀態：正常</div></div>
-        <div class="status-item">當前屬性<span id="turn-count">1</span><div class="buff-info" id="action-points">剩餘行動：1</div></div>
+        <div class="status-item">當前回合<span id="turn-count">1</span><div class="buff-info" id="action-points">剩餘行動：1</div></div>
     </div>
     <div class="battle-log" id="log-box">[系統] 戰鬥準備中...<br></div>
     <div class="card-container" id="card-selection"></div>
@@ -162,8 +167,33 @@
                 <p>戰鬥開局時，雙方皆會獲得 20 點防禦護盾。</p>
             </div>
             <div class="effect-item">
-                <b>🌫️ 迷霧選擇（新）</b>
+                <b>🌫️ 迷霧選擇</b>
                 <p>視野受阻！每回合僅能從卡庫隨機抽出 2 張卡牌供選擇（原本為 3 張）。</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 魔王情報彈跳視窗 -->
+<div class="modal-overlay" id="boss-modal">
+    <div class="modal-content">
+        <div class="modal-header"><h2>👹 魔王技能與行動情報</h2><button class="btn-close" onclick="toggleBossModal()">關閉</button></div>
+        <div id="boss-body">
+            <div class="effect-item boss-item">
+                <b>⚔️ 普通猛擊 / 重擊（攻擊）</b>
+                <p>魔王的基本攻擊手段，每回合對玩家造成 12 ~ 22 點的基礎隨機傷害。</p>
+            </div>
+            <div class="effect-item boss-item">
+                <b>🔥 暗影狂暴（增益）</b>
+                <p>魔王爆發暗黑能量！使其<b>接下來的 2 次攻擊</b>附加高達 <b>+8 點傷害</b>。</p>
+            </div>
+            <div class="effect-item boss-item">
+                <b>🛡️ 暗黑護盾（防禦）</b>
+                <p>魔王血量低於 50% 時有機會釋放，為自己張開 <b>15 點防禦護盾</b>抵擋傷害。</p>
+            </div>
+            <div class="effect-item boss-item">
+                <b>🪄 自我修復（回復）</b>
+                <p>魔王血量低於 50% 時有機會釋放，立即恢復 <b>20 點生命值</b>（治療枯竭下減半）。</p>
             </div>
         </div>
     </div>
@@ -183,7 +213,7 @@
     let monsterPoison = 0;
     let monsterSkipTurns = 0; 
     let monsterWeakTurns = 0; 
-    let monsterAtkBuffTurns = 0; // 新增魔王攻擊提升持續時間
+    let monsterAtkBuffTurns = 0; // 記錄魔王狂暴剩餘次數
     let playerAtkBuff = 0; 
     let playerReflectActive = false;
     let playerRegenTurns = 0; 
@@ -215,8 +245,9 @@
         
         // 特殊戰術型
         { id: 7, name: "血之狂熱", type: "special", subType: "sacrifice", category: "特殊戰術型", value: 18, costHP: 10, buffVal: 15, desc: "犧牲 10 點自身血量，下一次攻擊傷害固定 +15 點！" },
-        { id: 8, name: "禁錮咒語", type: "special", subType: "skip", category: "特殊戰術型", value: 0, desc: "【強效驅散】清除魔王身上所有狀態與增益，並使其停止行動 1 回合！" },
-        { id: 9, name: "反彈護鏡", type: "special", subType: "reflect", category: "特殊戰術型", value: 0, desc: "獲得 10 點護盾。若下一回合生命受到魔王傷害，反彈該傷害的 50% 給魔王。" },
+        { id: 8, name: "禁錮咒語", type: "special", subType: "skip", category: "特殊戰術型", value: 0, desc: "【強效驅散】清除魔王身上所有狀態與護盾，並使其停止行動 1 回合！" },
+        // 重構反彈護鏡描述
+        { id: 9, name: "反彈護鏡", type: "special", subType: "reflect", category: "特殊戰術型", value: 0, desc: "獲得 10 點護盾。下回合不論護盾是否擋下，皆精準反彈魔王打出總傷害的 50%！" },
         { id: 14, name: "命運之輪", type: "special", subType: "roulette", category: "特殊戰術型", value: 0, desc: "隨機觸發：【生機庇護】回復18血並增血量上限、【絕對防禦】獲得18護盾、或【烈風風刃】造成22固定傷害！" },
         { id: 16, name: "盾擊破敵", type: "special", subType: "shield_bash", category: "特殊戰術型", value: 0, desc: "消耗你目前所有的防禦護盾，護盾每剩餘 1 點就對魔王造成 1.5 倍的強力衝擊傷害！" }
     ];
@@ -288,6 +319,11 @@
         modal.style.display = (modal.style.display === "flex") ? "none" : "flex";
     }
 
+    function toggleBossModal() {
+        const modal = document.getElementById("boss-modal");
+        modal.style.display = (modal.style.display === "flex") ? "none" : "flex";
+    }
+
     function startNewTurn() {
         if (gameOver) return;
         actionsLeft = (currentModifier.effect === "double_action") ? 2 : 1;
@@ -332,7 +368,7 @@
         if (monsterPoison > 0) monsterBuffText += ` | 中毒(${monsterPoison}T)`;
         if (monsterSkipTurns > 0) monsterBuffText += ` | 🔒禁錮(${monsterSkipTurns}T)`;
         if (monsterWeakTurns > 0) monsterBuffText += ` | ❄️冰霜虛弱`;
-        if (monsterAtkBuffTurns > 0) monsterBuffText += ` | 🔥暗影狂暴(${monsterAtkBuffTurns}T)`;
+        if (monsterAtkBuffTurns > 0) monsterBuffText += ` | 🔥暗影狂暴(${monsterAtkBuffTurns}次)`;
         document.getElementById("monster-buff").innerText = monsterBuffText;
     }
 
@@ -348,7 +384,6 @@
         container.innerHTML = "";
         let shuffled = [...cardPool].sort(() => 0.5 - Math.random());
         
-        // 迷霧選擇戰場效果：只抽 2 張卡牌
         let drawCount = (currentModifier && currentModifier.effect === "fog_choice") ? 2 : 3;
         shuffled.slice(0, drawCount).forEach(card => {
             let cardDiv = document.createElement("div"); 
@@ -448,7 +483,6 @@
                 playerAtkBuff = card.buffVal; 
                 logMessage(`&nbsp;&nbsp;🩸 血之狂熱：你犧牲了 ${card.costHP} 點血量，下一次攻擊傷害將直接增加 <b style="color:#fbbf24;">+${card.buffVal}</b> 點！`); 
             }
-            // 升級：強效驅散，清除魔王身上所有狀態
             else if (card.subType === "skip") { 
                 monsterSkipTurns = 1; 
                 monsterShield = 0;
@@ -460,7 +494,7 @@
             else if (card.subType === "reflect") { 
                 playerShield += 10; 
                 playerReflectActive = true; 
-                logMessage(`&nbsp;&nbsp;🛡️ 獲得 10 點防禦護盾，並準備在下回合反彈生命受到的傷害！`); 
+                logMessage(`&nbsp;&nbsp;🛡️ 獲得 10 點防禦護盾，並準備在下回合反彈魔王打出總傷害的 50%！`); 
             }
             else if (card.subType === "shield_bash") {
                 if (playerShield > 0) {
@@ -472,7 +506,6 @@
                     logMessage(`&nbsp;&nbsp;🛡️ 你使用了盾擊破敵，但身上沒有任何護盾，攻擊落空！`);
                 }
             }
-            // 命運之輪調整：適度削弱數值 & 風暴取代雷擊
             else if (card.subType === "roulette") {
                 let roll = Math.random();
                 if (roll < 0.33) {
@@ -498,7 +531,6 @@
         }
     }
 
-    // 多樣化魔王 AI 招式
     function monsterTurn() {
         if (gameOver) return;
         let monsterActions = (currentModifier.effect === "double_action") ? 2 : 1;
@@ -531,10 +563,10 @@
                     logMessage(`&nbsp;&nbsp;🛡️ 魔王張開「暗黑護盾」，獲得了 15 點防禦護盾！`);
                 }
             } 
-            // 招式 2：若尚未擁有攻擊 Buff，有 30% 機率施展「暗影狂暴」提升傷害
+            // 招式 2：若尚未擁有攻擊 Buff，有 30% 機率施展「暗影狂暴」（設定為 2 次攻擊機會）
             else if (monsterAtkBuffTurns <= 0 && rollAI < 0.3) {
-                monsterAtkBuffTurns = 2;
-                logMessage(`&nbsp;&nbsp;🔥 <b>魔王發動「暗影狂暴」！身上湧現暗黑能量，未來 2 回合攻擊力增加 +8 點！</b>`);
+                monsterAtkBuffTurns = 2; // 可持續強化 2 次反擊攻擊
+                logMessage(`&nbsp;&nbsp;🔥 <b>魔王發動「暗影狂暴」！身上湧現暗黑能量，未來 2 次攻擊威力增加 +8 點！</b>`);
             } 
             // 招式 3：普通攻擊 / 重擊
             else {
@@ -543,6 +575,8 @@
                 // 計算魔王暗影狂暴加成
                 if (monsterAtkBuffTurns > 0) {
                     rawMonsterDmg += 8;
+                    monsterAtkBuffTurns--; // 消耗一次狂暴次數
+                    logMessage(`&nbsp;&nbsp;💥 魔王帶有【暗影狂暴】加成，本次攻擊傷害增加 +8 點！`);
                 }
 
                 if (currentModifier.effect === "berserk") rawMonsterDmg = Math.round(rawMonsterDmg * 1.3);
@@ -555,6 +589,7 @@
 
                 let damageToPlayerBody = rawMonsterDmg;
                 
+                // 護盾抵擋計算
                 if (playerShield > 0) {
                     if (playerShield >= damageToPlayerBody) {
                         playerShield -= damageToPlayerBody; 
@@ -568,19 +603,18 @@
                 }
 
                 playerHP -= damageToPlayerBody;
-                logMessage(`&nbsp;&nbsp;⚠️ 魔王發動猛擊，對你造成了 <b style="color:#f87171;">${damageToPlayerBody}</b> 點生命傷害。`);
+                logMessage(`&nbsp;&nbsp;⚠️ 魔王發動猛擊，造成了 <b style="color:#f87171;">${rawMonsterDmg}</b> 點總攻擊傷害（扣血 ${damageToPlayerBody} 點）。`);
 
-                if (playerReflectActive && damageToPlayerBody > 0) {
-                    let reflectedDmg = Math.round(damageToPlayerBody * 0.5);
+                // 核心重構：反彈護鏡計算「總打出傷害的 50%」
+                if (playerReflectActive && rawMonsterDmg > 0) {
+                    let reflectedDmg = Math.round(rawMonsterDmg * 0.5);
                     applyDamageToMonster(reflectedDmg, false);
-                    logMessage(`&nbsp;&nbsp;🔄 <b>鏡面反射生效！將生命受到傷害的 50%（${reflectedDmg} 點）反彈給魔王！</b>`);
+                    logMessage(`&nbsp;&nbsp;🔄 <b>鏡面反射生效！不論護盾是否擋下，精準將魔王打出總傷害的 50%（${reflectedDmg} 點）反彈給魔王！</b>`);
                 }
             }
             if (checkWinLoss()) return;
         }
 
-        // 遞減魔王的狂暴增益回合
-        if (monsterAtkBuffTurns > 0) monsterAtkBuffTurns--;
         playerReflectActive = false; 
 
         turn++; 
