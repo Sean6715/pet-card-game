@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>萌寵冒險：進階策略卡牌對決</title>
+    <title>萌寵冒險：進階策略對決</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -146,7 +146,7 @@
     <div class="status-panel">
         <div class="status-item">玩家血量 (HP)<span id="player-hp">100</span><div class="buff-info" id="player-buff">狀態：正常</div></div>
         <div class="status-item"><span id="boss-title-hp">魔王血量 (HP)</span><span id="monster-hp">120</span><div class="buff-info" id="monster-buff">狀態：正常</div></div>
-        <div class="status-item">當前回合<span id="turn-count">1</span><div class="buff-info" id="action-points">剩餘行動：1</div></div>
+        <div class="status-item">當開啟回合<span id="turn-count">1</span><div class="buff-info" id="action-points">剩餘行動：1</div></div>
     </div>
     <div class="battle-log" id="log-box">[系統] 戰鬥準備中...<br></div>
     <div class="card-container" id="card-selection"></div>
@@ -172,7 +172,7 @@
             <select id="modifier-select">
                 <option value="random">🎲 隨機決定</option>
                 <option value="double_action">✨ 雙倍協奏（雙方皆可連續行動 2 次）</option>
-                <option value="berserk">🔥 狂暴磁場（傷害+30%，每回合扣5血）</option>
+                <option value="berserk">🔥 狂暴磁場（傷害+20%，每回合扣5血）</option>
                 <option value="weak_heal">💧 治療枯竭（所有回復效果減半）</option>
                 <option value="iron_wall">🛡️ 鐵壁防線（雙方開局獲得 20 點護盾）</option>
                 <option value="fog_choice">🌫️ 迷霧選擇（每回合僅有 2 張卡可選）</option>
@@ -204,7 +204,7 @@
         <div class="modal-header"><h2>⚡ 戰場效果總覽</h2><button class="btn-close" onclick="toggleBattlefieldModal()">關閉</button></div>
         <div id="battlefield-body">
             <div class="effect-item"><b>✨ 雙倍協奏</b><p>雙方每回合皆可連續進行 2 次行動。</p></div>
-            <div class="effect-item"><b>🔥 狂暴磁場</b><p>雙方所有攻擊傷害增加 30%，但每回合結束時，雙方各自承受 5 點環境扣血。</p></div>
+            <div class="effect-item"><b>🔥 狂暴磁場</b><p>雙方所有攻擊傷害增加 20%，但每回合結束時，雙方各自承受 5 點環境扣血。</p></div>
             <div class="effect-item"><b>💧 治療枯竭</b><p>雙方所有的生命回復效果減少 50%。</p></div>
             <div class="effect-item"><b>🛡️ 鐵壁防線</b><p>戰鬥開局時，雙方皆會獲得 20 點防禦護盾。</p></div>
             <div class="effect-item"><b>🌫️ 迷霧選擇</b><p>視野受阻！每回合僅能從卡庫隨機抽出 2 張卡牌供選擇。</p></div>
@@ -246,7 +246,7 @@
 
     let currentBoss = null;
     let bossRevived = false; 
-    let playerSuppressedNextTurn = false; // 深淵咆哮的壓制旗標
+    let playerSuppressedNextTurn = false;
 
     const bossTypes = [
         { 
@@ -269,7 +269,7 @@
 
     const battlefieldModifiers = [
         { name: "✨ 雙倍協奏：雙方每回合皆可連續進行 2 次行動！", effect: "double_action" },
-        { name: "🔥 狂暴磁場：雙方攻擊傷害增加 30%，但每回合結束雙方扣除 5 點血量", effect: "berserk" },
+        { name: "🔥 狂暴磁場：雙方攻擊傷害增加 20%，但每回合結束雙方扣除 5 點血量", effect: "berserk" },
         { name: "💧 治療枯竭：雙方所有回血效果減少 50%", effect: "weak_heal" },
         { name: "🛡️ 鐵壁防線：雙方初始獲得 20 點護盾", effect: "iron_wall" },
         { name: "🌫️ 迷霧選擇：每回合僅有 2 張卡牌可供挑選！", effect: "fog_choice" }
@@ -381,6 +381,7 @@
         });
     }
 
+    // 重構：當前魔王情報獨立條列招式與精準數值
     function updateCurrentBossModalUI() {
         const body = document.getElementById("current-boss-body");
         if (!currentBoss) {
@@ -389,8 +390,9 @@
         }
         let bossSpecificInfo = "";
         if (currentBoss.trait === "standard") {
-            bossSpecificInfo = `<div class="effect-item current-item"><b>📢 專屬特化機制：深淵咆哮</b><p>每隔 3 回合（第 3、6、9...回合）釋放毀滅音波，造成 20 點傷害並使玩家下回合僅剩 1 張卡可選！</p></div>`;
+            bossSpecificInfo = `<div class="effect-item current-item"><b>📢 專屬大招：深淵咆哮</b><p>每隔 3 回合（第 3、6、9...回合）必定發動！造成 <b>20 點傷害</b>，並施加【壓制】使玩家下一回合<b>僅剩 1 張卡牌可選</b>！</p></div>`;
         }
+
         body.innerHTML = `
             ${bossSpecificInfo}
             <div class="effect-item current-item">
@@ -399,8 +401,20 @@
                 <p><b>核心被動特性：</b>${currentBoss.desc}</p>
             </div>
             <div class="effect-item boss-item">
-                <b>⚔️ 招式：普通猛擊 / 重擊 / 護盾 / 修復</b>
-                <p>具備標準的攻擊、防禦與自我修復能力，並會施展「暗影狂暴」提升攻擊力。</p>
+                <b>⚔️ 招式 1：普通猛擊 / 重擊</b>
+                <p><b>觸發時機：</b>主要攻擊手段<br><b>效果數值：</b>對玩家造成 <b>12 ~ 22 點</b>的隨機基礎傷害。</p>
+            </div>
+            <div class="effect-item boss-item">
+                <b>🔥 招式 2：暗影狂暴</b>
+                <p><b>觸發時機：</b>無 Buff 時機率施展 (30%)<br><b>效果數值：</b>湧現暗黑能量，使<b>接下來 2 次攻擊</b>固定額外附加 <b>+8 點傷害</b>！</p>
+            </div>
+            <div class="effect-item boss-item">
+                <b>🛡️ 招式 3：暗黑護盾</b>
+                <p><b>觸發時機：</b>血量低於 50% 時機率施展<br><b>效果數值：</b>為自己張開 <b>15 點防禦護盾</b>抵擋傷害。</p>
+            </div>
+            <div class="effect-item boss-item">
+                <b>🪄 招式 4：自我修復</b>
+                <p><b>觸發時機：</b>血量低於 50% 時機率施展<br><b>效果數值：</b>立即恢復 <b>20 點生命值</b>（在「治療枯竭」效果下減半為 10 點）。</p>
             </div>
         `;
     }
@@ -415,7 +429,7 @@
         actionsLeft = (currentModifier.effect === "double_action") ? 2 : 1;
 
         if (monsterPoison > 0) { 
-            applyDamageToMonster(6, false, null);
+            applyDamageToMonster(6, false, null, false);
             monsterPoison--; 
             logMessage(`&nbsp;&nbsp;☠️ 魔王受到劇毒侵蝕，持續扣除 6 點血量！`); 
         }
@@ -429,7 +443,7 @@
 
         if (currentModifier.effect === "berserk") { 
             playerHP -= 5; 
-            applyDamageToMonster(5, false, null);
+            applyDamageToMonster(5, false, null, false);
             logMessage(`&nbsp;&nbsp;🔥 狂暴磁場生效：雙方各自承受 5 點環境扣血！`); 
         }
 
@@ -472,7 +486,6 @@
         container.innerHTML = "";
         let shuffled = [...cardPool].sort(() => 0.5 - Math.random());
         
-        // 核心：若受到深淵咆哮壓制，本回合僅能從 1 張卡中選擇
         let drawCount = (currentModifier && currentModifier.effect === "fog_choice") ? 2 : 3;
         if (playerSuppressedNextTurn) {
             drawCount = 1;
@@ -489,8 +502,8 @@
         });
     }
 
-    function applyDamageToMonster(dmg, ignoreShield, cardName) {
-        if (currentBoss && currentBoss.trait === "evasion" && Math.random() < 0.25) {
+    function applyDamageToMonster(dmg, ignoreShield, cardName, canEvade = true) {
+        if (canEvade && currentBoss && currentBoss.trait === "evasion" && Math.random() < 0.25) {
             logMessage(`&nbsp;&nbsp;💨 <b>【閃避成功】影魔身形一閃，完全躲開了你的 ${cardName ? `<b>${cardName}</b>` : "攻擊"}！</b>`);
             return false;
         }
@@ -511,7 +524,7 @@
 
     function playCard(card) {
         if (gameOver || actionsLeft <= 0) return;
-        let dmgMultiplier = (currentModifier.effect === "berserk") ? 1.3 : 1.0;
+        let dmgMultiplier = (currentModifier.effect === "berserk") ? 1.2 : 1.0;
 
         if (card.type === "attack") {
             let finalDmg = card.value;
@@ -529,14 +542,14 @@
 
             let hit = false;
             if (card.subType === "pierce") {
-                hit = applyDamageToMonster(finalDmg, true, card.name);
+                hit = applyDamageToMonster(finalDmg, true, card.name, true);
                 if (hit) logMessage(`&nbsp;&nbsp;⚔️ 你使用了 <b>${card.name}</b>，無視魔王護盾直接造成 <b style="color:#f87171;">${finalDmg}</b> 點穿透傷害！`);
             } 
             else if (card.subType === "detonate") {
                 let hasDebuff = (monsterPoison > 0 || monsterWeakTurns > 0);
                 let bonusDmg = hasDebuff ? 22 : 0;
                 let totalDmg = finalDmg + bonusDmg;
-                hit = applyDamageToMonster(totalDmg, false, card.name);
+                hit = applyDamageToMonster(totalDmg, false, card.name, true);
                 
                 if (hit) {
                     if (hasDebuff) {
@@ -549,7 +562,7 @@
                 }
             } 
             else {
-                hit = applyDamageToMonster(finalDmg, false, card.name);
+                hit = applyDamageToMonster(finalDmg, false, card.name, true);
                 if (hit) {
                     if (card.subType === "crit") {
                         logMessage(`&nbsp;&nbsp;⚡ 暴擊判定：${isCrit ? "成功爆擊！" : "普通命中。"}`);
@@ -613,7 +626,7 @@
             else if (card.subType === "shield_bash") {
                 if (playerShield > 0) {
                     let bashDmg = Math.round(playerShield * 1.5);
-                    let hit = applyDamageToMonster(bashDmg, false, card.name); 
+                    let hit = applyDamageToMonster(bashDmg, false, card.name, true); 
                     if (hit) {
                         logMessage(`&nbsp;&nbsp;🛡️💥 <b>盾擊破敵爆發！消耗了 ${playerShield} 點護盾，對魔王造成了 <b style="color:#f87171;">${bashDmg}</b> 點衝擊傷害！</b>`);
                     }
@@ -632,7 +645,7 @@
                     playerShield += 18;
                     logMessage(`🎰 <b>命運之輪：轉到了「絕對防禦」！獲得了 18 點堅固護盾！</b>`);
                 } else {
-                    let hit = applyDamageToMonster(22, true, "烈風風刃");
+                    let hit = applyDamageToMonster(22, true, "烈風風刃", true);
                     if (hit) logMessage(`🎰 <b>命運之輪：轉到了「烈風風刃」！颳起強風，對魔王造成 22 點固定穿透傷害！</b>`);
                 }
             }
@@ -666,10 +679,9 @@
         for (let i = 0; i < monsterActions; i++) {
             if (gameOver) break;
 
-            // 核心：深淵霸主每隔 3 回合（第 3、6、9...回合）釋放【深淵咆哮】
             if (currentBoss && currentBoss.trait === "standard" && turn % 3 === 0) {
                 let roarDmg = 20;
-                if (currentModifier.effect === "berserk") roarDmg = Math.round(roarDmg * 1.3);
+                if (currentModifier.effect === "berserk") roarDmg = Math.round(roarDmg * 1.2);
 
                 if (monsterWeakTurns > 0) {
                     roarDmg = Math.round(roarDmg * 0.6);
@@ -690,12 +702,12 @@
                     }
                 }
                 playerHP -= damageToPlayerBody;
-                playerSuppressedNextTurn = true; // 觸發下回合壓制
+                playerSuppressedNextTurn = true;
                 logMessage(`&nbsp;&nbsp;📢💥 <b>【深淵咆哮】霸主釋放毀滅音波，對你造成了 ${roarDmg} 點傷害，並施加【壓制】！</b>`);
 
                 if (playerReflectActive && roarDmg > 0) {
                     let reflectedDmg = Math.round(roarDmg * 0.5);
-                    applyDamageToMonster(reflectedDmg, false, "鏡面反射");
+                    applyDamageToMonster(reflectedDmg, false, "鏡面反射", false);
                     logMessage(`&nbsp;&nbsp;🔄 <b>鏡面反射生效！反彈 ${reflectedDmg} 點傷害給魔王！</b>`);
                 }
             } 
@@ -725,7 +737,7 @@
                         logMessage(`&nbsp;&nbsp;💥 魔王帶有【暗影狂暴】加成，本次攻擊傷害增加 +8 點！`);
                     }
 
-                    if (currentModifier.effect === "berserk") rawMonsterDmg = Math.round(rawMonsterDmg * 1.3);
+                    if (currentModifier.effect === "berserk") rawMonsterDmg = Math.round(rawMonsterDmg * 1.2);
 
                     if (monsterWeakTurns > 0) {
                         rawMonsterDmg = Math.round(rawMonsterDmg * 0.6);
@@ -758,7 +770,7 @@
 
                     if (playerReflectActive && rawMonsterDmg > 0) {
                         let reflectedDmg = Math.round(rawMonsterDmg * 0.5);
-                        applyDamageToMonster(reflectedDmg, false, "鏡面反射");
+                        applyDamageToMonster(reflectedDmg, false, "鏡面反射", false);
                         logMessage(`&nbsp;&nbsp;🔄 <b>鏡面反射生效！反彈 ${reflectedDmg} 點傷害給魔王！</b>`);
                     }
                 }
