@@ -185,9 +185,10 @@
 
     let playerShield = 0;
     let monsterPoison = 0;
-    let monsterHealBlocked = 0;
+    let monsterSkipTurns = 0; // 改為記錄魔王被禁錮跳過行動的回合數
     let playerAtkBuff = 0; 
     let playerReflectActive = false;
+    let playerRegenTurns = 0; // 新增：玩家持續回復剩餘回合數
 
     const battlefieldModifiers = [
         { name: "✨ 雙倍協奏：雙方每回合皆可連續進行 2 次行動！", effect: "double_action" },
@@ -198,14 +199,20 @@
     let currentModifier = null;
 
     const cardPool = [
+        // 攻擊型
         { id: 1, name: "小火狐烈焰", type: "attack", subType: "normal", category: "攻擊型", value: 18, desc: "造成 18 點固定烈焰傷害。" },
         { id: 2, name: "嗜血猛擊", type: "attack", subType: "lifesteal", category: "攻擊型", value: 14, healVal: 7, desc: "造成 14 點傷害，並吸取 7 點生命值。" },
         { id: 3, name: "暴擊雷電", type: "attack", subType: "crit", category: "攻擊型", value: 26, desc: "40% 機率爆擊造成 26 點高傷害，否則僅造成 10 點。" },
         { id: 4, name: "劇毒飛刀", type: "attack", subType: "poison", category: "攻擊型", value: 10, desc: "造成 10 點傷害，使對手中毒 3 回合（每回合固定扣 6 點血）。" },
+        
+        // 回復防禦型
         { id: 5, name: "瞬間大回復", type: "heal", subType: "burst", category: "回復防禦型", value: 24, desc: "瞬間恢復 24 點生命值。" },
         { id: 6, name: "聖光護盾", type: "heal", subType: "shield", category: "回復防禦型", value: 12, shieldVal: 15, desc: "恢復 12 點生命並獲得 15 點護盾值。" },
+        { id: 10, name: "自然泉源", type: "heal", subType: "regen", category: "回復防禦型", value: 0, desc: "獲得持續 3 回合的泉源祝福，每回合自動回復 7 點生命值。" },
+        
+        // 特殊戰術型
         { id: 7, name: "血之狂熱", type: "special", subType: "sacrifice", category: "特殊戰術型", value: 18, costHP: 10, buffVal: 15, desc: "犧牲 10 點自身血量，下回合攻擊傷害固定 +15 點！" },
-        { id: 8, name: "禁錮咒語", type: "special", subType: "antiheal", category: "特殊戰術型", value: 0, desc: "封鎖對手 2 回合內無法自我修復回血。" },
+        { id: 8, name: "禁錮咒語", type: "special", subType: "skip", category: "特殊戰術型", value: 0, desc: "封鎖魔王行動 2 回合，使其無法攻擊與回血。" },
         { id: 9, name: "反彈護鏡", type: "special", subType: "reflect", category: "特殊戰術型", value: 0, desc: "獲得 10 點護盾。若下一回合生命受到魔王傷害，反彈該傷害的 50% 給魔王。" }
     ];
 
@@ -216,9 +223,10 @@
         gameOver = false;
         playerShield = 0;
         monsterPoison = 0;
-        monsterHealBlocked = 0;
+        monsterSkipTurns = 0;
         playerAtkBuff = 0;
         playerReflectActive = false;
+        playerRegenTurns = 0;
 
         currentModifier = battlefieldModifiers[Math.floor(Math.random() * battlefieldModifiers.length)];
         document.getElementById("battlefield-banner").innerText = `當前戰場效果：${currentModifier.name}`;
@@ -266,8 +274,28 @@
     function startNewTurn() {
         if (gameOver) return;
         actionsLeft = (currentModifier.effect === "double_action") ? 2 : 1;
-        if (monsterPoison > 0) { monsterHP -= 6; monsterPoison--; logMessage(`☠️ 魔王受到劇毒侵蝕，持續扣除 6 點血量！`); }
-        if (currentModifier.effect === "berserk") { playerHP -= 5; monsterHP -= 5; logMessage(`🔥 狂暴磁場生效：雙方各自承受 5 點環境扣血！`); }
+
+        // 持續傷害：中毒
+        if (monsterPoison > 0) { 
+            monsterHP -= 6; 
+            monsterPoison--; 
+            logMessage(`☠️ 魔王受到劇毒侵蝕，持續扣除 6 點血量！`); 
+        }
+
+        // 持續回復：自然泉源
+        if (playerRegenTurns > 0) {
+            let regenVal = (currentModifier.effect === "weak_heal") ? 3 : 7;
+            playerHP = Math.min(100, playerHP + regenVal);
+            playerRegenTurns--;
+            logMessage(`🌿 自然泉源生效：持續回復了 <b style="color:#4ade80;">${regenVal}</b> 點生命值！（剩餘 ${playerRegenTurns} 回合）`);
+        }
+
+        if (currentModifier.effect === "berserk") { 
+            playerHP -= 5; 
+            monsterHP -= 5; 
+            logMessage(`🔥 狂暴磁場生效：雙方各自承受 5 點環境扣血！`); 
+        }
+
         if (checkWinLoss()) return;
         updateStatus();
         renderCards();
@@ -282,11 +310,12 @@
         let playerBuffText = `護盾：${playerShield}`;
         if (playerAtkBuff > 0) playerBuffText += ` | 攻擊強化(+${playerAtkBuff})`;
         if (playerReflectActive) playerBuffText += ` | 護鏡啟用`;
+        if (playerRegenTurns > 0) playerBuffText += ` | 持續回復(${playerRegenTurns}T)`;
         document.getElementById("player-buff").innerText = playerBuffText;
         
         let monsterBuffText = "狀態：正常";
         if (monsterPoison > 0) monsterBuffText = `中毒(${monsterPoison}T)`;
-        if (monsterHealBlocked > 0) monsterBuffText += ` | 禁回血`;
+        if (monsterSkipTurns > 0) monsterBuffText = `🔒 禁錮中(${monsterSkipTurns}T)`;
         document.getElementById("monster-buff").innerText = monsterBuffText;
     }
 
@@ -340,12 +369,17 @@
             }
         } 
         else if (card.type === "heal") {
-            let healAmount = (currentModifier.effect === "weak_heal") ? Math.floor(card.value / 2) : card.value;
-            playerHP = Math.min(100, playerHP + healAmount); 
-            logMessage(`第 ${turn} 回合：你使用了 <b>${card.name}</b>，回復了 <b style="color:#4ade80;">${healAmount}</b> 點生命！`);
-            if (card.subType === "shield") { 
-                playerShield += card.shieldVal; 
-                logMessage(`🛡️ 獲得額外護盾 +${card.shieldVal} 點！`); 
+            if (card.subType === "regen") {
+                playerRegenTurns = 3;
+                logMessage(`第 ${turn} 回合：你使用了 <b>${card.name}</b>，獲得了持續 3 回合的泉源祝福！`);
+            } else {
+                let healAmount = (currentModifier.effect === "weak_heal") ? Math.floor(card.value / 2) : card.value;
+                playerHP = Math.min(100, playerHP + healAmount); 
+                logMessage(`第 ${turn} 回合：你使用了 <b>${card.name}</b>，回復了 <b style="color:#4ade80;">${healAmount}</b> 點生命！`);
+                if (card.subType === "shield") { 
+                    playerShield += card.shieldVal; 
+                    logMessage(`🛡️ 獲得額外護盾 +${card.shieldVal} 點！`); 
+                }
             }
         } 
         else if (card.type === "special") {
@@ -354,9 +388,9 @@
                 playerAtkBuff = card.buffVal; 
                 logMessage(`🩸 血之狂熱：你犧牲了 ${card.costHP} 點血量，下一次攻擊傷害將直接增加 <b style="color:#fbbf24;">+${card.buffVal}</b> 點！`); 
             }
-            else if (card.subType === "antiheal") { 
-                monsterHealBlocked = 2; 
-                logMessage(`🔒 禁錮咒語：成功封鎖魔王 2 回合內的自我修復能力！`); 
+            else if (card.subType === "skip") { 
+                monsterSkipTurns = 2; 
+                logMessage(`🔒 <b>禁錮咒語生效！魔王遭到束縛，接下來 2 回合內將無法行動與回血！</b>`); 
             }
             else if (card.subType === "reflect") { 
                 playerShield += 10; 
@@ -377,11 +411,25 @@
     function monsterTurn() {
         if (gameOver) return;
         let monsterActions = (currentModifier.effect === "double_action") ? 2 : 1;
+
+        // 檢查魔王是否被禁錮跳過行動
+        if (monsterSkipTurns > 0) {
+            logMessage(`--- <b>魔王反擊回合（遭到禁錮束縛，本回合無法行動！）</b> ---`);
+            monsterSkipTurns--;
+            turn++; 
+            updateStatus(); 
+            startNewTurn();
+            return;
+        }
+
         logMessage(`--- <b>魔王反擊回合${monsterActions > 1 ? "（連續行動 2 次）" : ""}</b> ---`);
 
         for (let i = 0; i < monsterActions; i++) {
             if (gameOver) break;
-            if (monsterHP < 60 && monsterHealBlocked <= 0 && Math.random() < 0.5) {
+            // 如果在雙倍協奏下，第一下行動被禁錮扣除，第二下還可以動嗎？這裡簡單處理：若被禁錮則整回合跳過
+            if (monsterSkipTurns > 0) break;
+
+            if (monsterHP < 60 && Math.random() < 0.5) {
                 let monsterHeal = (currentModifier.effect === "weak_heal") ? 10 : 20;
                 monsterHP = Math.min(maxMonsterHP, monsterHP + monsterHeal); 
                 logMessage(`🪄 魔王施展「自我修復」，回復了 ${monsterHeal} 點生命值！`);
@@ -415,7 +463,6 @@
             if (checkWinLoss()) return;
         }
 
-        if (monsterHealBlocked > 0) monsterHealBlocked--;
         playerReflectActive = false; 
 
         turn++; 
