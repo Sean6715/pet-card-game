@@ -101,6 +101,13 @@
         .modal-header h2 { margin: 0; color: #38bdf8; font-size: 20px; }
         .btn-close { background: #ef4444; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         
+        /* 設定選單表單樣式 */
+        .setup-group { margin-bottom: 15px; }
+        .setup-group label { display: block; font-size: 13px; color: #fbbf24; margin-bottom: 5px; font-weight: bold; }
+        .setup-group select { width: 100%; padding: 10px; background: #0f172a; color: white; border: 1px solid #475569; border-radius: 8px; font-size: 14px; }
+        .btn-start-battle { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: background 0.2s; }
+        .btn-start-battle:hover { background: #1d4ed8; }
+
         .compendium-section { margin-bottom: 20px; }
         .compendium-section h3 { font-size: 15px; margin-bottom: 8px; color: #fbbf24; border-left: 3px solid #fbbf24; padding-left: 8px; }
         .compendium-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
@@ -125,16 +132,45 @@
             <button class="btn-info" onclick="toggleCompendium()">📖 卡牌圖鑑</button>
         </div>
     </div>
-    <div class="desc">善用卡牌之間的異常狀態與驅散機制，應對多變的魔王招式！</div>
+    <div class="desc" id="game-subtitle">善用卡牌之間的異常狀態與驅散機制，應對多變的魔王招式！</div>
     <div class="battlefield-banner" id="battlefield-banner">戰場載入中...</div>
     <div class="status-panel">
         <div class="status-item">玩家血量 (HP)<span id="player-hp">100</span><div class="buff-info" id="player-buff">狀態：正常</div></div>
-        <div class="status-item">魔王血量 (HP)<span id="monster-hp">120</span><div class="buff-info" id="monster-buff">狀態：正常</div></div>
+        <div class="status-item"><span id="boss-title-hp">魔王血量 (HP)</span><span id="monster-hp">120</span><div class="buff-info" id="monster-buff">狀態：正常</div></div>
         <div class="status-item">當前回合<span id="turn-count">1</span><div class="buff-info" id="action-points">剩餘行動：1</div></div>
     </div>
-    <div class="battle-log" id="log-box">[系統] 戰鬥準備中...<br></div>
+    <div class="battle-log" id="log-box">[系統] 請點擊下方按鈕開始冒險...<br></div>
     <div class="card-container" id="card-selection"></div>
-    <button class="btn-reset" id="reset-btn" onclick="initGame()" style="display:none;">重新開始冒險</button>
+    <button class="btn-reset" id="reset-btn" onclick="openSetupModal()" style="display:block;">⚙️ 選擇魔王與戰場並開始冒險</button>
+</div>
+
+<!-- 開局自選設定視窗 -->
+<div class="modal-overlay" id="setup-modal" style="display:flex;">
+    <div class="modal-content">
+        <div class="modal-header"><h2>⚙️ 戰鬥自選配置</h2></div>
+        <div class="setup-group">
+            <label>選擇挑戰魔王：</label>
+            <select id="boss-select">
+                <option value="random">🎲 隨機決定</option>
+                <option value="standard">👹 深淵霸主（標準平衡型）</option>
+                <option value="undying">☠️ 不死魔王·巴洛克（復活特化型）</option>
+                <option value="evasion">🥷 幽影刺客·影魔（閃避特化型）</option>
+                <option value="vampire">🧛 吸血鬼王·德古拉（吸血特化型）</option>
+            </select>
+        </div>
+        <div class="setup-group">
+            <label>選擇戰場效果：</label>
+            <select id="modifier-select">
+                <option value="random">🎲 隨機決定</option>
+                <option value="double_action">✨ 雙倍協奏（雙方皆可連續行動 2 次）</option>
+                <option value="berserk">🔥 狂暴磁場（傷害+30%，每回合扣5血）</option>
+                <option value="weak_heal">💧 治療枯竭（所有回復效果減半）</option>
+                <option value="iron_wall">🛡️ 鐵壁防線（雙方開局獲得 20 點護盾）</option>
+                <option value="fog_choice">🌫️ 迷霧選擇（每回合僅有 2 張卡可選）</option>
+            </select>
+        </div>
+        <button class="btn-start-battle" onclick="startConfiguredGame()">確認出發，展開冒險！</button>
+    </div>
 </div>
 
 <!-- 卡牌圖鑑視窗 -->
@@ -150,26 +186,11 @@
     <div class="modal-content">
         <div class="modal-header"><h2>⚡ 戰場效果總覽</h2><button class="btn-close" onclick="toggleBattlefieldModal()">關閉</button></div>
         <div id="battlefield-body">
-            <div class="effect-item">
-                <b>✨ 雙倍協奏</b>
-                <p>雙方每回合皆可連續進行 2 次行動。</p>
-            </div>
-            <div class="effect-item">
-                <b>🔥 狂暴磁場</b>
-                <p>雙方所有攻擊傷害增加 30%，但每回合結束時，雙方各自承受 5 點環境扣血。</p>
-            </div>
-            <div class="effect-item">
-                <b>💧 治療枯竭</b>
-                <p>雙方所有的生命回復效果減少 50%。</p>
-            </div>
-            <div class="effect-item">
-                <b>🛡️ 鐵壁防線</b>
-                <p>戰鬥開局時，雙方皆會獲得 20 點防禦護盾。</p>
-            </div>
-            <div class="effect-item">
-                <b>🌫️ 迷霧選擇</b>
-                <p>視野受阻！每回合僅能從卡庫隨機抽出 2 張卡牌供選擇。</p>
-            </div>
+            <div class="effect-item"><b>✨ 雙倍協奏</b><p>雙方每回合皆可連續進行 2 次行動。</p></div>
+            <div class="effect-item"><b>🔥 狂暴磁場</b><p>雙方所有攻擊傷害增加 30%，但每回合結束時，雙方各自承受 5 點環境扣血。</p></div>
+            <div class="effect-item"><b>💧 治療枯竭</b><p>雙方所有的生命回復效果減少 50%。</p></div>
+            <div class="effect-item"><b>🛡️ 鐵壁防線</b><p>戰鬥開局時，雙方皆會獲得 20 點防禦護盾。</p></div>
+            <div class="effect-item"><b>🌫️ 迷霧選擇</b><p>視野受阻！每回合僅能從卡庫隨機抽出 2 張卡牌供選擇。</p></div>
         </div>
     </div>
 </div>
@@ -177,24 +198,12 @@
 <!-- 魔王情報彈跳視窗 -->
 <div class="modal-overlay" id="boss-modal">
     <div class="modal-content">
-        <div class="modal-header"><h2>👹 魔王技能與行動情報</h2><button class="btn-close" onclick="toggleBossModal()">關閉</button></div>
+        <div class="modal-header"><h2>👹 魔王技能與種類情報</h2><button class="btn-close" onclick="toggleBossModal()">關閉</button></div>
         <div id="boss-body">
-            <div class="effect-item boss-item">
-                <b>⚔️ 普通猛擊 / 重擊（攻擊）</b>
-                <p>魔王的基本攻擊手段，每回合對玩家造成 12 ~ 22 點的基礎隨機傷害。</p>
-            </div>
-            <div class="effect-item boss-item">
-                <b>🔥 暗影狂暴（增益）</b>
-                <p>魔王爆發暗黑能量！使其<b>接下來的 2 次攻擊</b>附加高達 <b>+8 點傷害</b>。</p>
-            </div>
-            <div class="effect-item boss-item">
-                <b>🛡️ 暗黑護盾（防禦）</b>
-                <p>魔王血量低於 50% 時有機會釋放，為自己張開 <b>15 點防禦護盾</b>抵擋傷害。</p>
-            </div>
-            <div class="effect-item boss-item">
-                <b>🪄 自我修復（回復）</b>
-                <p>魔王血量低於 50% 時有機會釋放，立即恢復 <b>20 點生命值</b>（治療枯竭下減半）。</p>
-            </div>
+            <div class="effect-item boss-item"><b>👹 深淵霸主（標準型）</b><p>具備標準的攻擊、護盾與自我修復能力，並會施展「暗影狂暴」提升攻擊力。</p></div>
+            <div class="effect-item boss-item"><b>☠️ 不死魔王·巴洛克（復活特化）</b><p>當血量歸零時會觸發被動，<b>原地滿血復活一次（恢復 50 點血量）</b>並進入永久狂暴！</p></div>
+            <div class="effect-item boss-item"><b>🥷 幽影刺客·影魔（閃避特化）</b><p>身手矯健，擁有 <b>25% 的閃避率</b>，當閃避成功時會完全不受你的攻擊傷害。</p></div>
+            <div class="effect-item boss-item"><b>🧛 吸血鬼王·德古拉（吸血特化）</b><p>每次對你造成傷害時，會<b>同步吸取等同傷害 30% 的生命值</b>來治療自己。</p></div>
         </div>
     </div>
 </div>
@@ -217,6 +226,16 @@
     let playerAtkBuff = 0; 
     let playerReflectActive = false;
     let playerRegenTurns = 0; 
+
+    let currentBoss = null;
+    let bossRevived = false; // 用於不死魔王復活判定
+
+    const bossTypes = [
+        { id: "standard", name: "深淵霸主", hp: 120, trait: "standard" },
+        { id: "undying", name: "不死魔王·巴洛克", hp: 100, trait: "undying" },
+        { id: "evasion", name: "幽影刺客·影魔", hp: 110, trait: "evasion" },
+        { id: "vampire", name: "吸血鬼王·德古拉", hp: 115, trait: "vampire" }
+    ];
 
     const battlefieldModifiers = [
         { name: "✨ 雙倍協奏：雙方每回合皆可連續進行 2 次行動！", effect: "double_action" },
@@ -243,16 +262,37 @@
         
         { id: 7, name: "血之狂熱", type: "special", subType: "sacrifice", category: "特殊戰術型", value: 18, costHP: 10, buffVal: 15, desc: "犧牲 10 點自身血量，下一次攻擊傷害固定 +15 點！" },
         { id: 8, name: "禁錮咒語", type: "special", subType: "skip", category: "特殊戰術型", value: 0, desc: "【強效驅散】清除魔王身上所有狀態與護盾，並使其停止行動 1 回合！" },
-        // 精簡敘述的反彈護鏡
         { id: 9, name: "反彈護鏡", type: "special", subType: "reflect", category: "特殊戰術型", value: 0, desc: "獲得 10 點護盾。下回合反彈魔王打出總傷害的 50% 給魔王！" },
         { id: 14, name: "命運之輪", type: "special", subType: "roulette", category: "特殊戰術型", value: 0, desc: "隨機觸發：【生機庇護】回復18血並增血量上限、【絕對防禦】獲得18護盾、或【烈風風刃】造成22固定傷害！" },
+        // 修正盾擊破敵：移除穿透，改為正常護盾衝擊
         { id: 16, name: "盾擊破敵", type: "special", subType: "shield_bash", category: "特殊戰術型", value: 0, desc: "消耗你目前所有的防禦護盾，護盾每剩餘 1 點就對魔王造成 1.5 倍的強力衝擊傷害！" }
     ];
 
-    function initGame() {
+    function openSetupModal() {
+        document.getElementById("setup-modal").style.display = "flex";
+    }
+
+    function startConfiguredGame() {
+        document.getElementById("setup-modal").style.display = "none";
+        
+        let bossChoice = document.getElementById("boss-select").value;
+        if (bossChoice === "random") {
+            currentBoss = bossTypes[Math.floor(Math.random() * bossTypes.length)];
+        } else {
+            currentBoss = bossTypes.find(b => b.id === bossChoice);
+        }
+
+        let modChoice = document.getElementById("modifier-select").value;
+        if (modChoice === "random") {
+            currentModifier = battlefieldModifiers[Math.floor(Math.random() * battlefieldModifiers.length)];
+        } else {
+            currentModifier = battlefieldModifiers.find(m => m.effect === modChoice);
+        }
+
         playerHP = 100;
         maxPlayerHP = 100;
-        monsterHP = 120;
+        monsterHP = currentBoss.hp;
+        maxMonsterHP = currentBoss.hp;
         turn = 1;
         gameOver = false;
         playerShield = 0;
@@ -264,9 +304,10 @@
         playerAtkBuff = 0;
         playerReflectActive = false;
         playerRegenTurns = 0;
+        bossRevived = false;
 
-        currentModifier = battlefieldModifiers[Math.floor(Math.random() * battlefieldModifiers.length)];
-        document.getElementById("battlefield-banner").innerText = `當前戰場效果：${currentModifier.name}`;
+        document.getElementById("boss-title-hp").innerText = `${currentBoss.name} 血量`;
+        document.getElementById("battlefield-banner").innerText = `當前魔王：【${currentBoss.name}】 | 戰場效果：${currentModifier.name}`;
 
         if (currentModifier.effect === "iron_wall") { 
             playerShield = 20; 
@@ -276,7 +317,7 @@
         
         const logBox = document.getElementById("log-box");
         logBox.innerHTML = "";
-        logMessage(`<div class="log-player-turn">▶ 第 1 回合：戰鬥正式開始！</div>`);
+        logMessage(`<div class="log-player-turn">▶ 第 1 回合：對決【${currentBoss.name}】正式開始！</div>`);
         
         updateStatus();
         startNewTurn();
@@ -362,6 +403,7 @@
         document.getElementById("player-buff").innerText = playerBuffText;
         
         let monsterBuffText = `護盾：${monsterShield}`;
+        if (currentBoss) monsterBuffText += ` | 特性：${currentBoss.name}`;
         if (monsterPoison > 0) monsterBuffText += ` | 中毒(${monsterPoison}T)`;
         if (monsterSkipTurns > 0) monsterBuffText += ` | 🔒禁錮(${monsterSkipTurns}T)`;
         if (monsterWeakTurns > 0) monsterBuffText += ` | ❄️冰霜虛弱`;
@@ -392,6 +434,12 @@
     }
 
     function applyDamageToMonster(dmg, ignoreShield) {
+        // 幽影刺客·影魔的閃避特化判定 (25% 閃避率)
+        if (currentBoss && currentBoss.trait === "evasion" && Math.random() < 0.25) {
+            logMessage(`&nbsp;&nbsp;💨 <b>【閃避成功】影魔身形一閃，完全躲開了你的攻擊！</b>`);
+            return;
+        }
+
         if (ignoreShield || monsterShield <= 0) {
             monsterHP -= dmg;
         } else {
@@ -493,11 +541,12 @@
                 playerReflectActive = true; 
                 logMessage(`&nbsp;&nbsp;🛡️ 獲得 10 點防禦護盾，並準備在下回合反彈傷害！`); 
             }
+            // 修正盾擊破敵：改為正常衝擊傷害（消耗護盾 * 1.5），不再無視護盾
             else if (card.subType === "shield_bash") {
                 if (playerShield > 0) {
                     let bashDmg = Math.round(playerShield * 1.5);
-                    applyDamageToMonster(bashDmg, true); 
-                    logMessage(`&nbsp;&nbsp;🛡️💥 <b>盾擊破敵爆發！消耗了 ${playerShield} 點護盾，對魔王造成了 <b style="color:#f87171;">${bashDmg}</b> 點穿透重擊！</b>`);
+                    applyDamageToMonster(bashDmg, false); 
+                    logMessage(`&nbsp;&nbsp;🛡️💥 <b>盾擊破敵爆發！消耗了 ${playerShield} 點護盾，對魔王造成了 <b style="color:#f87171;">${bashDmg}</b> 點衝擊傷害！</b>`);
                     playerShield = 0;
                 } else {
                     logMessage(`&nbsp;&nbsp;🛡️ 你使用了盾擊破敵，但身上沒有任何護盾，攻擊落空！`);
@@ -532,7 +581,7 @@
         if (gameOver) return;
         let monsterActions = (currentModifier.effect === "double_action") ? 2 : 1;
 
-        logMessage(`<div class="log-monster-turn">◀ 魔王反擊回合${monsterActions > 1 ? "（連續行動 2 次）" : ""}</div>`);
+        logMessage(`<div class="log-monster-turn">◀ 【${currentBoss.name}】反擊回合${monsterActions > 1 ? "（連續行動 2 次）" : ""}</div>`);
 
         if (monsterSkipTurns > 0) {
             logMessage(`&nbsp;&nbsp;🔒 <b>魔王遭到禁錮束縛，本回合停止行動！</b>`);
@@ -597,7 +646,13 @@
                 playerHP -= damageToPlayerBody;
                 logMessage(`&nbsp;&nbsp;⚠️ 魔王發動猛擊，造成了 <b style="color:#f87171;">${rawMonsterDmg}</b> 點總傷害。`);
 
-                // 精簡乾淨的反彈日誌
+                // 吸血鬼王·德古拉的吸血被動特化
+                if (currentBoss && currentBoss.trait === "vampire" && rawMonsterDmg > 0) {
+                    let vampireHeal = Math.round(rawMonsterDmg * 0.3);
+                    monsterHP = Math.min(maxMonsterHP, monsterHP + vampireHeal);
+                    logMessage(`&nbsp;&nbsp;🧛 <b>【嗜血吸取】德古拉從你身上汲取了 ${vampireHeal} 點生命值治療自己！</b>`);
+                }
+
                 if (playerReflectActive && rawMonsterDmg > 0) {
                     let reflectedDmg = Math.round(rawMonsterDmg * 0.5);
                     applyDamageToMonster(reflectedDmg, false);
@@ -615,8 +670,18 @@
         startNewTurn();
     }
 
-    // 核心新增：雙方同時死亡的「同歸於盡」判定
     function checkWinLoss() {
+        // 不死魔王·巴洛克的復活被動判定
+        if (currentBoss && currentBoss.trait === "undying" && monsterHP <= 0 && !bossRevived) {
+            bossRevived = true;
+            monsterHP = 50; // 復活恢復 50 血
+            maxMonsterHP = 100;
+            monsterAtkBuffTurns = 99; // 永久狂暴
+            logMessage(`☠️⚡ <b>【不滅之魂】巴洛克血量歸零，但隨即伴隨黑焰原地復活！生命恢復至 50 點並進入永久狂暴狀態！</b>`);
+            updateStatus();
+            return false;
+        }
+
         let playerDead = playerHP <= 0;
         let monsterDead = monsterHP <= 0;
 
@@ -631,7 +696,7 @@
         if (monsterDead) {
             monsterHP = 0;
             updateStatus();
-            logMessage("🎉 <b>太強了！你成功擊敗了進階魔王！</b>");
+            logMessage(`🎉 <b>太強了！你成功擊敗了【${currentBoss.name}】，完美獲得勝利！</b>`);
             endGame();
             return true;
         }
@@ -650,8 +715,6 @@
         document.getElementById("card-selection").innerHTML = ""; 
         document.getElementById("reset-btn").style.display = "block"; 
     }
-
-    window.onload = initGame;
 </script>
 </body>
 </html>
