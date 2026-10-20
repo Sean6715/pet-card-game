@@ -138,7 +138,7 @@
         .btn-reset { display: block; width: 100%; padding: 12px; background: #059669; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
         .btn-reset:hover { background: #047857; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); display: none; justify-content: center; align-items: center; z-index: 100; }
-        .modal-content { background: #1e293b; padding: 25px; border-radius: 166px; max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto; border: 1px solid #475569; box-shadow: 0 15px 30px rgba(0,0,0,0.6); }
+        .modal-content { background: #1e293b; padding: 25px; border-radius: 16px; max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto; border: 1px solid #475569; box-shadow: 0 15px 30px rgba(0,0,0,0.6); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
         .modal-header h2 { margin: 0; color: #38bdf8; font-size: 20px; }
         .btn-close { background: #ef4444; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
@@ -156,14 +156,14 @@
         <h1>⚔️ 萌寵冒險：進階策略卡牌對決</h1>
         <button class="btn-info" onclick="toggleCompendium()">ℹ️ 卡牌圖鑑</button>
     </div>
-    <div class="desc">運用策略卡牌，戰勝具備智慧反擊與反彈功能的魔王！若「反彈護鏡」失效，請按 Ctrl+F5 強制重新整理。</div>
+    <div class="desc">運用策略卡牌與戰術組合，擊敗強大的魔王！</div>
     <div class="battlefield-banner" id="battlefield-banner">戰場載入中...</div>
     <div class="status-panel">
         <div class="status-item">玩家血量 (HP)<span id="player-hp">100</span><div class="buff-info" id="player-buff">狀態：正常</div></div>
         <div class="status-item">魔王血量 (HP)<span id="monster-hp">120</span><div class="buff-info" id="monster-buff">狀態：正常</div></div>
         <div class="status-item">當前回合數<span id="turn-count">1</span><div class="buff-info" id="action-points">剩餘行動：1</div></div>
     </div>
-    <div class="battle-log" id="log-box">[系統] 戰鬥展開！若反彈護鏡敘述未更新，請強制重新整理網頁...<br></div>
+    <div class="battle-log" id="log-box">[系統] 戰鬥準備中...<br></div>
     <div class="card-container" id="card-selection"></div>
     <button class="btn-reset" id="reset-btn" onclick="initGame()" style="display:none;">重新開始冒險</button>
 </div>
@@ -187,7 +187,7 @@
     let monsterPoison = 0;
     let monsterHealBlocked = 0;
     let playerAtkBuff = 0; 
-    let playerReflectActive = false; // 新增狀態：記錄玩家是否開啟了反彈護鏡
+    let playerReflectActive = false;
 
     const battlefieldModifiers = [
         { name: "✨ 雙倍協奏：雙方每回合皆可連續進行 2 次行動！", effect: "double_action" },
@@ -197,7 +197,6 @@
     ];
     let currentModifier = null;
 
-    // 更新後的卡牌資料庫（明確化反彈護鏡敘述）
     const cardPool = [
         { id: 1, name: "小火狐烈焰", type: "attack", subType: "normal", category: "攻擊型", value: 18, desc: "造成 18 點固定烈焰傷害。" },
         { id: 2, name: "嗜血猛擊", type: "attack", subType: "lifesteal", category: "攻擊型", value: 14, healVal: 7, desc: "造成 14 點傷害，並吸取 7 點生命值。" },
@@ -207,7 +206,6 @@
         { id: 6, name: "聖光護盾", type: "heal", subType: "shield", category: "回復防禦型", value: 12, shieldVal: 15, desc: "恢復 12 點生命並獲得 15 點護盾值。" },
         { id: 7, name: "血之狂熱", type: "special", subType: "sacrifice", category: "特殊戰術型", value: 18, costHP: 10, buffVal: 15, desc: "犧牲 10 點自身血量，下回合攻擊傷害固定 +15 點！" },
         { id: 8, name: "禁錮咒語", type: "special", subType: "antiheal", category: "特殊戰術型", value: 0, desc: "封鎖對手 2 回合內無法自我修復回血。" },
-        // 修正後的反彈護鏡描述
         { id: 9, name: "反彈護鏡", type: "special", subType: "reflect", category: "特殊戰術型", value: 0, desc: "獲得 10 點護盾。若下一回合生命受到魔王傷害，反彈該傷害的 50% 給魔王。" }
     ];
 
@@ -220,14 +218,18 @@
         monsterPoison = 0;
         monsterHealBlocked = 0;
         playerAtkBuff = 0;
-        playerReflectActive = false; // 重置狀態
+        playerReflectActive = false;
 
         currentModifier = battlefieldModifiers[Math.floor(Math.random() * battlefieldModifiers.length)];
         document.getElementById("battlefield-banner").innerText = `當前戰場效果：${currentModifier.name}`;
 
         if (currentModifier.effect === "iron_wall") { playerShield = 20; }
         document.getElementById("reset-btn").style.display = "none";
+        
+        const logBox = document.getElementById("log-box");
+        logBox.innerHTML = "";
         logMessage("<b>[系統] 戰鬥正式開始，迎接全新挑戰！</b>");
+        
         updateStatus();
         startNewTurn();
         buildCompendiumUI();
@@ -238,13 +240,21 @@
         body.innerHTML = "";
         const categories = ["攻擊型", "回復防禦型", "特殊戰術型"];
         categories.forEach(cat => {
-            let section = document.createElement("div"); section.className = "compendium-section"; section.innerHTML = `<h3>${cat}</h3>`;
-            let grid = document.createElement("div"); grid.className = "compendium-grid";
+            let section = document.createElement("div"); 
+            section.className = "compendium-section"; 
+            section.innerHTML = `<h3>${cat}</h3>`;
+            
+            let grid = document.createElement("div"); 
+            grid.className = "compendium-grid";
+            
             cardPool.filter(c => c.category === cat).forEach(card => {
-                let cardEl = document.createElement("div"); cardEl.className = "compendium-card"; cardEl.innerHTML = `<b>${card.name}</b><p>${card.desc}</p>`;
+                let cardEl = document.createElement("div"); 
+                cardEl.className = "compendium-card"; 
+                cardEl.innerHTML = `<b>${card.name}</b><p>${card.desc}</p>`;
                 grid.appendChild(cardEl);
             });
-            section.appendChild(grid); body.appendChild(section);
+            section.appendChild(grid); 
+            body.appendChild(section);
         });
     }
 
@@ -268,10 +278,12 @@
         document.getElementById("monster-hp").innerText = monsterHP > 0 ? monsterHP : 0;
         document.getElementById("turn-count").innerText = turn;
         document.getElementById("action-points").innerText = `剩餘行動：${actionsLeft}`;
+        
         let playerBuffText = `護盾：${playerShield}`;
         if (playerAtkBuff > 0) playerBuffText += ` | 攻擊強化(+${playerAtkBuff})`;
-        if (playerReflectActive) playerBuffText += ` | 護鏡啟用`; // 顯示狀態
+        if (playerReflectActive) playerBuffText += ` | 護鏡啟用`;
         document.getElementById("player-buff").innerText = playerBuffText;
+        
         let monsterBuffText = "狀態：正常";
         if (monsterPoison > 0) monsterBuffText = `中毒(${monsterPoison}T)`;
         if (monsterHealBlocked > 0) monsterBuffText += ` | 禁回血`;
@@ -286,11 +298,15 @@
 
     function renderCards() {
         if (gameOver) return;
-        const container = document.getElementById("card-selection"); container.innerHTML = "";
+        const container = document.getElementById("card-selection"); 
+        container.innerHTML = "";
         let shuffled = [...cardPool].sort(() => 0.5 - Math.random());
         shuffled.slice(0, 3).forEach(card => {
-            let cardDiv = document.createElement("div"); cardDiv.className = `card ${card.type}`; cardDiv.innerHTML = `<h3>${card.name}</h3><p>${card.desc}</p>`;
-            cardDiv.onclick = () => playCard(card); container.appendChild(cardDiv);
+            let cardDiv = document.createElement("div"); 
+            cardDiv.className = `card ${card.type}`; 
+            cardDiv.innerHTML = `<h3>${card.name}</h3><p>${card.desc}</p>`;
+            cardDiv.onclick = () => playCard(card); 
+            container.appendChild(cardDiv);
         });
     }
 
@@ -300,27 +316,62 @@
 
         if (card.type === "attack") {
             let finalDmg = card.value;
-            if (card.subType === "crit") { let isCrit = Math.random() < 0.4; finalDmg = isCrit ? 26 : 10; logMessage(`⚡ 暴擊判定：${isCrit ? "成功爆擊！" : "普通命中。"}`); }
-            if (playerAtkBuff > 0) { finalDmg += playerAtkBuff; playerAtkBuff = 0; }
+            if (card.subType === "crit") { 
+                let isCrit = Math.random() < 0.4; 
+                finalDmg = isCrit ? 26 : 10; 
+                logMessage(`⚡ 暴擊判定：${isCrit ? "成功爆擊！" : "普通命中。"}`); 
+            }
+            if (playerAtkBuff > 0) { 
+                finalDmg += playerAtkBuff; 
+                playerAtkBuff = 0; 
+            }
             finalDmg = Math.round(finalDmg * dmgMultiplier);
-            monsterHP -= finalDmg; logMessage(`第 ${turn} 回合：你使用了 <b>${card.name}</b>，對魔王造成了 <b style="color:#f87171;">${finalDmg}</b> 點傷害！`);
-            if (card.subType === "lifesteal") { let healAmount = (currentModifier.effect === "weak_heal") ? Math.floor(7 / 2) : 7; playerHP = Math.min(100, playerHP + healAmount); logMessage(`✨ 吸血生效：你額外回復了 ${healAmount} 點生命值。`); }
-            else if (card.subType === "poison") { monsterPoison = 3; logMessage(`🧪 劇毒命中：魔王已中毒，將持續 3 回合扣血！`); }
+            monsterHP -= finalDmg; 
+            logMessage(`第 ${turn} 回合：你使用了 <b>${card.name}</b>，對魔王造成了 <b style="color:#f87171;">${finalDmg}</b> 點傷害！`);
+            
+            if (card.subType === "lifesteal") { 
+                let healAmount = (currentModifier.effect === "weak_heal") ? Math.floor(7 / 2) : 7; 
+                playerHP = Math.min(100, playerHP + healAmount); 
+                logMessage(`✨ 吸血生效：你額外回復了 ${healAmount} 點生命值。`); 
+            }
+            else if (card.subType === "poison") { 
+                monsterPoison = 3; 
+                logMessage(`🧪 劇毒命中：魔王已中毒，將持續 3 回合扣血！`); 
+            }
         } 
         else if (card.type === "heal") {
             let healAmount = (currentModifier.effect === "weak_heal") ? Math.floor(card.value / 2) : card.value;
-            playerHP = Math.min(100, playerHP + healAmount); logMessage(`第 ${turn} 回合：你使用了 <b>${card.name}</b>，回復了 <b style="color:#4ade80;">${healAmount}</b> 點生命！`);
-            if (card.subType === "shield") { playerShield += card.shieldVal; logMessage(`🛡️ 獲得額外護盾 +${card.shieldVal} 點！`); }
+            playerHP = Math.min(100, playerHP + healAmount); 
+            logMessage(`第 ${turn} 回合：你使用了 <b>${card.name}</b>，回復了 <b style="color:#4ade80;">${healAmount}</b> 點生命！`);
+            if (card.subType === "shield") { 
+                playerShield += card.shieldVal; 
+                logMessage(`🛡️ 獲得額外護盾 +${card.shieldVal} 點！`); 
+            }
         } 
         else if (card.type === "special") {
-            if (card.subType === "sacrifice") { playerHP -= card.costHP; playerAtkBuff = card.buffVal; logMessage(`🩸 血之狂熱：你犧牲了 ${card.costHP} 點血量，下一次攻擊傷害將直接增加 <b style="color:#fbbf24;">+${card.buffVal}</b> 點！`); }
-            else if (card.subType === "antiheal") { monsterHealBlocked = 2; logMessage(`🔒 禁錮咒語：成功封鎖魔王 2 回合內的自我修復能力！`); }
-            // 實裝反彈護鏡效果
-            else if (card.subType === "reflect") { playerShield += 10; playerReflectActive = true; logMessage(`🛡️ 獲得 10 點防禦護盾，並準備在下回合反彈生命受到的傷害！`); }
+            if (card.subType === "sacrifice") { 
+                playerHP -= card.costHP; 
+                playerAtkBuff = card.buffVal; 
+                logMessage(`🩸 血之狂熱：你犧牲了 ${card.costHP} 點血量，下一次攻擊傷害將直接增加 <b style="color:#fbbf24;">+${card.buffVal}</b> 點！`); 
+            }
+            else if (card.subType === "antiheal") { 
+                monsterHealBlocked = 2; 
+                logMessage(`🔒 禁錮咒語：成功封鎖魔王 2 回合內的自我修復能力！`); 
+            }
+            else if (card.subType === "reflect") { 
+                playerShield += 10; 
+                playerReflectActive = true; 
+                logMessage(`🛡️ 獲得 10 點防禦護盾，並準備在下回合反彈生命受到的傷害！`); 
+            }
         }
-        actionsLeft--; updateStatus();
+        actionsLeft--; 
+        updateStatus();
         if (checkWinLoss()) return;
-        if (actionsLeft > 0) { renderCards(); } else { setTimeout(monsterTurn, 600); }
+        if (actionsLeft > 0) { 
+            renderCards(); 
+        } else { 
+            setTimeout(monsterTurn, 600); 
+        }
     }
 
     function monsterTurn() {
@@ -332,28 +383,30 @@
             if (gameOver) break;
             if (monsterHP < 60 && monsterHealBlocked <= 0 && Math.random() < 0.5) {
                 let monsterHeal = (currentModifier.effect === "weak_heal") ? 10 : 20;
-                monsterHP = Math.min(maxMonsterHP, monsterHP + monsterHeal); logMessage(`🪄 魔王施展「自我修復」，回復了 ${monsterHeal} 點生命值！`);
+                monsterHP = Math.min(maxMonsterHP, monsterHP + monsterHeal); 
+                logMessage(`🪄 魔王施展「自我修復」，回復了 ${monsterHeal} 點生命值！`);
             } else {
                 let rawMonsterDmg = Math.floor(Math.random() * 11) + 12;
                 if (currentModifier.effect === "berserk") rawMonsterDmg = Math.round(rawMonsterDmg * 1.3);
 
-                let damageToPlayerBody = rawMonsterDmg; // 記錄實際上扣到血量的傷害
+                let damageToPlayerBody = rawMonsterDmg;
                 
-                // 護盾抵擋計算
                 if (playerShield > 0) {
                     if (playerShield >= damageToPlayerBody) {
-                        playerShield -= damageToPlayerBody; damageToPlayerBody = 0; logMessage(`🛡️ 護盾完全擋下了魔王的攻擊！`);
+                        playerShield -= damageToPlayerBody; 
+                        damageToPlayerBody = 0; 
+                        logMessage(`🛡️ 護盾完全擋下了魔王的攻擊！`);
                     } else {
-                        damageToPlayerBody -= playerShield; playerShield = 0; logMessage(`🛡️ 護盾被擊碎，剩餘傷害突破防線！`);
+                        damageToPlayerBody -= playerShield; 
+                        playerShield = 0; 
+                        logMessage(`🛡️ 護盾被擊碎，剩餘傷害突破防線！`);
                     }
                 }
 
                 playerHP -= damageToPlayerBody;
                 logMessage(`⚠️ 魔王發動猛擊，對你造成了 <b style="color:#f87171;">${damageToPlayerBody}</b> 點生命傷害。`);
 
-                // --- 實裝反彈邏輯 ---
                 if (playerReflectActive && damageToPlayerBody > 0) {
-                    // 數學計算：反彈傷害 = 生命受傷值的 50%
                     let reflectedDmg = Math.round(damageToPlayerBody * 0.5);
                     monsterHP -= reflectedDmg;
                     logMessage(`🔄 <b>鏡面反射生效！將生命受到傷害的 50%（${reflectedDmg} 點）反彈給魔王！</b>`);
@@ -363,10 +416,26 @@
         }
 
         if (monsterHealBlocked > 0) monsterHealBlocked--;
-        playerReflectActive = false; // 回合結束重置護鏡狀態
+        playerReflectActive = false; 
 
-        turn++; updateStatus(); startNewTurn();
+        turn++; 
+        updateStatus(); 
+        startNewTurn();
     }
 
     function checkWinLoss() {
-        if (monsterHP <= 0
+        if (monsterHP <= 0) { monsterHP = 0; updateStatus(); logMessage("🎉 <b>太強了！你成功擊敗了進階魔王！</b>"); endGame(); return true; }
+        if (playerHP <= 0) { playerHP = 0; updateStatus(); logMessage("❌ <b>冒險失敗：你的生命值歸零。</b>"); endGame(); return true; }
+        return false;
+    }
+
+    function endGame() { 
+        gameOver = true; 
+        document.getElementById("card-selection").innerHTML = ""; 
+        document.getElementById("reset-btn").style.display = "block"; 
+    }
+
+    window.onload = initGame;
+</script>
+</body>
+</html>
