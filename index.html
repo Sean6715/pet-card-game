@@ -33,12 +33,19 @@
             margin-bottom: 5px;
         }
         h1 { color: #38bdf8; margin: 0; font-size: 24px; }
+        .header-buttons {
+            display: flex;
+            gap: 8px;
+        }
         .btn-info {
-            background: #0ea5e9; color: white; border: none; padding: 6px 14px;
-            border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px;
+            background: #0ea5e9; color: white; border: none; padding: 6px 12px;
+            border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;
             transition: background 0.2s;
         }
         .btn-info:hover { background: #0284c7; }
+        .btn-battlefield { background: #8b5cf6; }
+        .btn-battlefield:hover { background: #7c3aed; }
+        
         .desc { color: #94a3b8; margin-bottom: 15px; font-size: 13px; }
         .battlefield-banner {
             background: #0284c7; color: white; padding: 10px; border-radius: 8px;
@@ -52,11 +59,24 @@
         .status-item { text-align: center; font-size: 13px; color: #cbd5e1; }
         .status-item span { display: block; font-size: 18px; font-weight: bold; color: #38bdf8; }
         .buff-info { font-size: 11px; color: #fbbf24; margin-top: 3px; }
+        
+        /* 戰鬥日誌區：加大高度以容納清晰排版 */
         .battle-log {
             background: #0f172a; border: 1px solid #475569; padding: 12px;
-            border-radius: 8px; height: 130px; overflow-y: auto; font-size: 12px;
+            border-radius: 8px; height: 160px; overflow-y: auto; font-size: 12px;
             color: #e2e8f0; margin-bottom: 15px; line-height: 1.5; font-family: monospace;
         }
+        
+        /* 回合標頭樣式（藍色玩家 vs 紅色魔王） */
+        .log-player-turn {
+            color: #38bdf8; font-weight: bold; background: rgba(56, 189, 248, 0.1);
+            border-left: 3px solid #38bdf8; padding: 4px 8px; margin: 8px 0 4px 0; border-radius: 0 4px 4px 0;
+        }
+        .log-monster-turn {
+            color: #f87171; font-weight: bold; background: rgba(248, 113, 113, 0.1);
+            border-left: 3px solid #f87171; padding: 4px 8px; margin: 8px 0 4px 0; border-radius: 0 4px 4px 0;
+        }
+
         .card-container {
             display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap;
         }
@@ -74,18 +94,26 @@
         .card.special:hover { background: #7e22ce; }
         .card h3 { margin: 0 0 6px 0; font-size: 14px; }
         .card p { margin: 0; font-size: 10px; color: #f1f5f9; }
+        
         .btn-reset { display: block; width: 100%; padding: 12px; background: #059669; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
         .btn-reset:hover { background: #047857; }
+        
+        /* 彈跳視窗共用樣式 */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); display: none; justify-content: center; align-items: center; z-index: 100; }
         .modal-content { background: #1e293b; padding: 25px; border-radius: 16px; max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto; border: 1px solid #475569; box-shadow: 0 15px 30px rgba(0,0,0,0.6); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
         .modal-header h2 { margin: 0; color: #38bdf8; font-size: 20px; }
         .btn-close { background: #ef4444; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        
         .compendium-section { margin-bottom: 20px; }
         .compendium-section h3 { font-size: 15px; margin-bottom: 8px; color: #fbbf24; border-left: 3px solid #fbbf24; padding-left: 8px; }
         .compendium-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
         .compendium-card { background: #334155; padding: 10px; border-radius: 8px; font-size: 12px; border: 1px solid #475569; }
         .compendium-card b { display: block; margin-bottom: 4px; color: #38bdf8; }
+        
+        .effect-item { background: #334155; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #8b5cf6; }
+        .effect-item b { color: #c084fc; font-size: 14px; display: block; margin-bottom: 4px; }
+        .effect-item p { margin: 0; font-size: 12px; color: #cbd5e1; }
     </style>
 </head>
 <body>
@@ -93,24 +121,53 @@
 <div class="container">
     <div class="header-top">
         <h1>⚔️ 萌寵冒險：進階策略卡牌對決</h1>
-        <button class="btn-info" onclick="toggleCompendium()">ℹ️ 卡牌圖鑑</button>
+        <div class="header-buttons">
+            <button class="btn-info btn-battlefield" onclick="toggleBattlefieldModal()">⚡ 戰場效果</button>
+            <button class="btn-info" onclick="toggleCompendium()">📖 卡牌圖鑑</button>
+        </div>
     </div>
-    <div class="desc">運用多元策略卡牌與戰術組合，擊敗強大的魔王！</div>
+    <div class="desc">善用卡牌之間的異常狀態與狀態轉換連招，擊敗強大的魔王！</div>
     <div class="battlefield-banner" id="battlefield-banner">戰場載入中...</div>
     <div class="status-panel">
         <div class="status-item">玩家血量 (HP)<span id="player-hp">100</span><div class="buff-info" id="player-buff">狀態：正常</div></div>
         <div class="status-item">魔王血量 (HP)<span id="monster-hp">120</span><div class="buff-info" id="monster-buff">狀態：正常</div></div>
-        <div class="status-item">當回回合數<span id="turn-count">1</span><div class="buff-info" id="action-points">剩餘行動：1</div></div>
+        <div class="status-item">當前回合數<span id="turn-count">1</span><div class="buff-info" id="action-points">剩餘行動：1</div></div>
     </div>
     <div class="battle-log" id="log-box">[系統] 戰鬥準備中...<br></div>
     <div class="card-container" id="card-selection"></div>
     <button class="btn-reset" id="reset-btn" onclick="initGame()" style="display:none;">重新開始冒險</button>
 </div>
 
+<!-- 卡牌圖鑑視窗 -->
 <div class="modal-overlay" id="compendium-modal">
     <div class="modal-content">
         <div class="modal-header"><h2>📖 遊戲卡牌圖鑑</h2><button class="btn-close" onclick="toggleCompendium()">關閉</button></div>
         <div id="compendium-body"></div>
+    </div>
+</div>
+
+<!-- 戰場效果總覽視窗 -->
+<div class="modal-overlay" id="battlefield-modal">
+    <div class="modal-content">
+        <div class="modal-header"><h2>⚡ 戰場效果總覽</h2><button class="btn-close" onclick="toggleBattlefieldModal()">關閉</button></div>
+        <div id="battlefield-body">
+            <div class="effect-item">
+                <b>✨ 雙倍協奏</b>
+                <p>雙方每回合皆可連續進行 2 次行動（玩家可選 2 張卡，魔王反擊連續攻擊 2 次）。</p>
+            </div>
+            <div class="effect-item">
+                <b>🔥 狂暴磁場</b>
+                <p>雙方所有攻擊傷害增加 30%，但每回合結束時，雙方各自承受 5 點環境扣血。</p>
+            </div>
+            <div class="effect-item">
+                <b>💧 治療枯竭</b>
+                <p>雙方所有的生命回復效果（包含瞬間回血、吸血、持續泉源）減少 50%。</p>
+            </div>
+            <div class="effect-item">
+                <b>🛡️ 鐵壁防線</b>
+                <p>戰鬥開局時，雙方皆會獲得 20 點防禦護盾。</p>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -123,10 +180,10 @@
     let actionsLeft = 1;
 
     let playerShield = 0;
-    let monsterShield = 0; // 新增魔王護盾變數
+    let monsterShield = 0; 
     let monsterPoison = 0;
     let monsterSkipTurns = 0; 
-    let monsterWeakTurns = 0; // 新增魔王虛弱（攻擊力降低）回合
+    let monsterWeakTurns = 0; 
     let playerAtkBuff = 0; 
     let playerReflectActive = false;
     let playerRegenTurns = 0; 
@@ -148,6 +205,8 @@
         { id: 11, name: "捨身一擊", type: "attack", subType: "recoil", category: "攻擊型", value: 30, selfCost: 8, desc: "扣除自身 8 點血量，對魔王造成高達 30 點爆發傷害！" },
         { id: 12, name: "冰霜連擊", type: "attack", subType: "frost", category: "攻擊型", value: 12, desc: "造成 12 點傷害，並使魔王下一次攻擊傷害降低 40%。" },
         { id: 13, name: "破甲重擊", type: "attack", subType: "pierce", category: "攻擊型", value: 15, desc: "造成 15 點傷害，此傷害無視魔王的護盾直接扣血！" },
+        // 新增連動卡牌 1
+        { id: 15, name: "元素引爆", type: "attack", subType: "detonate", category: "攻擊型", value: 10, desc: "造成 10 點傷害。若魔王身上帶有【中毒】或【冰霜虛弱】，會引爆並額外追加 22 點傷害！" },
         
         // 回復防禦型
         { id: 5, name: "瞬間大回復", type: "heal", subType: "burst", category: "回復防禦型", value: 24, desc: "瞬間恢復 24 點生命值。" },
@@ -155,10 +214,12 @@
         { id: 10, name: "自然泉源", type: "heal", subType: "regen", category: "回復防禦型", value: 0, desc: "獲得持續 3 回合的泉源祝福，每回合自動回復 7 點生命值。" },
         
         // 特殊戰術型
-        { id: 7, name: "血之狂熱", type: "special", subType: "sacrifice", category: "特殊戰術型", value: 18, costHP: 10, buffVal: 15, desc: "犧牲 10 點自身血量，下回合攻擊傷害固定 +15 點！" },
-        { id: 8, name: "禁錮咒語", type: "special", subType: "skip", category: "特殊戰術型", value: 0, desc: "取消魔王的自我修復/持續回復效果，並使其停止行動 1 回合！" },
+        { id: 7, name: "血之狂熱", type: "special", subType: "sacrifice", category: "特殊戰術型", value: 18, costHP: 10, buffVal: 15, desc: "犧牲 10 點自身血量，下一次攻擊傷害固定 +15 點！" },
+        { id: 8, name: "禁錮咒語", type: "special", subType: "skip", category: "特殊戰術型", value: 0, desc: "清除魔王的持續回復效果，並使其停止行動 1 回合！" },
         { id: 9, name: "反彈護鏡", type: "special", subType: "reflect", category: "特殊戰術型", value: 0, desc: "獲得 10 點護盾。若下一回合生命受到魔王傷害，反彈該傷害的 50% 給魔王。" },
-        { id: 14, name: "命運之輪", type: "special", subType: "roulette", category: "特殊戰術型", value: 0, desc: "隨機觸發：回復 20 生命、獲得 20 護盾、或對魔王造成 25 雷擊傷害！" }
+        { id: 14, name: "命運之輪", type: "special", subType: "roulette", category: "特殊戰術型", value: 0, desc: "隨機觸發：回復 20 生命、獲得 20 護盾、或對魔王造成 25 雷擊傷害！" },
+        // 新增連動卡牌 2
+        { id: 16, name: "護盾轉換", type: "special", subType: "shield_convert", category: "特殊戰術型", value: 0, desc: "將你目前累積的所有【防禦護盾】全部轉化為同等數值的生命值回補，並清空護盾。" }
     ];
 
     function initGame() {
@@ -186,7 +247,7 @@
         
         const logBox = document.getElementById("log-box");
         logBox.innerHTML = "";
-        logMessage("<b>[系統] 戰鬥正式開始，迎接全新挑戰！</b>");
+        logMessage(`<div class="log-player-turn">▶ 第 1 回合：戰鬥正式開始！</div>`);
         
         updateStatus();
         startNewTurn();
@@ -221,6 +282,11 @@
         modal.style.display = (modal.style.display === "flex") ? "none" : "flex";
     }
 
+    function toggleBattlefieldModal() {
+        const modal = document.getElementById("battlefield-modal");
+        modal.style.display = (modal.style.display === "flex") ? "none" : "flex";
+    }
+
     function startNewTurn() {
         if (gameOver) return;
         actionsLeft = (currentModifier.effect === "double_action") ? 2 : 1;
@@ -228,20 +294,20 @@
         if (monsterPoison > 0) { 
             applyDamageToMonster(6, false);
             monsterPoison--; 
-            logMessage(`☠️ 魔王受到劇毒侵蝕，持續扣除 6 點血量！`); 
+            logMessage(`&nbsp;&nbsp;☠️ 魔王受到劇毒侵蝕，持續扣除 6 點血量！`); 
         }
 
         if (playerRegenTurns > 0) {
             let regenVal = (currentModifier.effect === "weak_heal") ? 3 : 7;
             playerHP = Math.min(100, playerHP + regenVal);
             playerRegenTurns--;
-            logMessage(`🌿 自然泉源生效：持續回復了 <b style="color:#4ade80;">${regenVal}</b> 點生命值！（剩餘 ${playerRegenTurns} 回合）`);
+            logMessage(`&nbsp;&nbsp;🌿 自然泉源生效：持續回復了 <b style="color:#4ade80;">${regenVal}</b> 點生命值！（剩餘 ${playerRegenTurns} 回合）`);
         }
 
         if (currentModifier.effect === "berserk") { 
             playerHP -= 5; 
             applyDamageToMonster(5, false);
-            logMessage(`🔥 狂暴磁場生效：雙方各自承受 5 點環境扣血！`); 
+            logMessage(`&nbsp;&nbsp;🔥 狂暴磁場生效：雙方各自承受 5 點環境扣血！`); 
         }
 
         if (checkWinLoss()) return;
@@ -288,7 +354,6 @@
         });
     }
 
-    // 通用對魔王造成傷害（處理護盾與破甲）
     function applyDamageToMonster(dmg, ignoreShield) {
         if (ignoreShield || monsterShield <= 0) {
             monsterHP -= dmg;
@@ -312,7 +377,7 @@
             if (card.subType === "crit") { 
                 let isCrit = Math.random() < 0.4; 
                 finalDmg = isCrit ? 26 : 10; 
-                logMessage(`⚡ 暴擊判定：${isCrit ? "成功爆擊！" : "普通命中。"}`); 
+                logMessage(`&nbsp;&nbsp;⚡ 暴擊判定：${isCrit ? "成功爆擊！" : "普通命中。"}`); 
             }
             if (playerAtkBuff > 0) { 
                 finalDmg += playerAtkBuff; 
@@ -323,38 +388,55 @@
             // 破甲重擊處理
             if (card.subType === "pierce") {
                 applyDamageToMonster(finalDmg, true);
-                logMessage(`第 ${turn} 回合：你使用了 <b>${card.name}</b>，無視魔王護盾直接造成 <b style="color:#f87171;">${finalDmg}</b> 點穿透傷害！`);
-            } else {
+                logMessage(`&nbsp;&nbsp;⚔️ 你使用了 <b>${card.name}</b>，無視魔王護盾直接造成 <b style="color:#f87171;">${finalDmg}</b> 點穿透傷害！`);
+            } 
+            // 元素引爆處理（聯動卡牌）
+            else if (card.subType === "detonate") {
+                let hasDebuff = (monsterPoison > 0 || monsterWeakTurns > 0);
+                let bonusDmg = hasDebuff ? 22 : 0;
+                let totalDmg = finalDmg + bonusDmg;
+                applyDamageToMonster(totalDmg, false);
+                
+                if (hasDebuff) {
+                    logMessage(`&nbsp;&nbsp;💥 <b>元素引爆成功！偵測到魔王身上的異常狀態，引爆追加了 22 點傷害，造成共 <b style="color:#f87171;">${totalDmg}</b> 點傷害！</b>`);
+                    // 消費掉狀態
+                    monsterPoison = 0;
+                    monsterWeakTurns = 0;
+                } else {
+                    logMessage(`&nbsp;&nbsp;💥 你使用了 <b>${card.name}</b>，但魔王身上沒有異常狀態，僅造成 <b style="color:#f87171;">${totalDmg}</b> 點傷害。`);
+                }
+            } 
+            else {
                 applyDamageToMonster(finalDmg, false);
-                logMessage(`第 ${turn} 回合：你使用了 <b>${card.name}</b>，對魔王造成了 <b style="color:#f87171;">${finalDmg}</b> 點傷害！`);
+                logMessage(`&nbsp;&nbsp;⚔️ 你使用了 <b>${card.name}</b>，對魔王造成了 <b style="color:#f87171;">${finalDmg}</b> 點傷害！`);
             }
             
             if (card.subType === "lifesteal") { 
                 let healAmount = (currentModifier.effect === "weak_heal") ? Math.floor(7 / 2) : 7; 
                 playerHP = Math.min(100, playerHP + healAmount); 
-                logMessage(`✨ 吸血生效：你額外回復了 ${healAmount} 點生命值。`); 
+                logMessage(`&nbsp;&nbsp;✨ 吸血生效：你額外回復了 ${healAmount} 點生命值。`); 
             } else if (card.subType === "poison") { 
                 monsterPoison = 3; 
-                logMessage(`🧪 劇毒命中：魔王已中毒，將持續 3 回合扣血！`); 
+                logMessage(`&nbsp;&nbsp;🧪 劇毒命中：魔王已中毒，將持續 3 回合扣血！`); 
             } else if (card.subType === "recoil") {
                 playerHP -= card.selfCost;
-                logMessage(`💥 捨身代價：你承受了 ${card.selfCost} 點反噬傷害！`);
+                logMessage(`&nbsp;&nbsp;💥 捨身代價：你承受了 ${card.selfCost} 點反噬傷害！`);
             } else if (card.subType === "frost") {
                 monsterWeakTurns = 1;
-                logMessage(`❄️ 寒冰凍結：魔王遭到冰凍虛弱，下一次攻擊傷害降低 40%！`);
+                logMessage(`&nbsp;&nbsp;❄️ 寒冰凍結：魔王遭到冰凍虛弱，下一次攻擊傷害降低 40%！`);
             }
         } 
         else if (card.type === "heal") {
             if (card.subType === "regen") {
                 playerRegenTurns = 3;
-                logMessage(`第 ${turn} 回合：你使用了 <b>${card.name}</b>，獲得了持續 3 回合的泉源祝福！`);
+                logMessage(`&nbsp;&nbsp;🌿 你使用了 <b>${card.name}</b>，獲得了持續 3 回合的泉源祝福！`);
             } else {
                 let healAmount = (currentModifier.effect === "weak_heal") ? Math.floor(card.value / 2) : card.value;
                 playerHP = Math.min(100, playerHP + healAmount); 
-                logMessage(`第 ${turn} 回合：你使用了 <b>${card.name}</b>，回復了 <b style="color:#4ade80;">${healAmount}</b> 點生命！`);
+                logMessage(`&nbsp;&nbsp;💚 你使用了 <b>${card.name}</b>，回復了 <b style="color:#4ade80;">${healAmount}</b> 點生命！`);
                 if (card.subType === "shield") { 
                     playerShield += card.shieldVal; 
-                    logMessage(`🛡️ 獲得額外護盾 +${card.shieldVal} 點！`); 
+                    logMessage(`&nbsp;&nbsp;🛡️ 獲得額外護盾 +${card.shieldVal} 點！`); 
                 }
             }
         } 
@@ -362,28 +444,39 @@
             if (card.subType === "sacrifice") { 
                 playerHP -= card.costHP; 
                 playerAtkBuff = card.buffVal; 
-                logMessage(`🩸 血之狂熱：你犧牲了 ${card.costHP} 點血量，下一次攻擊傷害將直接增加 <b style="color:#fbbf24;">+${card.buffVal}</b> 點！`); 
+                logMessage(`&nbsp;&nbsp;🩸 血之狂熱：你犧牲了 ${card.costHP} 點血量，下一次攻擊傷害將直接增加 <b style="color:#fbbf24;">+${card.buffVal}</b> 點！`); 
             }
             else if (card.subType === "skip") { 
-                monsterSkipTurns = 1; // 禁錮 1 回合
-                logMessage(`🔒 <b>禁錮咒語生效！成功清除敵方強化，並使魔王停止行動 1 回合！</b>`); 
+                monsterSkipTurns = 1; 
+                logMessage(`&nbsp;&nbsp;🔒 <b>禁錮咒語生效！成功清除敵方狀態，並使魔王停止行動 1 回合！</b>`); 
             }
             else if (card.subType === "reflect") { 
                 playerShield += 10; 
                 playerReflectActive = true; 
-                logMessage(`🛡️ 獲得 10 點防禦護盾，並準備在下回合反彈生命受到的傷害！`); 
+                logMessage(`&nbsp;&nbsp;🛡️ 獲得 10 點防禦護盾，並準備在下回合反彈生命受到的傷害！`); 
+            }
+            // 護盾轉換處理（聯動卡牌）
+            else if (card.subType === "shield_convert") {
+                if (playerShield > 0) {
+                    let convertedVal = playerShield;
+                    playerHP = Math.min(100, playerHP + convertedVal);
+                    playerShield = 0;
+                    logMessage(`&nbsp;&nbsp;🔄 <b>護盾轉換成功！將累積的護盾全部轉化為生命，回復了 <b style="color:#4ade80;">${convertedVal}</b> 點血量！</b>`);
+                } else {
+                    logMessage(`&nbsp;&nbsp;🔄 你使用了護盾轉換，但目前身上沒有任何防禦護盾。`);
+                }
             }
             else if (card.subType === "roulette") {
                 let roll = Math.random();
                 if (roll < 0.33) {
                     playerHP = Math.min(100, playerHP + 20);
-                    logMessage(`🎰 <b>命運之輪：轉到了「生機」！幸運回復了 20 點生命值！</b>`);
+                    logMessage(`&nbsp;&nbsp;🎰 <b>命運之輪：轉到了「生機」！幸運回復了 20 點生命值！</b>`);
                 } else if (roll < 0.66) {
                     playerShield += 20;
-                    logMessage(`🎰 <b>命運之輪：轉到了「守護」！獲得了 20 點防禦護盾！</b>`);
+                    logMessage(`&nbsp;&nbsp;🎰 <b>命運之輪：轉到了「守護」！獲得了 20 點防禦護盾！</b>`);
                 } else {
                     applyDamageToMonster(25, false);
-                    logMessage(`🎰 <b>命運之輪：轉到了「天罰」！召喚雷擊對魔王造成 25 點傷害！</b>`);
+                    logMessage(`&nbsp;&nbsp;🎰 <b>命運之輪：轉到了「天罰」！召喚雷擊對魔王造成 25 點傷害！</b>`);
                 }
             }
         }
@@ -401,39 +494,39 @@
         if (gameOver) return;
         let monsterActions = (currentModifier.effect === "double_action") ? 2 : 1;
 
+        // 獨立標示魔王反擊回合區塊
+        logMessage(`<div class="log-monster-turn">◀ 魔王反擊回合${monsterActions > 1 ? "（連續行動 2 次）" : ""}</div>`);
+
         if (monsterSkipTurns > 0) {
-            logMessage(`--- <b>魔王反擊回合（遭到禁錮束縛，本回合停止行動！）</b> ---`);
+            logMessage(`&nbsp;&nbsp;🔒 <b>魔王遭到禁錮束縛，本回合停止行動！</b>`);
             monsterSkipTurns--;
             turn++; 
             updateStatus(); 
+            logMessage(`<div class="log-player-turn">▶ 第 ${turn} 回合：你的行動</div>`);
             startNewTurn();
             return;
         }
 
-        logMessage(`--- <b>魔王反擊回合${monsterActions > 1 ? "（連續行動 2 次）" : ""}</b> ---`);
-
         for (let i = 0; i < monsterActions; i++) {
             if (gameOver) break;
 
-            // 魔王 AI：低血量修復或獲得護盾
             if (monsterHP < 60 && Math.random() < 0.4) {
                 if (Math.random() < 0.5) {
                     let monsterHeal = (currentModifier.effect === "weak_heal") ? 10 : 20;
                     monsterHP = Math.min(maxMonsterHP, monsterHP + monsterHeal); 
-                    logMessage(`🪄 魔王施展「自我修復」，回復了 ${monsterHeal} 點生命值！`);
+                    logMessage(`&nbsp;&nbsp;🪄 魔王施展「自我修復」，回復了 ${monsterHeal} 點生命值！`);
                 } else {
                     monsterShield += 15;
-                    logMessage(`🛡️ 魔王張開「暗黑護盾」，獲得了 15 點防禦護盾！`);
+                    logMessage(`&nbsp;&nbsp;🛡️ 魔王張開「暗黑護盾」，獲得了 15 點防禦護盾！`);
                 }
             } else {
                 let rawMonsterDmg = Math.floor(Math.random() * 11) + 12;
                 if (currentModifier.effect === "berserk") rawMonsterDmg = Math.round(rawMonsterDmg * 1.3);
 
-                // 寒冰冰霜虛弱減傷 40%
                 if (monsterWeakTurns > 0) {
                     rawMonsterDmg = Math.round(rawMonsterDmg * 0.6);
                     monsterWeakTurns--;
-                    logMessage(`❄️ 魔王受寒冰影響，攻擊威力減弱！`);
+                    logMessage(`&nbsp;&nbsp;❄️ 魔王受寒冰影響，攻擊威力減弱！`);
                 }
 
                 let damageToPlayerBody = rawMonsterDmg;
@@ -442,21 +535,21 @@
                     if (playerShield >= damageToPlayerBody) {
                         playerShield -= damageToPlayerBody; 
                         damageToPlayerBody = 0; 
-                        logMessage(`🛡️ 護盾完全擋下了魔王的攻擊！`);
+                        logMessage(`&nbsp;&nbsp;🛡️ 護盾完全擋下了魔王的攻擊！`);
                     } else {
                         damageToPlayerBody -= playerShield; 
                         playerShield = 0; 
-                        logMessage(`🛡️ 護盾被擊碎，剩餘傷害突破防線！`);
+                        logMessage(`&nbsp;&nbsp;🛡️ 護盾被擊碎，剩餘傷害突破防線！`);
                     }
                 }
 
                 playerHP -= damageToPlayerBody;
-                logMessage(`⚠️ 魔王發動猛擊，對你造成了 <b style="color:#f87171;">${damageToPlayerBody}</b> 點生命傷害。`);
+                logMessage(`&nbsp;&nbsp;⚠️ 魔王發動猛擊，對你造成了 <b style="color:#f87171;">${damageToPlayerBody}</b> 點生命傷害。`);
 
                 if (playerReflectActive && damageToPlayerBody > 0) {
                     let reflectedDmg = Math.round(damageToPlayerBody * 0.5);
                     applyDamageToMonster(reflectedDmg, false);
-                    logMessage(`🔄 <b>鏡面反射生效！將生命受到傷害的 50%（${reflectedDmg} 點）反彈給魔王！</b>`);
+                    logMessage(`&nbsp;&nbsp;🔄 <b>鏡面反射生效！將生命受到傷害的 50%（${reflectedDmg} 點）反彈給魔王！</b>`);
                 }
             }
             if (checkWinLoss()) return;
@@ -466,6 +559,7 @@
 
         turn++; 
         updateStatus(); 
+        logMessage(`<div class="log-player-turn">▶ 第 ${turn} 回合：你的行動</div>`);
         startNewTurn();
     }
 
