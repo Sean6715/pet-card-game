@@ -168,7 +168,7 @@
             </div>
             <div class="effect-item">
                 <b>🌫️ 迷霧選擇</b>
-                <p>視野受阻！每回合僅能從卡庫隨機抽出 2 張卡牌供選擇（原本為 3 張）。</p>
+                <p>視野受阻！每回合僅能從卡庫隨機抽出 2 張卡牌供選擇。</p>
             </div>
         </div>
     </div>
@@ -213,7 +213,7 @@
     let monsterPoison = 0;
     let monsterSkipTurns = 0; 
     let monsterWeakTurns = 0; 
-    let monsterAtkBuffTurns = 0; // 記錄魔王狂暴剩餘次數
+    let monsterAtkBuffTurns = 0; 
     let playerAtkBuff = 0; 
     let playerReflectActive = false;
     let playerRegenTurns = 0; 
@@ -228,7 +228,6 @@
     let currentModifier = null;
 
     const cardPool = [
-        // 攻擊型
         { id: 1, name: "小火狐烈焰", type: "attack", subType: "normal", category: "攻擊型", value: 18, desc: "造成 18 點固定烈焰傷害。" },
         { id: 2, name: "嗜血猛擊", type: "attack", subType: "lifesteal", category: "攻擊型", value: 14, healVal: 7, desc: "造成 14 點傷害，並吸取 7 點生命值。" },
         { id: 3, name: "暴擊雷電", type: "attack", subType: "crit", category: "攻擊型", value: 26, desc: "40% 機率爆擊造成 26 點高額雷擊傷害，否則僅造成 10 點。" },
@@ -238,16 +237,14 @@
         { id: 13, name: "破甲重擊", type: "attack", subType: "pierce", category: "攻擊型", value: 15, desc: "造成 15 點傷害，此傷害無視魔王的護盾直接扣血！" },
         { id: 15, name: "元素引爆", type: "attack", subType: "detonate", category: "攻擊型", value: 10, desc: "造成 10 點傷害。若魔王身上帶有【中毒】或【冰霜虛弱】，會引爆並額外追加 22 點傷害！" },
         
-        // 回復防禦型
         { id: 5, name: "瞬間大回復", type: "heal", subType: "burst", category: "回復防禦型", value: 24, desc: "瞬間恢復 24 點生命值。" },
         { id: 6, name: "聖光護盾", type: "heal", subType: "shield", category: "回復防禦型", value: 12, shieldVal: 15, desc: "恢復 12 點生命並獲得 15 點護盾值。" },
         { id: 10, name: "自然泉源", type: "heal", subType: "regen", category: "回復防禦型", value: 0, desc: "獲得持續 3 回合的泉源祝福，每回合自動回復 7 點生命值。" },
         
-        // 特殊戰術型
         { id: 7, name: "血之狂熱", type: "special", subType: "sacrifice", category: "特殊戰術型", value: 18, costHP: 10, buffVal: 15, desc: "犧牲 10 點自身血量，下一次攻擊傷害固定 +15 點！" },
         { id: 8, name: "禁錮咒語", type: "special", subType: "skip", category: "特殊戰術型", value: 0, desc: "【強效驅散】清除魔王身上所有狀態與護盾，並使其停止行動 1 回合！" },
-        // 重構反彈護鏡描述
-        { id: 9, name: "反彈護鏡", type: "special", subType: "reflect", category: "特殊戰術型", value: 0, desc: "獲得 10 點護盾。下回合不論護盾是否擋下，皆精準反彈魔王打出總傷害的 50%！" },
+        // 精簡敘述的反彈護鏡
+        { id: 9, name: "反彈護鏡", type: "special", subType: "reflect", category: "特殊戰術型", value: 0, desc: "獲得 10 點護盾。下回合反彈魔王打出總傷害的 50% 給魔王！" },
         { id: 14, name: "命運之輪", type: "special", subType: "roulette", category: "特殊戰術型", value: 0, desc: "隨機觸發：【生機庇護】回復18血並增血量上限、【絕對防禦】獲得18護盾、或【烈風風刃】造成22固定傷害！" },
         { id: 16, name: "盾擊破敵", type: "special", subType: "shield_bash", category: "特殊戰術型", value: 0, desc: "消耗你目前所有的防禦護盾，護盾每剩餘 1 點就對魔王造成 1.5 倍的強力衝擊傷害！" }
     ];
@@ -436,7 +433,7 @@
                 applyDamageToMonster(totalDmg, false);
                 
                 if (hasDebuff) {
-                    logMessage(`&nbsp;&nbsp;💥 <b>元素引爆成功！偵測到魔王身上的異常狀態，引爆追加了 22 點傷害，造成共 <b style="color:#f87171;">${totalDmg}</b> 點傷害！</b>`);
+                    logMessage(`&nbsp;&nbsp;💥 <b>元素引爆成功！引爆追加了 22 點傷害，造成共 <b style="color:#f87171;">${totalDmg}</b> 點傷害！</b>`);
                     monsterPoison = 0;
                     monsterWeakTurns = 0;
                 } else {
@@ -494,7 +491,7 @@
             else if (card.subType === "reflect") { 
                 playerShield += 10; 
                 playerReflectActive = true; 
-                logMessage(`&nbsp;&nbsp;🛡️ 獲得 10 點防禦護盾，並準備在下回合反彈魔王打出總傷害的 50%！`); 
+                logMessage(`&nbsp;&nbsp;🛡️ 獲得 10 點防禦護盾，並準備在下回合反彈傷害！`); 
             }
             else if (card.subType === "shield_bash") {
                 if (playerShield > 0) {
@@ -552,7 +549,6 @@
 
             let rollAI = Math.random();
 
-            // 招式 1：低血量時施展修復或張開護盾
             if (monsterHP < 60 && Math.random() < 0.45) {
                 if (Math.random() < 0.5) {
                     let monsterHeal = (currentModifier.effect === "weak_heal") ? 10 : 20;
@@ -563,19 +559,16 @@
                     logMessage(`&nbsp;&nbsp;🛡️ 魔王張開「暗黑護盾」，獲得了 15 點防禦護盾！`);
                 }
             } 
-            // 招式 2：若尚未擁有攻擊 Buff，有 30% 機率施展「暗影狂暴」（設定為 2 次攻擊機會）
             else if (monsterAtkBuffTurns <= 0 && rollAI < 0.3) {
-                monsterAtkBuffTurns = 2; // 可持續強化 2 次反擊攻擊
-                logMessage(`&nbsp;&nbsp;🔥 <b>魔王發動「暗影狂暴」！身上湧現暗黑能量，未來 2 次攻擊威力增加 +8 點！</b>`);
+                monsterAtkBuffTurns = 2; 
+                logMessage(`&nbsp;&nbsp;🔥 <b>魔王發動「暗影狂暴」！未來 2 次攻擊威力增加 +8 點！</b>`);
             } 
-            // 招式 3：普通攻擊 / 重擊
             else {
                 let rawMonsterDmg = Math.floor(Math.random() * 11) + 12;
                 
-                // 計算魔王暗影狂暴加成
                 if (monsterAtkBuffTurns > 0) {
                     rawMonsterDmg += 8;
-                    monsterAtkBuffTurns--; // 消耗一次狂暴次數
+                    monsterAtkBuffTurns--; 
                     logMessage(`&nbsp;&nbsp;💥 魔王帶有【暗影狂暴】加成，本次攻擊傷害增加 +8 點！`);
                 }
 
@@ -589,7 +582,6 @@
 
                 let damageToPlayerBody = rawMonsterDmg;
                 
-                // 護盾抵擋計算
                 if (playerShield > 0) {
                     if (playerShield >= damageToPlayerBody) {
                         playerShield -= damageToPlayerBody; 
@@ -603,13 +595,13 @@
                 }
 
                 playerHP -= damageToPlayerBody;
-                logMessage(`&nbsp;&nbsp;⚠️ 魔王發動猛擊，造成了 <b style="color:#f87171;">${rawMonsterDmg}</b> 點總攻擊傷害（扣血 ${damageToPlayerBody} 點）。`);
+                logMessage(`&nbsp;&nbsp;⚠️ 魔王發動猛擊，造成了 <b style="color:#f87171;">${rawMonsterDmg}</b> 點總傷害。`);
 
-                // 核心重構：反彈護鏡計算「總打出傷害的 50%」
+                // 精簡乾淨的反彈日誌
                 if (playerReflectActive && rawMonsterDmg > 0) {
                     let reflectedDmg = Math.round(rawMonsterDmg * 0.5);
                     applyDamageToMonster(reflectedDmg, false);
-                    logMessage(`&nbsp;&nbsp;🔄 <b>鏡面反射生效！不論護盾是否擋下，精準將魔王打出總傷害的 50%（${reflectedDmg} 點）反彈給魔王！</b>`);
+                    logMessage(`&nbsp;&nbsp;🔄 <b>鏡面反射生效！反彈 ${reflectedDmg} 點傷害給魔王！</b>`);
                 }
             }
             if (checkWinLoss()) return;
@@ -623,9 +615,33 @@
         startNewTurn();
     }
 
+    // 核心新增：雙方同時死亡的「同歸於盡」判定
     function checkWinLoss() {
-        if (monsterHP <= 0) { monsterHP = 0; updateStatus(); logMessage("🎉 <b>太強了！你成功擊敗了進階魔王！</b>"); endGame(); return true; }
-        if (playerHP <= 0) { playerHP = 0; updateStatus(); logMessage("❌ <b>冒險失敗：你的生命值歸零。</b>"); endGame(); return true; }
+        let playerDead = playerHP <= 0;
+        let monsterDead = monsterHP <= 0;
+
+        if (playerDead && monsterDead) {
+            playerHP = 0;
+            monsterHP = 0;
+            updateStatus();
+            logMessage("🤝 <b>驚天大對決！你與魔王同時倒下，達成【同歸於盡】平局！</b>");
+            endGame();
+            return true;
+        }
+        if (monsterDead) {
+            monsterHP = 0;
+            updateStatus();
+            logMessage("🎉 <b>太強了！你成功擊敗了進階魔王！</b>");
+            endGame();
+            return true;
+        }
+        if (playerDead) {
+            playerHP = 0;
+            updateStatus();
+            logMessage("❌ <b>冒險失敗：你的生命值歸零。</b>");
+            endGame();
+            return true;
+        }
         return false;
     }
 
