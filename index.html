@@ -61,6 +61,18 @@
             text-align: center; font-weight: bold; font-size: 14px; margin-bottom: 15px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
+        .tutorial-banner {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #0f172a; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: bold;
+            margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
+        }
+        .btn-skip-tutorial {
+            background: #0f172a; color: #f59e0b; border: 1px solid #f59e0b; padding: 4px 10px;
+            border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold;
+        }
+        .btn-skip-tutorial:hover { background: #1e293b; }
+
         .status-panel {
             display: flex; justify-content: space-around; background: #334155;
             padding: 15px; border-radius: 10px; margin-bottom: 15px;
@@ -91,6 +103,15 @@
             background: #2563eb; color: white; padding: 12px; border-radius: 10px;
             width: 125px; text-align: center; cursor: pointer; transition: transform 0.2s, background 0.2s;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 1px solid #60a5fa;
+            position: relative;
+        }
+        .card.highlight {
+            border: 2px solid #fbbf24; animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
         }
         .card:hover { transform: translateY(-5px); background: #1d4ed8; }
         .card.attack { background: #dc2626; border-color: #f87171; }
@@ -132,9 +153,6 @@
         .effect-item.boss-item b { color: #f87171; }
         .effect-item.current-item b { color: #fbbf24; }
         .effect-item p { margin: 0; font-size: 12px; color: #cbd5e1; }
-        
-        .tutorial-tip { background: #1e1b4b; border: 1px solid #6366f1; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 12px; line-height: 1.6; }
-        .tutorial-tip b { color: #a5b4fc; }
     </style>
 </head>
 <body>
@@ -144,7 +162,7 @@
         <h1>⚔️ 萌寵冒險：進階策略對決</h1>
         <div class="header-buttons">
             <button class="btn-info btn-hero" onclick="toggleHeroModal()">🐱 萌寵英雄</button>
-            <button class="btn-info btn-tutorial" onclick="toggleTutorialModal()">🎓 教學指南</button>
+            <button class="btn-info btn-tutorial" onclick="startTutorialStage()">🎓 實戰教學</button>
             <button class="btn-info btn-current-boss" onclick="toggleCurrentBossModal()">👁️ 當前魔王</button>
             <button class="btn-info btn-boss" onclick="toggleBossModal()">👹 魔王圖鑑</button>
             <button class="btn-info btn-battlefield" onclick="toggleBattlefieldModal()">⚡ 戰場效果</button>
@@ -153,6 +171,13 @@
         </div>
     </div>
     <div class="desc" id="game-subtitle">選擇適合的萌寵英雄與卡牌策略，擊敗強大的魔王！</div>
+    
+    <!-- 實戰教學動態引導條 -->
+    <div class="tutorial-banner" id="tutorial-banner" style="display:none;">
+        <span id="tutorial-text">🎓 新手教學引導載入中...</span>
+        <button class="btn-skip-tutorial" onclick="skipTutorial()">⏩ 略過新手教學</button>
+    </div>
+
     <div class="battlefield-banner" id="battlefield-banner">戰場載入中...</div>
     <div class="status-panel">
         <div class="status-item"><span id="player-title-hp">英雄血量 (HP)</span><span id="player-hp">92 / 92</span><div class="buff-info" id="player-buff">狀態：正常</div></div>
@@ -210,32 +235,6 @@
             <div class="effect-item hero-item"><b>🔥 火狂小狐 (Ignis) - 爆發輸出型</b><p><b>初始血量：</b>92 HP<br><b>被動天賦【烈焰血脈】：</b>打出攻擊型卡牌時，有 30% 機率額外追加 <b>+5 點烈焰傷害</b>！</p></div>
             <div class="effect-item hero-item"><b>🛡️ 堅甲龜 (Turtlo) - 防禦反擊型</b><p><b>初始血量：</b>108 HP<br><b>被動天賦【重甲庇護】：</b>每回合開始時<b>自動獲得 4 點護盾</b>；且獲得護盾的效果提升 <b>+15%</b>！</p></div>
             <div class="effect-item hero-item"><b>🐱 影爪貓 (Shadow) - 異常毒傷型</b><p><b>初始血量：</b>100 HP<br><b>被動天賦【劇毒爪痕】：</b>對魔王造成的【中毒】與【冰霜虛弱】效果持續回合數<b>額外 +1 回合</b>！</p></div>
-        </div>
-    </div>
-</div>
-
-<!-- 教學指南與新手實戰解析視窗 (內含回復類卡牌教學) -->
-<div class="modal-overlay" id="tutorial-modal">
-    <div class="modal-content">
-        <div class="modal-header"><h2>🎓 新手指南與出牌策略觀念</h2><button class="btn-close" onclick="toggleTutorialModal()">關閉</button></div>
-        <div class="tutorial-tip">
-            <b>💡 觀念 1：回復與續航卡牌的最佳使用時機</b><br>
-            * <b>【瞬間大回復】</b>：當血量掉到 50% 以下，或面對魔王準備爆發時使用，能及時拉回安全血線。<br>
-            * <b>【自然泉源】</b>：適合在戰鬥前中期（第 1 或 第 2 回合）施放，利用持續 3 回合的自動回血來抵銷環境扣血（如狂暴磁場）。<br>
-            * ⚠️ <b>注意戰場壓制</b>：若遇到「治療枯竭」戰場效果，所有回復量會減少 40%，此時應更偏向依賴護盾或防禦！
-        </div>
-        <div class="tutorial-tip">
-            <b>💡 觀念 2：如何破解帶護盾的魔王？</b><br>
-            當魔王開啟【暗黑護盾】時，普通攻擊會被護盾吸收。此時優先使用 <b>【破甲重擊】</b>（無視護盾直接扣血）或 <b>【禁錮咒語】</b>（一舉強效驅散所有護盾與狂暴狀態）！
-        </div>
-        <div class="tutorial-tip">
-            <b>💡 觀念 3：發揮最佳異常狀態 Combo！</b><br>
-            先使用 <b>【劇毒飛刀】</b> 或 <b>【冰霜連擊】</b> 給魔王掛上狀態，下一回合立刻打出 <b>【元素引爆】</b>，就能引爆並額外追加 22 點高額爆發傷害！
-        </div>
-        <div class="tutorial-tip">
-            <b>💡 觀念 4：預判魔王大招與反擊</b><br>
-            * 深淵霸主每隔 3 回合（第 3、6、9 回合）會釋放【深淵咆哮】。在前一回合預先打出 <b>【反彈護鏡】</b> 或 <b>【聖光護盾】</b>，可以完美吸收並反彈傷害！<br>
-            * 使用堅甲龜時，累積高額護盾後打出 <b>【盾擊破敵】</b> 能造成極可怕的衝擊傷害！
         </div>
     </div>
 </div>
@@ -308,6 +307,10 @@
     let bossRevived = false; 
     let playerSuppressedNextTurn = false;
 
+    // 新手實戰教學變數
+    let isTutorialMode = false;
+    let tutorialStep = 0;
+
     const heroes = [
         { id: "ignis", name: "火狂小狐 (Ignis)", hp: 92, trait: "ignis", desc: "【烈焰血脈】打出攻擊卡牌時，30% 機率額外追加 +5 點烈焰傷害！" },
         { id: "turtlo", name: "堅甲龜 (Turtlo)", hp: 108, trait: "turtlo", desc: "【重甲庇護】每回合自動獲得 4 點護盾，且獲得護盾的效果提升 +15%！" },
@@ -351,16 +354,53 @@
     ];
 
     function startRandomGame() {
+        isTutorialMode = false;
+        document.getElementById("tutorial-banner").style.display = "none";
         let randomHero = heroes[Math.floor(Math.random() * heroes.length)];
         let randomBoss = bossTypes[Math.floor(Math.random() * bossTypes.length)];
         let randomMod = battlefieldModifiers[Math.floor(Math.random() * battlefieldModifiers.length)];
         initGameWithConfig(randomHero, randomBoss, randomMod);
     }
 
+    function startTutorialStage() {
+        isTutorialMode = true;
+        tutorialStep = 1;
+        document.getElementById("tutorial-banner").style.display = "flex";
+        
+        // 戰術教學關卡配置：影爪貓 vs 深淵霸主 (狂暴磁場)
+        let tutHero = heroes.find(h => h.id === "shadow");
+        let tutBoss = bossTypes.find(b => b.id === "standard");
+        let tutMod = battlefieldModifiers.find(m => m.effect === "berserk");
+        
+        initGameWithConfig(tutHero, tutBoss, tutMod);
+        updateTutorialUI();
+    }
+
+    function skipTutorial() {
+        isTutorialMode = false;
+        document.getElementById("tutorial-banner").style.display = "none";
+        logMessage("⏩ <b>已略過新手教學，開啟標準對決！</b>");
+        startRandomGame();
+    }
+
+    function updateTutorialUI() {
+        if (!isTutorialMode) return;
+        const tutText = document.getElementById("tutorial-text");
+        if (tutorialStep === 1) {
+            tutText.innerHTML = `<b>🎓 實戰 Step 1：</b> 觀察影爪貓天賦！請打出 <b>【劇毒飛刀】</b>，觸發被動延長中毒至 4 回合！`;
+        } else if (tutorialStep === 2) {
+            tutText.innerHTML = `<b>🎓 實戰 Step 2：</b> 血量受到狂暴磁場扣血！請打出 <b>【瞬間大回復】</b> 拉回血線！`;
+        } else if (tutorialStep === 3) {
+            tutText.innerHTML = `<b>🎓 實戰 Step 3：</b> 魔王身上帶有劇毒！請打出 <b>【元素引爆】</b> 引爆 32 點巨額爆發傷害！`;
+        }
+    }
+
     function openSetupModal() { document.getElementById("setup-modal").style.display = "flex"; }
     function closeSetupModal() { document.getElementById("setup-modal").style.display = "none"; }
 
     function startConfiguredGame() {
+        isTutorialMode = false;
+        document.getElementById("tutorial-banner").style.display = "none";
         closeSetupModal();
         let heroChoice = document.getElementById("hero-select").value;
         let selectedHero = (heroChoice === "random") ? heroes[Math.floor(Math.random() * heroes.length)] : heroes.find(h => h.id === heroChoice);
@@ -381,7 +421,7 @@
 
         playerHP = currentHero.hp;
         maxPlayerHP = currentHero.hp;
-        monsterHP = currentBoss.hp;
+        monsterHP = isTutorialMode ? 50 : currentBoss.hp; // 教學關將魔王血量調為50，方便一局教學結束
         maxMonsterHP = currentBoss.hp;
         turn = 1;
         gameOver = false;
@@ -399,7 +439,9 @@
 
         document.getElementById("player-title-hp").innerText = `${currentHero.name.split(' ')[0]} 血量`;
         document.getElementById("boss-title-hp").innerText = `${currentBoss.name} 血量`;
-        document.getElementById("battlefield-banner").innerText = `英雄：【${currentHero.name}】 | 魔王：【${currentBoss.name}】 | 戰場：${currentModifier.name}`;
+        
+        // 修正語法：戰場寫成「戰場效果」
+        document.getElementById("battlefield-banner").innerText = `英雄：【${currentHero.name}】 | 魔王：【${currentBoss.name}】 | 戰場效果：${currentModifier.name}`;
 
         if (currentModifier.effect === "iron_wall") { 
             playerShield = 20; 
@@ -478,7 +520,6 @@
     }
 
     function toggleHeroModal() { const modal = document.getElementById("hero-modal"); modal.style.display = (modal.style.display === "flex") ? "none" : "flex"; }
-    function toggleTutorialModal() { const modal = document.getElementById("tutorial-modal"); modal.style.display = (modal.style.display === "flex") ? "none" : "flex"; }
     function toggleCompendium() { const modal = document.getElementById("compendium-modal"); modal.style.display = (modal.style.display === "flex") ? "none" : "flex"; }
     function toggleBattlefieldModal() { const modal = document.getElementById("battlefield-modal"); modal.style.display = (modal.style.display === "flex") ? "none" : "flex"; }
     function toggleBossModal() { const modal = document.getElementById("boss-modal"); modal.style.display = (modal.style.display === "flex") ? "none" : "flex"; }
@@ -531,11 +572,12 @@
         if (playerSuppressedNextTurn) playerBuffText += ` | ⚠️遭到壓制`;
         document.getElementById("player-buff").innerText = playerBuffText;
         
+        // 精準標註虛弱層數與回合數
         let monsterBuffText = `護盾：${monsterShield}`;
         if (currentBoss) monsterBuffText += ` | ${currentBoss.name}`;
         if (monsterPoison > 0) monsterBuffText += ` | 中毒(${monsterPoison}T)`;
         if (monsterSkipTurns > 0) monsterBuffText += ` | 🔒禁錮(${monsterSkipTurns}T)`;
-        if (monsterWeakTurns > 0) monsterBuffText += ` | ❄️冰霜虛弱`;
+        if (monsterWeakTurns > 0) monsterBuffText += ` | ❄️冰霜虛弱(${monsterWeakTurns}T)`;
         if (monsterAtkBuffTurns > 0) monsterBuffText += ` | 🔥暗影狂暴(${monsterAtkBuffTurns}次)`;
         document.getElementById("monster-buff").innerText = monsterBuffText;
     }
@@ -550,18 +592,52 @@
         if (gameOver) return;
         const container = document.getElementById("card-selection"); 
         container.innerHTML = "";
-        let shuffled = [...cardPool].sort(() => 0.5 - Math.random());
-        
-        let drawCount = (currentModifier && currentModifier.effect === "fog_choice") ? 2 : 3;
-        if (playerSuppressedNextTurn) {
-            drawCount = 1;
-            playerSuppressedNextTurn = false;
-            logMessage(`&nbsp;&nbsp;⚠️ <b>【壓制生效】由於上回合受到深淵咆哮影響，本回合僅能從 1 張卡牌中抉擇！</b>`);
+
+        let cardsToRender = [];
+
+        // 實戰教學模式的手牌固定引導
+        if (isTutorialMode) {
+            if (tutorialStep === 1) {
+                cardsToRender = [
+                    cardPool.find(c => c.subType === "poison"), // 劇毒飛刀 (引導發動天賦)
+                    cardPool.find(c => c.subType === "normal"),
+                    cardPool.find(c => c.subType === "crit")
+                ];
+            } else if (tutorialStep === 2) {
+                cardsToRender = [
+                    cardPool.find(c => c.subType === "burst"), // 瞬間大回復 (引導回血)
+                    cardPool.find(c => c.subType === "normal"),
+                    cardPool.find(c => c.subType === "shield")
+                ];
+            } else if (tutorialStep === 3) {
+                cardsToRender = [
+                    cardPool.find(c => c.subType === "detonate"), // 元素引爆 (引導引爆Combo)
+                    cardPool.find(c => c.subType === "normal"),
+                    cardPool.find(c => c.subType === "crit")
+                ];
+            }
+        } else {
+            let shuffled = [...cardPool].sort(() => 0.5 - Math.random());
+            let drawCount = (currentModifier && currentModifier.effect === "fog_choice") ? 2 : 3;
+            if (playerSuppressedNextTurn) {
+                drawCount = 1;
+                playerSuppressedNextTurn = false;
+                logMessage(`&nbsp;&nbsp;⚠️ <b>【壓制生效】由於上回合受到深淵咆哮影響，本回合僅能從 1 張卡牌中抉擇！</b>`);
+            }
+            cardsToRender = shuffled.slice(0, drawCount);
         }
 
-        shuffled.slice(0, drawCount).forEach(card => {
+        cardsToRender.forEach((card, index) => {
             let cardDiv = document.createElement("div"); 
-            cardDiv.className = `card ${card.type}`; 
+            cardDiv.className = `card ${card.type}`;
+            
+            // 教學模式高亮關鍵卡牌
+            if (isTutorialMode) {
+                if (tutorialStep === 1 && card.subType === "poison") cardDiv.classList.add("highlight");
+                if (tutorialStep === 2 && card.subType === "burst") cardDiv.classList.add("highlight");
+                if (tutorialStep === 3 && card.subType === "detonate") cardDiv.classList.add("highlight");
+            }
+
             cardDiv.innerHTML = `<h3>${card.name}</h3><p>${card.desc}</p>`;
             cardDiv.onclick = () => playCard(card); 
             container.appendChild(cardDiv);
@@ -590,6 +666,15 @@
 
     function playCard(card) {
         if (gameOver || actionsLeft <= 0) return;
+
+        // 新手教學進度推進行動
+        if (isTutorialMode) {
+            if (tutorialStep === 1 && card.subType === "poison") tutorialStep = 2;
+            else if (tutorialStep === 2 && card.subType === "burst") tutorialStep = 3;
+            else if (tutorialStep === 3 && card.subType === "detonate") tutorialStep = 4;
+            updateTutorialUI();
+        }
+
         let dmgMultiplier = (currentModifier.effect === "berserk") ? 1.2 : 1.0;
 
         if (card.type === "attack") {
@@ -654,8 +739,8 @@
                     monsterPoison = 3 + extraTurns; 
                     logMessage(`&nbsp;&nbsp;🧪 劇毒命中：魔王已中毒，將持續 ${monsterPoison} 回合扣血！`); 
                 } else if (card.subType === "frost") {
-                    monsterWeakTurns = 1 + extraTurns;
-                    logMessage(`&nbsp;&nbsp;❄️ 寒冰凍結：魔王遭到【冰霜虛弱】(${monsterWeakTurns}T)，攻擊傷害降低 40%！`);
+                    monsterWeakTurns = 1 + extraTurns; // 影爪貓時會正確寫入 2 回合
+                    logMessage(`&nbsp;&nbsp;❄️ 寒冰凍結：魔王遭到【冰霜虛弱】(${monsterWeakTurns} 回合)，攻擊傷害降低 40%！`);
                 }
             }
 
@@ -889,7 +974,12 @@
         if (monsterDead) {
             monsterHP = 0;
             updateStatus();
-            logMessage(`🎉 <b>太強了！你成功擊敗了【${currentBoss.name}】，完美獲得勝利！</b>`);
+            if (isTutorialMode) {
+                logMessage("🎉🎓 <b>恭喜完成實戰教學！你已經掌握了萌寵英雄與卡牌 Combo 的戰術核心！</b>");
+                document.getElementById("tutorial-banner").style.display = "none";
+            } else {
+                logMessage(`🎉 <b>太強了！你成功擊敗了【${currentBoss.name}】，完美獲得勝利！</b>`);
+            }
             endGame();
             return true;
         }
@@ -910,9 +1000,9 @@
     }
 
     function checkFirstTimeVisit() {
-        if (!localStorage.getItem("hasVisitedPetAdventure")) {
-            localStorage.setItem("hasVisitedPetAdventure", "true");
-            toggleTutorialModal();
+        if (!localStorage.getItem("hasVisitedPetAdventureStep")) {
+            localStorage.setItem("hasVisitedPetAdventureStep", "true");
+            startTutorialStage(); // 首次進入直接展開「實戰新手教學關卡」
         }
     }
 
