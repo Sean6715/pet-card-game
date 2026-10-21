@@ -276,7 +276,7 @@
 
     .rarity-tag {
         display: inline-block; padding: 1px 6px; border-radius: 4px;
-        font-size: 9px; font-weight: bold; margin-left: 4px;
+        font-size: 9px; font-weight: bold;
     }
     .rarity-common { background: #64748b; color: white; }
     .rarity-rare { background: #0ea5e9; color: white; }
@@ -331,9 +331,38 @@
     .effect-item.current-item b { color: #fbbf24; }
     .effect-item p { margin: 0; font-size: 12px; color: #cbd5e1; line-height: 1.5; }
 
-    .tutorial-modal-intro { padding: 8px 0 12px; }
-    .tutorial-modal-intro > p { margin: 0 0 12px; color: #cbd5e1; font-size: 14px; line-height: 1.6; }
-    .tutorial-modal-intro .tip { color: #fbbf24; font-weight: bold; text-align: center; margin-top: 12px; }
+    /* ===== 教學與圖鑑新增樣式 ===== */
+    .intro-section {
+        background: #0f172a; padding: 12px; border-radius: 8px;
+        margin-bottom: 12px; border-left: 3px solid #38bdf8;
+    }
+    .intro-section h3 { color: #38bdf8; font-size: 14px; margin: 0 0 8px 0; }
+    .intro-section ul, .intro-section ol { margin: 6px 0; padding-left: 22px; color: #cbd5e1; font-size: 13px; line-height: 1.7; }
+    .intro-section li { margin-bottom: 4px; }
+    .intro-section p { color: #cbd5e1; font-size: 13px; margin: 6px 0; }
+    .intro-section b { color: #fbbf24; }
+
+    .hero-name-big { font-size: 18px; font-weight: bold; color: #38bdf8; margin-bottom: 8px; display: block; }
+    .boss-name-big { font-size: 18px; font-weight: bold; color: #ef4444; margin-bottom: 8px; display: block; }
+    .talent-tag {
+        display: inline-block; background: #10b981; color: white;
+        padding: 3px 10px; border-radius: 4px; font-size: 11px;
+        margin-bottom: 6px; font-weight: bold;
+    }
+    .trait-tag {
+        display: inline-block; background: #a855f7; color: white;
+        padding: 3px 10px; border-radius: 4px; font-size: 11px;
+        margin-bottom: 6px; font-weight: bold;
+    }
+    .card-in-compendium {
+        background: rgba(15, 23, 42, 0.6); padding: 8px 10px; border-radius: 6px;
+        margin-top: 6px; font-size: 12px; border-left: 3px solid #475569;
+    }
+    .card-in-compendium.attack { border-left-color: #dc2626; }
+    .card-in-compendium.heal { border-left-color: #16a34a; }
+    .card-in-compendium.special { border-left-color: #9333ea; }
+    .card-in-compendium b { color: #38bdf8; display: inline-block; margin-right: 6px; }
+    .card-in-compendium p { margin: 4px 0 0; color: #cbd5e1; line-height: 1.4; }
 
     @media (max-width: 600px) {
         .container { padding: 15px; }
@@ -410,18 +439,52 @@
     <button class="btn-reset" id="reset-btn" onclick="startRandomGame()" style="display:none;">⚔️ 重新開始冒險（隨機）</button>
 </div>
 
+<!-- 教學開始（含玩法介紹） -->
 <div class="modal-overlay" id="tutorial-start-modal">
     <div class="modal-content">
-        <div class="modal-header"><h2>🎓 新手實戰教學（6 回合）</h2></div>
+        <div class="modal-header"><h2>🎓 新手教學與玩法介紹</h2></div>
         <div class="tutorial-modal-intro">
-            <p>這是一場 6 回合的教學，會帶你認識英雄天賦、魔王技能、上方功能列，以及卡牌 Combo 的核心玩法：</p>
-            <div class="effect-item hero-item"><b>Step 1 · 英雄天賦（劇毒飛刀）</b><p>認識影爪貓的「中毒 +1 回合」被動。</p></div>
-            <div class="effect-item hero-item"><b>Step 2 · 高傷害卡（捨身一擊）</b><p>自損 7 血換 28 傷，體會高風險高報酬。</p></div>
-            <div class="effect-item hero-item"><b>Step 3 · 反制魔王大招（禁錮咒語）</b><p>第 3 回合深淵霸主會放【深淵咆哮】，用禁錮咒語封印它的專屬特質！</p></div>
-            <div class="effect-item hero-item"><b>Step 4 · 弱點標記</b><p>使用弱點標記讓魔王受到 +25% 傷害。</p></div>
-            <div class="effect-item hero-item"><b>Step 5 · 感受標記效果（捨身一擊）</b><p>同樣的捨身一擊，這次傷害會變成 43（平常 34）。</p></div>
-            <div class="effect-item hero-item"><b>Step 6 · 收頭斬殺（致命一擊）</b><p>魔王生命低於 30%，致命一擊造成 45 點穿透傷害！</p></div>
-            <p class="tip">💡 開始後請跟著上方金色引導條打出「高亮卡牌」即可完成教學。</p>
+            <p style="margin:0 0 14px; color:#cbd5e1; font-size:14px; line-height:1.6;">歡迎來到萌寵冒險！這是一款<b style="color:#fbbf24;">牌庫構築</b>的策略卡牌遊戲。開始前先了解遊戲如何運作：</p>
+
+            <div class="intro-section">
+                <h3>📚 一、牌庫機制</h3>
+                <ul>
+                    <li>你的牌庫由 <b>15 張卡牌</b> 組成。</li>
+                    <li>其中 <b>3 張是英雄專屬卡</b>（固定，每位英雄不同）。</li>
+                    <li>另外 <b>12 張是通用卡</b>（可從通用卡池自選）。</li>
+                </ul>
+                <p style="margin-top:8px;"><b>稀有度上限：</b>普通卡最多 2 張、稀有卡 1 張、傳說卡 1 張。</p>
+            </div>
+
+            <div class="intro-section">
+                <h3>🔄 二、每回合流程</h3>
+                <ol>
+                    <li><b>抽牌：</b>從抽牌堆抽 <b>3 張</b> 手牌。</li>
+                    <li><b>出牌：</b>從手牌選 <b>1 張</b> 打出（雙倍協奏戰場可出 2 張）。</li>
+                    <li><b>棄牌：</b>打出的卡進入 <b>棄牌堆</b>，本局不能再用直到洗回。</li>
+                    <li><b>循環：</b>抽牌堆空時，棄牌堆會洗回抽牌堆。</li>
+                </ol>
+                <p style="margin-top:8px; color:#fca5a5;"><b>⚠️ 注意：</b>回合結束時，沒打完的手牌會全部丟棄！</p>
+            </div>
+
+            <div class="intro-section">
+                <h3>🎴 三、卡牌類型</h3>
+                <ul>
+                    <li><b style="color:#f87171;">攻擊型（紅）：</b>造成傷害、中毒、穿透等。</li>
+                    <li><b style="color:#4ade80;">回復型（綠）：</b>回復生命、獲得護盾。</li>
+                    <li><b style="color:#c084fc;">特殊型（紫）：</b>增益、控制、抽牌等戰術效果。</li>
+                </ul>
+            </div>
+
+            <div class="intro-section">
+                <h3>🎯 四、6 回合教學目標</h3>
+                <div class="effect-item hero-item" style="margin-bottom:6px; padding:8px 10px;"><b>Step 1 · 英雄天賦</b><p>打出「劇毒飛刀」認識影爪貓的「中毒 +1 回合」被動。</p></div>
+                <div class="effect-item hero-item" style="margin-bottom:6px; padding:8px 10px;"><b>Step 2 · 高傷害卡</b><p>打出「捨身一擊」體驗自損 7 血換 28 傷。</p></div>
+                <div class="effect-item hero-item" style="margin-bottom:6px; padding:8px 10px;"><b>Step 3 · 反制魔王特質</b><p>第 3 回合魔王會放「深淵咆哮」，用「禁錮咒語」封印它！</p></div>
+                <div class="effect-item hero-item" style="margin-bottom:6px; padding:8px 10px;"><b>Step 4 · 弱點標記</b><p>使用「弱點標記」讓魔王受到 +25% 傷害 3 回合。</p></div>
+                <div class="effect-item hero-item" style="margin-bottom:6px; padding:8px 10px;"><b>Step 5 · 感受增傷</b><p>同樣的「捨身一擊」這次打出 43 傷（平常 34）。</p></div>
+                <div class="effect-item hero-item" style="margin-bottom:6px; padding:8px 10px;"><b>Step 6 · 收頭斬殺</b><p>魔王生命 &lt; 30% 時，致命一擊造成 45 點穿透傷害！</p></div>
+            </div>
         </div>
         <button class="btn-start-battle" onclick="beginTutorialBattle()">▶️ 開始教學</button>
         <button class="btn-secondary" onclick="skipTutorial()">⏩ 跳過，直接開始標準對局</button>
@@ -466,7 +529,7 @@
             <select id="modifier-select">
                 <option value="random">🎲 隨機決定</option>
                 <option value="double_action">✨ 雙倍協奏（雙方每回合 2 次行動）</option>
-                <option value="berserk">🔥 狂暴磁場（傷害+20%，每回合雙方 -4 血）</option>
+                <option value="berserk">🔥 狂暴磁場（傷害+20%，每回合雙方 -4 生命）</option>
                 <option value="weak_heal">💧 治療枯竭（所有回復 -40%）</option>
                 <option value="iron_wall">🛡️ 鐵壁防線（雙方開局 +20 護盾）</option>
                 <option value="fog_choice">🌫️ 迷霧選擇（每回合僅抽 2 張）</option>
@@ -522,15 +585,15 @@
    ============================================================ */
 const heroes = [
     { id: "ignis",  name: "火狂小狐", icon: "🦊", hp: 96, trait: "ignis",
-      desc: "【烈焰血脈】打出攻擊型卡牌時，35% 機率額外 +5 點傷害。" },
+      desc: "【烈焰血脈】打出攻擊型卡牌時，35% 機率額外造成 5 點傷害。" },
     { id: "turtlo", name: "堅甲龜",   icon: "🐢", hp: 100, trait: "turtlo",
-      desc: "【堅甲防禦】受到敵方傷害時獲得 3 點護盾；所有護盾效果 +10%。" },
+      desc: "【堅甲防禦】受到敵方傷害時獲得 3 點護盾；所有護盾效果提升 10%。" },
     { id: "shadow", name: "影爪貓",   icon: "🐱", hp: 100, trait: "shadow",
-      desc: "【劇毒爪痕】對魔王造成的中毒持續回合數額外 +1 回合。" },
+      desc: "【劇毒爪痕】對魔王造成的中毒持續回合數額外增加 1 回合。" },
     { id: "thunder",name: "閃電鳥",   icon: "⚡", hp: 96, trait: "thunder",
-      desc: "【雷霆麻痺】攻擊命中時 25% 機率使魔王跳過 1 次行動。" },
+      desc: "【雷霆麻痺】攻擊命中時，25% 機率使魔王跳過 1 次行動。" },
     { id: "copycat",name: "複製兔",   icon: "🐰", hp: 98, trait: "copycat",
-      desc: "【鏡像戰術】每回合首次特殊卡額外觸發一次（禁錮、盾擊、時光沙漏除外）。" }
+      desc: "【鏡像戰術】每回合首次打出特殊卡時，額外觸發一次效果（禁錮、盾擊、時光沙漏除外）。" }
 ];
 
 /* ============================================================
@@ -538,15 +601,20 @@ const heroes = [
    ============================================================ */
 const bossTypes = [
     { id: "standard", name: "深淵霸主", icon: "👹", hp: 120, trait: "standard",
-      desc: "【咆哮特化】每 3 回合釋放【深淵咆哮】，造成 20 點傷害並施加壓制。" },
+      traitName: "深淵咆哮（每 3 回合）",
+      desc: "每 3 回合釋放【深淵咆哮】，造成 20 點傷害並施加壓制（下回合抽牌減少）。" },
     { id: "undying", name: "巴洛克", icon: "☠️", hp: 100, trait: "undying",
-      desc: "【不滅死靈】首次被擊殺時原地復活（恢復 35 點生命）並進入永久狂暴。" },
+      traitName: "不滅死魂（死亡復活）",
+      desc: "首次被擊殺時原地復活，恢復 35 點生命並進入永久狂暴（攻擊 +8 點）。" },
     { id: "evasion", name: "影魔", icon: "🥷", hp: 112, trait: "evasion",
-      desc: "【鬼魅刺客】被動擁有 27% 閃避率，完全躲開玩家的攻擊。" },
+      traitName: "鬼魅閃避（27% 機率）",
+      desc: "被動擁有 27% 閃避率，完全躲開玩家的攻擊。" },
     { id: "vampire", name: "德古拉", icon: "🧛", hp: 110, trait: "vampire",
-      desc: "【永夜君王】造成穿透傷害時，吸取該傷害 30% 的生命值。" },
+      traitName: "嗜血吸取（穿透 30%）",
+      desc: "造成穿透傷害時，吸取該傷害 30% 的生命值。" },
     { id: "guardian", name: "鋼鐵要塞", icon: "🏰", hp: 120, trait: "guardian",
-      desc: "【鋼鐵反震】護盾被擊破時反擊 12 點真實傷害（2 回合冷卻）。" }
+      traitName: "鋼鐵反震（破盾 12 真傷）",
+      desc: "護盾被擊破時對玩家造成 12 點真實傷害（無視護盾，冷卻 2 回合）。" }
 ];
 
 /* ============================================================
@@ -554,68 +622,109 @@ const bossTypes = [
    ============================================================ */
 const battlefieldModifiers = [
     { name: "✨ 雙倍協奏", desc: "雙方每回合 2 次行動", effect: "double_action" },
-    { name: "🔥 狂暴磁場", desc: "傷害 +20%，每回合雙方 -4 血，無視護盾", effect: "berserk" },
+    { name: "🔥 狂暴磁場", desc: "傷害 +20%，每回合雙方 -4 生命，無視護盾", effect: "berserk" },
     { name: "💧 治療枯竭", desc: "所有回復 -40%", effect: "weak_heal" },
     { name: "🛡️ 鐵壁防線", desc: "雙方開局 +20 點護盾", effect: "iron_wall" },
     { name: "🌫️ 迷霧選擇", desc: "每回合僅抽 2 張", effect: "fog_choice" },
     { name: "🌵 荊棘之地", desc: "每次受攻擊，攻擊方反傷 3 點，無視護盾", effect: "thorns" },
-    { name: "🪦 獻祭祭壇", desc: "玩家生命上限 -10、魔王 -15", effect: "sacrifice_altar" }
+    { name: "🪦 獻祭祭壇", desc: "玩家生命上限 -10 點、魔王生命上限 -15 點", effect: "sacrifice_altar" }
 ];
 
 /* ============================================================
-   四、通用卡牌
+   四、通用卡牌（文字統一）
    ============================================================ */
 const commonCards = [
     // 普通（10 張）
-    { id: 1, name: "烈焰彈", type: "attack", subType: "normal", category: "攻擊", rarity: "common", value: 18, desc: "造成 18 點傷害。" },
-    { id: 2, name: "嗜血突擊", type: "attack", subType: "lifesteal", category: "攻擊", rarity: "common", value: 14, desc: "造成 14 點傷害，回復 7 點生命。" },
-    { id: 3, name: "暴擊雷電", type: "attack", subType: "crit", category: "攻擊", rarity: "common", value: 25, desc: "40% 機率造成 25 點傷害，否則造成 12 點傷害。" },
-    { id: 4, name: "劇毒飛刀", type: "attack", subType: "poison", category: "攻擊", rarity: "common", value: 10, desc: "造成 10 點傷害，使魔王中毒 3 回合（每回合 -6 生命）。" },
-    { id: 12, name: "冰霜連擊", type: "attack", subType: "frost", category: "攻擊", rarity: "common", value: 12, desc: "造成 12 點傷害，魔王傷害 -40% 持續 1 回合。" },
-    { id: 13, name: "破甲重擊", type: "attack", subType: "pierce", category: "攻擊", rarity: "common", value: 15, desc: "造成 15 點穿透傷害（無視護盾）。" },
-    { id: 5, name: "瞬間回復", type: "heal", subType: "burst", category: "回復", rarity: "common", value: 20, desc: "回復 20 點生命。" },
-    { id: 6, name: "聖光護盾", type: "heal", subType: "shield", category: "回復", rarity: "common", value: 10, shieldVal: 12, desc: "回復 10 點生命，獲得 12 點護盾。" },
-    { id: 10, name: "自然泉源", type: "heal", subType: "regen", category: "回復", rarity: "common", value: 0, desc: "3 回合內每回合回復 7 點生命。不可疊加。" },
-    { id: 7, name: "血之狂熱", type: "special", subType: "sacrifice", category: "特殊", rarity: "common", costHP: 10, buffVal: 15, desc: "失去 10 點生命，下次攻擊 +15 點傷害（可疊加）。" },
+    { id: 1, name: "烈焰彈", type: "attack", subType: "normal", category: "攻擊", rarity: "common", value: 18,
+      desc: "造成 18 點傷害。" },
+    { id: 2, name: "嗜血突擊", type: "attack", subType: "lifesteal", category: "攻擊", rarity: "common", value: 14,
+      desc: "造成 14 點傷害，並回復 7 點生命。" },
+    { id: 3, name: "暴擊雷電", type: "attack", subType: "crit", category: "攻擊", rarity: "common", value: 25,
+      desc: "40% 機率造成 25 點傷害，否則造成 12 點傷害。" },
+    { id: 4, name: "劇毒飛刀", type: "attack", subType: "poison", category: "攻擊", rarity: "common", value: 10,
+      desc: "造成 10 點傷害，使魔王中毒 3 回合（每回合無視護盾扣除 6 點生命）。" },
+    { id: 12, name: "冰霜連擊", type: "attack", subType: "frost", category: "攻擊", rarity: "common", value: 12,
+      desc: "造成 12 點傷害，使魔王攻擊傷害 -40%（持續 1 回合）。" },
+    { id: 13, name: "破甲重擊", type: "attack", subType: "pierce", category: "攻擊", rarity: "common", value: 15,
+      desc: "造成 15 點穿透傷害（無視魔王護盾）。" },
+    { id: 5, name: "瞬間回復", type: "heal", subType: "burst", category: "回復", rarity: "common", value: 20,
+      desc: "回復 20 點生命。" },
+    { id: 6, name: "聖光護盾", type: "heal", subType: "shield", category: "回復", rarity: "common", value: 10, shieldVal: 12,
+      desc: "回復 10 點生命，並獲得 12 點護盾。" },
+    { id: 10, name: "自然泉源", type: "heal", subType: "regen", category: "回復", rarity: "common", value: 0,
+      desc: "獲得 3 回合【泉源祝福】，每回合回復 7 點生命。不可疊加（重複使用僅重置為 3 回合）。" },
+    { id: 7, name: "血之狂熱", type: "special", subType: "sacrifice", category: "特殊", rarity: "common", costHP: 10, buffVal: 15,
+      desc: "失去 10 點生命，下次攻擊傷害 +15 點（可疊加）。" },
     // 稀有（12 張）
-    { id: 21, name: "堅壁清野", type: "heal", subType: "low_hp_shield", category: "回復", rarity: "rare", value: 12, desc: "獲得 12 點護盾；生命低於 50% 時改為 20 點。" },
-    { id: 20, name: "逆轉治癒", type: "heal", subType: "reverse_heal", category: "回復", rarity: "rare", desc: "回復「已損失生命 × 0.4」點生命（上限 25）。" },
-    { id: 17, name: "破釜沉舟", type: "attack", subType: "desperate", category: "攻擊", rarity: "rare", desc: "造成「已損失生命 × 0.4」點傷害（上限 40）。" },
-    { id: 18, name: "魔能侵蝕", type: "attack", subType: "erosion", category: "攻擊", rarity: "rare", value: 12, desc: "造成 12 點傷害，魔王每有 1 個異常狀態額外 +6 點（上限 +18）。" },
-    { id: 14, name: "命運之輪", type: "special", subType: "roulette", category: "特殊", rarity: "rare", desc: "隨機三選一：回復 18 生命且生命上限 +10 / 獲得 18 護盾 / 造成 22 穿透傷害。" },
-    { id: 9, name: "反彈護鏡", type: "special", subType: "reflect", category: "特殊", rarity: "rare", desc: "獲得 10 點護盾，下回合反彈魔王穿透傷害的 50%。" },
-    { id: 16, name: "盾擊破敵", type: "special", subType: "shield_bash", category: "特殊", rarity: "rare", desc: "消耗全部護盾，每 1 點造成 1.5 點傷害。" },
-    { id: 22, name: "偷天換日", type: "special", subType: "steal_shield", category: "特殊", rarity: "rare", desc: "偷取魔王 50% 護盾；若無護盾則獲得 5 點。不觸發反震。" },
-    { id: 23, name: "弱點標記", type: "special", subType: "mark", category: "特殊", rarity: "rare", desc: "標記魔王 3 回合，期間受到的玩家攻擊傷害 +25%。" },
-    { id: 25, name: "時光沙漏", type: "special", subType: "time_hourglass", category: "特殊", rarity: "rare", desc: "下回合起始行動 +1。" },
-    { id: 8, name: "禁錮咒語", type: "special", subType: "skip", category: "特殊", rarity: "rare", desc: "跳過魔王 1 次行動，接下來 2 回合內魔王的專屬特質失效（深淵咆哮 / 復活 / 閃避 / 吸血 / 反傷）。" },
-    { id: 26, name: "碎盾擊", type: "attack", subType: "shield_break", category: "攻擊", rarity: "rare", value: 8, desc: "打碎魔王全部護盾；若無護盾則造成 8 點傷害。" },
+    { id: 21, name: "堅壁清野", type: "heal", subType: "low_hp_shield", category: "回復", rarity: "rare", value: 12,
+      desc: "獲得 12 點護盾；若自身生命低於 50%，改為獲得 20 點護盾。" },
+    { id: 20, name: "逆轉治癒", type: "heal", subType: "reverse_heal", category: "回復", rarity: "rare",
+      desc: "回復「已損失生命值 × 0.4」點生命（上限 25 點）。" },
+    { id: 17, name: "破釜沉舟", type: "attack", subType: "desperate", category: "攻擊", rarity: "rare",
+      desc: "造成「已損失生命值 × 0.4」點傷害（上限 40 點）。" },
+    { id: 18, name: "魔能侵蝕", type: "attack", subType: "erosion", category: "攻擊", rarity: "rare", value: 12,
+      desc: "造成 12 點傷害；魔王每有 1 個異常狀態（中毒/冰霜/標記），額外 +6 點傷害（上限 +18 點）。" },
+    { id: 14, name: "命運之輪", type: "special", subType: "roulette", category: "特殊", rarity: "rare",
+      desc: "隨機三選一：① 回復 18 點生命且生命上限 +10；② 獲得 18 點護盾；③ 造成 22 點穿透傷害。" },
+    { id: 9, name: "反彈護鏡", type: "special", subType: "reflect", category: "特殊", rarity: "rare",
+      desc: "獲得 10 點護盾，下回合反彈魔王穿透傷害的 50%。" },
+    { id: 16, name: "盾擊破敵", type: "special", subType: "shield_bash", category: "特殊", rarity: "rare",
+      desc: "消耗全部護盾，每 1 點護盾造成 1.5 點傷害。" },
+    { id: 22, name: "偷天換日", type: "special", subType: "steal_shield", category: "特殊", rarity: "rare",
+      desc: "偷取魔王 50% 護盾；若魔王無護盾則獲得 5 點護盾。不觸發鋼鐵反震。" },
+    { id: 23, name: "弱點標記", type: "special", subType: "mark", category: "特殊", rarity: "rare",
+      desc: "標記魔王 3 回合，期間魔王受到的玩家攻擊傷害 +25%。" },
+    { id: 25, name: "時光沙漏", type: "special", subType: "time_hourglass", category: "特殊", rarity: "rare",
+      desc: "下回合起始行動數 +1。" },
+    { id: 8, name: "禁錮咒語", type: "special", subType: "skip", category: "特殊", rarity: "rare",
+      desc: "跳過魔王 1 次行動；接下來 2 回合內魔王的專屬特質失效（深淵咆哮 / 不滅死魂 / 鬼魅閃避 / 嗜血吸取 / 鋼鐵反震）。" },
+    { id: 26, name: "碎盾擊", type: "attack", subType: "shield_break", category: "攻擊", rarity: "rare", value: 8,
+      desc: "打碎魔王全部護盾；若魔王無護盾則造成 8 點傷害。" },
     // 傳說（4 張）
-    { id: 11, name: "捨身一擊", type: "attack", subType: "recoil", category: "攻擊", rarity: "legendary", value: 28, selfCost: 7, desc: "失去 7 點生命，造成 28 點傷害。" },
-    { id: 15, name: "元素引爆", type: "attack", subType: "detonate", category: "攻擊", rarity: "legendary", value: 10, desc: "造成 10 點傷害；若魔王有中毒或虛弱，額外 +22 點並清除該狀態。" },
-    { id: 24, name: "黑暗契約", type: "special", subType: "dark_contract", category: "特殊", rarity: "legendary", desc: "失去 12 點生命，永久 +6 點攻擊（上限 +12）。" },
-    { id: 19, name: "致命一擊", type: "attack", subType: "finisher", category: "攻擊", rarity: "legendary", value: 10, desc: "造成 10 點傷害；魔王生命低於 30% 時改為 30 點穿透傷害。" }
+    { id: 11, name: "捨身一擊", type: "attack", subType: "recoil", category: "攻擊", rarity: "legendary", value: 28, selfCost: 7,
+      desc: "失去 7 點生命，造成 28 點傷害。" },
+    { id: 15, name: "元素引爆", type: "attack", subType: "detonate", category: "攻擊", rarity: "legendary", value: 10,
+      desc: "造成 10 點傷害；若魔王有中毒或冰霜虛弱，額外 +22 點傷害並清除該狀態。" },
+    { id: 24, name: "黑暗契約", type: "special", subType: "dark_contract", category: "特殊", rarity: "legendary",
+      desc: "失去 12 點生命，永久 +6 點攻擊（上限 +12 點）。" },
+    { id: 19, name: "致命一擊", type: "attack", subType: "finisher", category: "攻擊", rarity: "legendary", value: 10,
+      desc: "造成 10 點傷害；若魔王生命低於 30%，改為造成 30 點穿透傷害。" }
 ];
 
 /* ============================================================
-   五、英雄專屬卡
+   五、英雄專屬卡（文字統一）
    ============================================================ */
 const heroCards = [
-    { id: "ignis_1", heroId: "ignis", name: "燃血狂怒", type: "attack", subType: "ignis_rage", category: "攻擊", rarity: "rare", desc: "失去 8 點生命，造成 20 點傷害；生命低於 50% 時額外 +10 點。" },
-    { id: "ignis_2", heroId: "ignis", name: "鳳凰之心", type: "heal", subType: "ignis_phoenix", category: "回復", rarity: "rare", desc: "回復 15 點生命；生命低於 30% 時改為 30 點。" },
-    { id: "ignis_3", heroId: "ignis", name: "絕境焚身", type: "attack", subType: "ignis_last", category: "攻擊", rarity: "legendary", desc: "失去 10 點生命，造成 25 點穿透傷害。" },
-    { id: "turtlo_1", heroId: "turtlo", name: "反震裝甲", type: "heal", subType: "turtlo_counter", category: "回復", rarity: "rare", desc: "獲得 15 點護盾，本回合被攻擊時反彈 50% 傷害給魔王。" },
-    { id: "turtlo_2", heroId: "turtlo", name: "銅牆鐵壁", type: "heal", subType: "turtlo_wall", category: "回復", rarity: "rare", desc: "獲得 20 點護盾。" },
-    { id: "turtlo_3", heroId: "turtlo", name: "不動如山", type: "special", subType: "turtlo_stand", category: "特殊", rarity: "legendary", desc: "獲得 15 點護盾，本回合受到的所有傷害 -5 點。" },
-    { id: "shadow_1", heroId: "shadow", name: "猛毒蔓延", type: "attack", subType: "shadow_poison", category: "攻擊", rarity: "rare", desc: "造成 6 點傷害，魔王中毒 3 回合（每回合 -6 生命）。" },
-    { id: "shadow_2", heroId: "shadow", name: "毒爆", type: "attack", subType: "shadow_burst", category: "攻擊", rarity: "rare", desc: "引爆魔王中毒：每層中毒造成 8 點傷害並清除。" },
-    { id: "shadow_3", heroId: "shadow", name: "致命毒霧", type: "attack", subType: "shadow_dead", category: "攻擊", rarity: "legendary", desc: "造成 4 點傷害，魔王中毒 5 回合（每回合 -6 生命，無視護盾）。" },
-    { id: "thunder_1", heroId: "thunder", name: "迅雷麻痺", type: "attack", subType: "thunder_strike", category: "攻擊", rarity: "rare", desc: "造成 12 點傷害，35% 機率使魔王跳過 1 次行動。" },
-    { id: "thunder_2", heroId: "thunder", name: "電光石火", type: "special", subType: "thunder_double", category: "特殊", rarity: "rare", desc: "本回合下一次攻擊傷害 ×2。" },
-    { id: "thunder_3", heroId: "thunder", name: "雷霆萬鈞", type: "attack", subType: "thunder_thunder", category: "攻擊", rarity: "legendary", desc: "造成 15 點傷害；若魔王處於麻痺狀態額外 +20 點。" },
-    { id: "copycat_1", heroId: "copycat", name: "快速施法", type: "special", subType: "copycat_draw", category: "特殊", rarity: "rare", desc: "抽 1 張牌。" },
-    { id: "copycat_2", heroId: "copycat", name: "魔法增幅", type: "special", subType: "copycat_boost", category: "特殊", rarity: "rare", desc: "本回合接下來 2 次攻擊傷害 +10 點。" },
-    { id: "copycat_3", heroId: "copycat", name: "無限迴響", type: "special", subType: "copycat_echo", category: "特殊", rarity: "legendary", desc: "隨機獲得 1 張通用卡加入手牌。" }
+    { id: "ignis_1", heroId: "ignis", name: "燃血狂怒", type: "attack", subType: "ignis_rage", category: "攻擊", rarity: "rare",
+      desc: "失去 8 點生命，造成 20 點傷害；自身生命低於 50% 時額外 +10 點傷害。" },
+    { id: "ignis_2", heroId: "ignis", name: "鳳凰之心", type: "heal", subType: "ignis_phoenix", category: "回復", rarity: "rare",
+      desc: "回復 15 點生命；自身生命低於 30% 時改為 30 點。" },
+    { id: "ignis_3", heroId: "ignis", name: "絕境焚身", type: "attack", subType: "ignis_last", category: "攻擊", rarity: "legendary",
+      desc: "失去 10 點生命，造成 25 點穿透傷害。" },
+    { id: "turtlo_1", heroId: "turtlo", name: "反震裝甲", type: "heal", subType: "turtlo_counter", category: "回復", rarity: "rare",
+      desc: "獲得 15 點護盾，本回合被攻擊時反彈 50% 傷害給魔王。" },
+    { id: "turtlo_2", heroId: "turtlo", name: "銅牆鐵壁", type: "heal", subType: "turtlo_wall", category: "回復", rarity: "rare",
+      desc: "獲得 20 點護盾。" },
+    { id: "turtlo_3", heroId: "turtlo", name: "不動如山", type: "special", subType: "turtlo_stand", category: "特殊", rarity: "legendary",
+      desc: "獲得 15 點護盾，本回合受到的所有傷害 -5 點。" },
+    { id: "shadow_1", heroId: "shadow", name: "猛毒蔓延", type: "attack", subType: "shadow_poison", category: "攻擊", rarity: "rare",
+      desc: "造成 6 點傷害，使魔王中毒 3 回合（每回合無視護盾扣除 6 點生命）。" },
+    { id: "shadow_2", heroId: "shadow", name: "毒爆", type: "attack", subType: "shadow_burst", category: "攻擊", rarity: "rare",
+      desc: "引爆魔王的中毒：每層中毒造成 8 點傷害並清除。" },
+    { id: "shadow_3", heroId: "shadow", name: "致命毒霧", type: "attack", subType: "shadow_dead", category: "攻擊", rarity: "legendary",
+      desc: "造成 4 點穿透傷害，使魔王中毒 5 回合（每回合無視護盾扣除 6 點生命）。" },
+    { id: "thunder_1", heroId: "thunder", name: "迅雷麻痺", type: "attack", subType: "thunder_strike", category: "攻擊", rarity: "rare",
+      desc: "造成 12 點傷害，35% 機率使魔王跳過 1 次行動。" },
+    { id: "thunder_2", heroId: "thunder", name: "電光石火", type: "special", subType: "thunder_double", category: "特殊", rarity: "rare",
+      desc: "本回合下一次攻擊傷害 ×2。" },
+    { id: "thunder_3", heroId: "thunder", name: "雷霆萬鈞", type: "attack", subType: "thunder_thunder", category: "攻擊", rarity: "legendary",
+      desc: "造成 15 點傷害；若魔王處於麻痺狀態額外 +20 點傷害。" },
+    { id: "copycat_1", heroId: "copycat", name: "快速施法", type: "special", subType: "copycat_draw", category: "特殊", rarity: "rare",
+      desc: "抽 1 張牌。" },
+    { id: "copycat_2", heroId: "copycat", name: "魔法增幅", type: "special", subType: "copycat_boost", category: "特殊", rarity: "rare",
+      desc: "本回合接下來 2 次攻擊傷害 +10 點。" },
+    { id: "copycat_3", heroId: "copycat", name: "無限迴響", type: "special", subType: "copycat_echo", category: "特殊", rarity: "legendary",
+      desc: "隨機獲得 1 張通用卡加入手牌。" }
 ];
 
 const cardPool = [...commonCards, ...heroCards];
@@ -623,7 +732,7 @@ const cardById = {};
 cardPool.forEach(c => cardById[c.id] = c);
 
 /* ============================================================
-   六、英雄預設牌庫（3 專屬 + 12 通用）
+   六、英雄預設牌庫
    ============================================================ */
 const defaultDecks = {
     ignis:  ["ignis_1","ignis_2","ignis_3", 1,2,7,11,17,24,5,6,23,14,25,3],
@@ -639,17 +748,17 @@ const rarityLimit = { common: 2, rare: 1, legendary: 1 };
    七、教學流程
    ============================================================ */
 const TUTORIAL_STEPS = [
-    { intro: `歡迎！你的英雄是 <b>影爪貓</b>，被動「中毒 +1 回合」。請打出 <b>【劇毒飛刀】</b>，讓魔王中毒 4 回合！<small>💡 想查看其他英雄？點擊上方「🐱 萌寵英雄」。</small>`,
+    { intro: `你的英雄是 <b>影爪貓</b>，被動「中毒 +1 回合」。請打出 <b>【劇毒飛刀】</b>，讓魔王中毒 4 回合！<small>💡 想查看其他英雄？點擊上方「🐱 萌寵英雄」。</small>`,
       cards: ["poison", "normal", "crit"], acceptable: ["poison"], highlight: ["poison"] },
-    { intro: `中毒每回合無視護盾 -6 生命！請打出 <b>【捨身一擊】</b>（失去 7 生命，造成 28 × 狂暴磁場 1.2 = 34 點傷害）！<small>💡 想查看所有卡牌？點擊上方「📖 卡牌圖鑑」。</small>`,
+    { intro: `中毒每回合無視護盾扣除 6 點生命！請打出 <b>【捨身一擊】</b>（失去 7 點生命，造成 28 × 狂暴磁場 1.2 = 34 點傷害）！<small>💡 想查看所有卡牌？點擊上方「📖 卡牌圖鑑」。</small>`,
       cards: ["recoil", "pierce", "frost"], acceptable: ["recoil"], highlight: ["recoil"] },
-    { intro: `⚠️ 第 3 回合！深淵霸主將釋放 <b>【深淵咆哮】</b>。請打出 <b>【禁錮咒語】</b>——它會跳過魔王 1 次行動，並封印他的【深淵咆哮】2 回合！<small>💡 想查看當前戰場？點擊上方「⚡ 戰場效果」。</small>`,
+    { intro: `⚠️ 第 3 回合！深淵霸主將釋放 <b>【深淵咆哮】</b>。請打出 <b>【禁錮咒語】</b>——跳過魔王 1 次行動，並封印他的咆哮 2 回合！<small>💡 想查看當前戰場？點擊上方「⚡ 戰場效果」。</small>`,
       cards: ["skip", "burst", "shield"], acceptable: ["skip"], highlight: ["skip"] },
-    { intro: `禁錮封印了咆哮！點擊上方 <b>「👁️ 當前魔王」</b> 查看詳細資訊，然後打出 <b>【弱點標記】</b>（魔王受到 +25% 傷害 3 回合）！`,
+    { intro: `禁錮封印了咆哮！點擊上方 <b>「👁️ 當前魔王」</b> 查看詳細資訊，然後打出 <b>【弱點標記】</b>（魔王受到 +25% 傷害，持續 3 回合）！`,
       cards: ["mark", "normal", "crit"], acceptable: ["mark"], highlight: ["mark"] },
-    { intro: `🎯 弱點標記生效！請打出 <b>【捨身一擊】</b>，這次傷害從 34 變成 <b>43</b>！<small>💡 想查看其他魔王？點擊上方「👹 魔王圖鑑」。</small>`,
+    { intro: `🎯 弱點標記生效！請打出 <b>【捨身一擊】</b>，這次傷害會從 34 點變成 <b>43 點</b>！<small>💡 想查看其他魔王？點擊上方「👹 魔王圖鑑」。</small>`,
       cards: ["recoil", "pierce", "frost"], acceptable: ["recoil"], highlight: ["recoil"] },
-    { intro: `魔王生命低於 30%！使用 <b>【致命一擊】</b> 收頭（斬殺 36 × 1.25 = <b>45 點穿透傷害</b>）！`,
+    { intro: `魔王生命低於 30% 了！使用 <b>【致命一擊】</b> 收頭（斬殺 36 × 1.25 = <b>45 點穿透傷害</b>）！`,
       cards: ["finisher", "desperate", "normal"], acceptable: ["finisher"], highlight: ["finisher"] }
 ];
 
@@ -794,7 +903,6 @@ function drawCards(n) {
 function applyDamageToMonster(dmg, opts = {}) {
     const { ignoreShield = false, cardName = null, canEvade = true, fromPlayer = true } = opts;
 
-    // 影魔閃避（受禁錮影響）
     if (canEvade && S.boss.trait === "evasion" && S.monster.sealedTurns <= 0 && Math.random() < 0.27) {
         log(`💨 <b>【閃避成功】</b>影魔身形一閃，完全躲開${cardName ? ` <b>${cardName}</b>` : "攻擊"}！`, "info");
         return { hit: false, actualDmg: 0, finalDmg: 0, markApplied: false };
@@ -828,7 +936,6 @@ function applyDamageToMonster(dmg, opts = {}) {
         log(`🎯🎯 <b>【弱點標記生效】</b>傷害 ×1.25：${baseDmg} → ${dmg}`, "mark");
     }
 
-    // 鋼鐵要塞反震（受禁錮影響）
     if (S.boss.trait === "guardian"
         && shieldBefore > 0 && S.monster.shield === 0
         && !ignoreShield && fromPlayer && S.monster.guardianCd <= 0
@@ -851,7 +958,7 @@ function dealDamageToPlayer(rawDmg, source, opts = {}) {
 
     if (S.player.damageReduction > 0 && (source === "attack" || source === "roar")) {
         dmg = Math.max(0, dmg - S.player.damageReduction);
-        log(`⛰️ 不動如山：本次傷害 -${S.player.damageReduction} 點（剩餘 ${dmg}）`, "shield");
+        log(`⛰️ 不動如山：本次傷害 -${S.player.damageReduction} 點（剩餘 ${dmg} 點）`, "shield");
     }
 
     if (!ignoreShield && S.player.shield > 0) {
@@ -924,7 +1031,7 @@ function showTutorialEndModal(success) {
 
     if (success) {
         title.innerText = "🎉 教學完成！";
-        body.innerHTML = `<p>你已掌握英雄天賦、魔王技能、功能列與 Combo 核心！</p>
+        body.innerHTML = `<p>你已掌握英雄天賦、魔王技能、牌庫機制與 Combo 核心！</p>
             <div class="effect-item hero-item"><b>下一步：正式對局</b>
             <p>・直接開始 <b>標準對局</b>：隨機英雄 × 隨機魔王 × 該英雄預設牌庫（15 張）。<br>
             ・打開 <b>自選配置</b>：編輯牌庫、鎖定英雄/魔王/戰場、選擇難度。</p></div>`;
@@ -945,15 +1052,36 @@ function showTutorialEndModal(success) {
 }
 
 /* ============================================================
-   十四、鎖定配置
+   十四、鎖定配置（修復：localStorage 結構驗證）
    ============================================================ */
 const LOCK_KEY = "petAdventureLockedConfig";
 function loadLockedConfig() {
     try {
         const raw = JSON.parse(localStorage.getItem(LOCK_KEY));
-        if (raw) return raw;
+        if (raw && typeof raw === "object") {
+            return {
+                hero: {
+                    locked: !!(raw.hero && raw.hero.locked),
+                    value: (raw.hero && raw.hero.value) || "ignis"
+                },
+                boss: {
+                    locked: !!(raw.boss && raw.boss.locked),
+                    value: (raw.boss && raw.boss.value) || "random"
+                },
+                mod: {
+                    locked: !!(raw.mod && raw.mod.locked),
+                    value: (raw.mod && raw.mod.value) || "random"
+                },
+                difficulty: raw.difficulty || "normal"
+            };
+        }
     } catch (e) {}
-    return { hero: { locked: false }, boss: { locked: false }, mod: { locked: false }, difficulty: "normal" };
+    return {
+        hero: { locked: false, value: "ignis" },
+        boss: { locked: false, value: "random" },
+        mod: { locked: false, value: "random" },
+        difficulty: "normal"
+    };
 }
 function saveLockedConfig(cfg) { localStorage.setItem(LOCK_KEY, JSON.stringify(cfg)); }
 function toggleLock(type) {
@@ -1169,8 +1297,8 @@ function initGameWithConfig(hero, boss, mod, isTutorial, difficulty, deck) {
     document.getElementById("pile-info").style.display = isTutorial ? "none" : "flex";
 
     logTurn(`▶ 第 1 回合：【${hero.name}】對決【${boss.name}】正式開始！`, "player");
-    if (!isTutorial) log(`📚 牌庫共 ${S.deck.length} 張（3 專屬 + ${S.deck.length - 3} 通用），已洗牌。`, "info");
-    if (mod.effect === "sacrifice_altar") log(`🪦 <b>【獻祭祭壇】</b>玩家生命上限 -10、魔王 -15！`, "warn");
+    if (!isTutorial) log(`📚 牌庫共 ${S.deck.length} 張（3 張專屬 + ${S.deck.length - 3} 張通用），已洗牌。`, "info");
+    if (mod.effect === "sacrifice_altar") log(`🪦 <b>【獻祭祭壇】</b>玩家生命上限 -10 點、魔王生命上限 -15 點！`, "warn");
     if (mod.effect === "iron_wall") log(`🛡️ <b>【鐵壁防線】</b>雙方開局獲得 20 點護盾！`, "shield");
 
     updateStatus();
@@ -1191,7 +1319,7 @@ function startNewTurn() {
 
     if (S.player.nextTurnBonus > 0) {
         S.actionsLeft += S.player.nextTurnBonus;
-        log(`⏳ <b>時光沙漏</b>：本回合額外 +${S.player.nextTurnBonus} 行動！`, "crit");
+        log(`⏳ <b>時光沙漏</b>：本回合額外 +${S.player.nextTurnBonus} 次行動！`, "crit");
         S.player.nextTurnBonus = 0;
     }
 
@@ -1212,7 +1340,7 @@ function startNewTurn() {
     if (S.monster.markedTurns > 0) {
         S.monster.markedTurns--;
         if (S.monster.markedTurns > 0) {
-            log(`🎯🎯 <b>【弱點標記持續中】</b>剩餘 ${S.monster.markedTurns} 回合 — 你對魔王的攻擊 +25%！`, "mark");
+            log(`🎯🎯 <b>【弱點標記持續中】</b>剩餘 ${S.monster.markedTurns} 回合 — 你對魔王的攻擊傷害 +25%！`, "mark");
         } else {
             log(`🎯 弱點標記已消失。`, "status");
         }
@@ -1221,7 +1349,7 @@ function startNewTurn() {
     if (S.monster.poison > 0) {
         S.monster.hp -= 6;
         S.monster.poison--;
-        log(`☠️ 魔王受到劇毒侵蝕，-6 生命！（剩餘 ${S.monster.poison} 回合）`, "status");
+        log(`☠️ 魔王受到劇毒侵蝕，扣除 6 點生命！（剩餘 ${S.monster.poison} 回合）`, "status");
     }
     if (S.player.regenTurns > 0) {
         const healed = healPlayer(7);
@@ -1229,7 +1357,7 @@ function startNewTurn() {
         log(`🌿 自然泉源：回復 ${healed} 點生命！（剩餘 ${S.player.regenTurns} 回合）`, "heal");
     }
     if (S.mod.effect === "berserk") {
-        log(`🔥 狂暴磁場：雙方各 -4 生命（無視護盾）！`, "warn");
+        log(`🔥 狂暴磁場：雙方各扣除 4 點生命（無視護盾）！`, "warn");
         S.player.hp -= 4;
         S.monster.hp -= 4;
     }
@@ -1309,7 +1437,7 @@ function finishPlayerAction() {
 }
 
 /* ============================================================
-   二十、卡牌效果
+   二十、卡牌效果結算
    ============================================================ */
 function executeCardEffect(card, isCopy = false) {
     if (S.gameOver || S.monster.hp <= 0) return;
@@ -1340,19 +1468,18 @@ function handleAttackCard(card, prefix, dmgMult) {
     if (S.player.nextAttacksCount > 0) {
         attackBonus = S.player.nextAttacksBonus;
         S.player.nextAttacksCount--;
-        log(`✨ <b>魔法增幅</b>：本次攻擊 +${attackBonus} 點！`, "crit");
+        log(`✨ <b>魔法增幅</b>：本次攻擊傷害 +${attackBonus} 點！`, "crit");
     }
 
     let dmg = card.value || 0;
 
-    // 英雄專屬攻擊
     if (card.subType === "ignis_rage") {
         S.player.hp -= 8;
         const isLow = S.player.hp < S.player.maxHp * 0.5;
         let base = isLow ? 30 : 20;
         let final = Math.round(base * dmgMult * multiplier) + attackBonus;
         const result = applyDamageToMonster(final, { cardName: card.name });
-        if (result.hit) log(`${prefix}🔥 <b>燃血狂怒</b>：失去 8 生命，造成 ${result.finalDmg} 點傷害${isLow ? "（低血 +10！）" : ""}！`, "crit");
+        if (result.hit) log(`${prefix}🔥 <b>燃血狂怒</b>：失去 8 點生命，造成 ${result.finalDmg} 點傷害${isLow ? "（低血觸發 +10！）" : ""}！`, "crit");
         maybeThunderParalysis(prefix);
         return;
     }
@@ -1360,7 +1487,7 @@ function handleAttackCard(card, prefix, dmgMult) {
         S.player.hp -= 10;
         let final = Math.round(25 * dmgMult * multiplier) + attackBonus;
         const result = applyDamageToMonster(final, { ignoreShield: true, cardName: card.name });
-        if (result.hit) log(`${prefix}🌋 <b>絕境焚身</b>：失去 10 生命，造成 ${result.finalDmg} 點穿透傷害！`, "crit");
+        if (result.hit) log(`${prefix}🌋 <b>絕境焚身</b>：失去 10 點生命，造成 ${result.finalDmg} 點穿透傷害！`, "crit");
         maybeThunderParalysis(prefix);
         return;
     }
@@ -1370,7 +1497,7 @@ function handleAttackCard(card, prefix, dmgMult) {
         if (result.hit) {
             const extra = S.hero.trait === "shadow" ? 1 : 0;
             S.monster.poison = 3 + extra;
-            log(`${prefix}🧪 <b>猛毒蔓延</b>：造成 ${result.finalDmg} 點傷害，中毒 ${S.monster.poison} 回合！`, "crit");
+            log(`${prefix}🧪 <b>猛毒蔓延</b>：造成 ${result.finalDmg} 點傷害，魔王中毒 ${S.monster.poison} 回合！`, "crit");
         }
         maybeThunderParalysis(prefix);
         return;
@@ -1394,7 +1521,7 @@ function handleAttackCard(card, prefix, dmgMult) {
         if (result.hit) {
             const extra = S.hero.trait === "shadow" ? 1 : 0;
             S.monster.poison = 5 + extra;
-            log(`${prefix}🌫️ <b>致命毒霧</b>：造成 ${result.finalDmg} 穿透傷害，中毒 ${S.monster.poison} 回合！`, "crit");
+            log(`${prefix}🌫️ <b>致命毒霧</b>：造成 ${result.finalDmg} 點穿透傷害，魔王中毒 ${S.monster.poison} 回合！`, "crit");
         }
         maybeThunderParalysis(prefix);
         return;
@@ -1416,16 +1543,15 @@ function handleAttackCard(card, prefix, dmgMult) {
         let base = wasParalyzed ? 35 : 15;
         let final = Math.round(base * dmgMult * multiplier) + attackBonus;
         const result = applyDamageToMonster(final, { cardName: card.name });
-        if (result.hit) log(`${prefix}🌪️ <b>雷霆萬鈞</b>：造成 ${result.finalDmg} 點傷害${wasParalyzed ? "（麻痺加成 +20！）" : ""}！`, "crit");
+        if (result.hit) log(`${prefix}🌪️ <b>雷霆萬鈞</b>：造成 ${result.finalDmg} 點傷害${wasParalyzed ? "（麻痺觸發 +20！）" : ""}！`, "crit");
         return;
     }
 
-    // 通用特殊攻擊
     if (card.subType === "desperate") {
         const lost = Math.max(0, S.player.maxHp - S.player.hp);
         let final = Math.round(Math.min(40, Math.round(lost * 0.4)) * dmgMult * multiplier) + attackBonus;
         const result = applyDamageToMonster(final, { cardName: card.name });
-        if (result.hit) log(`${prefix}🩹 <b>破釜沉舟</b>：已損失 ${lost} 生命，造成 ${result.finalDmg} 點傷害！`, "dmg");
+        if (result.hit) log(`${prefix}🩹 <b>破釜沉舟</b>：已損失 ${lost} 點生命，造成 ${result.finalDmg} 點傷害！`, "dmg");
         maybeThunderParalysis(prefix);
         return;
     }
@@ -1436,7 +1562,7 @@ function handleAttackCard(card, prefix, dmgMult) {
         if (S.monster.markedTurns > 0) count++;
         let final = Math.round((12 + count * 6) * dmgMult * multiplier) + attackBonus;
         const result = applyDamageToMonster(final, { cardName: card.name });
-        if (result.hit) log(`${prefix}🌀 <b>魔能侵蝕</b>：魔王有 ${count} 個異常，造成 ${result.finalDmg} 點傷害！`, "dmg");
+        if (result.hit) log(`${prefix}🌀 <b>魔能侵蝕</b>：魔王有 ${count} 個異常狀態，造成 ${result.finalDmg} 點傷害！`, "dmg");
         maybeThunderParalysis(prefix);
         return;
     }
@@ -1455,7 +1581,6 @@ function handleAttackCard(card, prefix, dmgMult) {
         return;
     }
 
-    // 通用攻擊
     let isCrit = false;
     if (card.subType === "crit") {
         isCrit = Math.random() < 0.4;
@@ -1463,7 +1588,7 @@ function handleAttackCard(card, prefix, dmgMult) {
     }
     if (S.player.atkBuff > 0) {
         dmg += S.player.atkBuff;
-        log(`⚗️ <b>血之狂熱</b>：攻擊 +${S.player.atkBuff} 點！`, "crit");
+        log(`⚗️ <b>血之狂熱</b>：攻擊傷害 +${S.player.atkBuff} 點！`, "crit");
         S.player.atkBuff = 0;
     }
     if (S.player.permanentAtkBuff > 0) dmg += S.player.permanentAtkBuff;
@@ -1480,7 +1605,7 @@ function handleAttackCard(card, prefix, dmgMult) {
         const result = applyDamageToMonster(total, { cardName: card.name });
         if (result.hit) {
             if (hasDebuff) {
-                log(`${prefix}💣 <b>元素引爆成功！</b>追加 22 點，共造成 ${result.finalDmg} 點傷害！`, "crit");
+                log(`${prefix}💣 <b>元素引爆成功！</b>追加 22 點引爆傷害，共造成 ${result.finalDmg} 點傷害！`, "crit");
                 S.monster.poison = 0;
                 S.monster.weakTurns = 0;
             } else {
@@ -1521,17 +1646,17 @@ function handleAttackCard(card, prefix, dmgMult) {
         } else if (card.subType === "poison") {
             const extra = S.hero.trait === "shadow" ? 1 : 0;
             S.monster.poison = 3 + extra;
-            log(`${prefix}🗡️ 劇毒命中：魔王中毒 ${S.monster.poison} 回合（每回合 -6 生命）！`, "status");
+            log(`${prefix}🗡️ 劇毒命中：魔王中毒 ${S.monster.poison} 回合（每回合無視護盾扣除 6 點生命）！`, "status");
         } else if (card.subType === "frost") {
             S.monster.weakTurns = 1;
-            log(`${prefix}❄️ 寒冰凍結：魔王傷害 -40% 持續 1 回合！`, "status");
+            log(`${prefix}❄️ 寒冰凍結：魔王攻擊傷害 -40%（持續 1 回合）！`, "status");
         }
         maybeThunderParalysis(prefix);
     }
 
     if (card.subType === "recoil") {
         S.player.hp -= card.selfCost;
-        log(`${prefix}💥 捨身代價：承受 ${card.selfCost} 點反噬！`, "dmg");
+        log(`${prefix}💥 捨身代價：自身承受 ${card.selfCost} 點反噬傷害！`, "dmg");
     }
 }
 
@@ -1545,13 +1670,13 @@ function maybeThunderParalysis(prefix) {
 function handleHealCard(card, prefix) {
     if (card.subType === "regen") {
         S.player.regenTurns = 3;
-        log(`${prefix}🌿 <b>${card.name}</b>：3 回合泉源祝福（每回合回復 7 生命，不可疊加）！`, "heal");
+        log(`${prefix}🌿 <b>自然泉源</b>：獲得 3 回合【泉源祝福】（每回合回復 7 點生命，不可疊加）！`, "heal");
     }
     else if (card.subType === "reverse_heal") {
         const lost = Math.max(0, S.player.maxHp - S.player.hp);
         const base = Math.min(25, Math.round(lost * 0.4));
         const healed = healPlayer(base);
-        log(`${prefix}♻️ <b>逆轉治癒</b>：已損失 ${lost} 生命，回復 ${healed} 點！`, "heal");
+        log(`${prefix}♻️ <b>逆轉治癒</b>：已損失 ${lost} 點生命，回復 ${healed} 點生命！`, "heal");
     }
     else if (card.subType === "low_hp_shield") {
         const isLow = S.player.hp < S.player.maxHp / 2;
@@ -1569,7 +1694,7 @@ function handleHealCard(card, prefix) {
         const add = Math.round(15 * 1.1);
         S.player.shield += add;
         S.player.turtloCounter = true;
-        log(`${prefix}🦔 <b>反震裝甲</b>：獲得 ${add} 點護盾，本回合被攻擊時反彈 50%！`, "shield");
+        log(`${prefix}🦔 <b>反震裝甲</b>：獲得 ${add} 點護盾，本回合被攻擊時反彈 50% 傷害！`, "shield");
     }
     else if (card.subType === "turtlo_wall") {
         const add = Math.round(20 * 1.1);
@@ -1578,7 +1703,7 @@ function handleHealCard(card, prefix) {
     }
     else {
         const healed = healPlayer(card.value);
-        log(`${prefix}💚 <b>${card.name}</b> 回復 ${healed} 點生命！`, "heal");
+        log(`${prefix}💚 <b>${card.name}</b>：回復 ${healed} 點生命！`, "heal");
         if (card.subType === "shield") {
             const add = S.hero.trait === "turtlo" ? Math.round(card.shieldVal * 1.1) : card.shieldVal;
             S.player.shield += add;
@@ -1593,28 +1718,25 @@ function handleSpecialCard(card, prefix) {
     if (card.subType === "sacrifice") {
         st.player.hp -= card.costHP;
         st.player.atkBuff += card.buffVal;
-        log(`${prefix}⚗️ <b>血之狂熱</b>：失去 ${card.costHP} 生命，下次攻擊 +${card.buffVal} 點（累積 +${st.player.atkBuff}）！`, "crit");
+        log(`${prefix}⚗️ <b>血之狂熱</b>：失去 ${card.costHP} 點生命，下次攻擊傷害 +${card.buffVal} 點（累積 +${st.player.atkBuff} 點）！`, "crit");
     }
     else if (card.subType === "skip") {
-        // 新禁錮：跳過 1 次行動 + 2 回合封印專屬特質
         st.monster.skipTurns += 1;
         st.monster.sealedTurns = 2;
-
-        // 給每個魔王不同的封印訊息
         const sealDesc = {
             standard: "【深淵咆哮】",
-            undying: "【不滅死魂】（死亡時將無法復活）",
+            undying: "【不滅死魂】",
             evasion: "【鬼魅閃避】",
             vampire: "【嗜血吸取】",
             guardian: "【鋼鐵反震】"
         };
-        log(`${prefix}🔒🔒 <b>【禁錮咒語】</b>魔王跳過 1 次行動！接下來 2 回合專屬特質 ${sealDesc[st.boss.trait] || "特質"} 失效！`, "seal");
+        log(`${prefix}🔒🔒 <b>【禁錮咒語】</b>魔王跳過 1 次行動！接下來 2 回合專屬特質 ${sealDesc[st.boss.trait]} 失效！`, "seal");
     }
     else if (card.subType === "reflect") {
         const add = st.hero.trait === "turtlo" ? 11 : 10;
         st.player.shield += add;
         st.player.reflectActive = true;
-        log(`${prefix}🪞 獲得 ${add} 點護盾，下回合反彈魔王穿透傷害的 50%！`, "shield");
+        log(`${prefix}🪞 <b>反彈護鏡</b>：獲得 ${add} 點護盾，下回合反彈魔王穿透傷害的 50%！`, "shield");
     }
     else if (card.subType === "shield_bash") {
         if (st.player.shield > 0) {
@@ -1623,9 +1745,9 @@ function handleSpecialCard(card, prefix) {
             const result = applyDamageToMonster(bashDmg, { cardName: card.name });
             if (result.hit) {
                 st.player.shield = 0;
-                log(`${prefix}💢 <b>盾擊破敵</b>：消耗 ${used} 護盾，造成 ${result.finalDmg} 點傷害！`, "crit");
+                log(`${prefix}💢 <b>盾擊破敵</b>：消耗 ${used} 點護盾，造成 ${result.finalDmg} 點傷害！`, "crit");
             } else {
-                log(`${prefix}💢 盾擊被閃避，護盾未消耗！`, "warn");
+                log(`${prefix}💢 盾擊被閃避，護盾未被消耗！`, "warn");
             }
         } else {
             log(`${prefix}💢 盾擊落空（無護盾）！`, "warn");
@@ -1637,7 +1759,7 @@ function handleSpecialCard(card, prefix) {
             const capGain = Math.max(0, Math.min(10, 50 - (st.player.maxHp - st.hero.hp)));
             st.player.maxHp += capGain;
             const healed = healPlayer(18);
-            log(`${prefix}🎰 <b>命運之輪：生機庇護！</b>回復 ${healed} 點生命，生命上限 +${capGain}（現為 ${st.player.maxHp}）！`, "heal");
+            log(`${prefix}🎰 <b>命運之輪：生機庇護！</b>回復 ${healed} 點生命，生命上限 +${capGain} 點（現為 ${st.player.maxHp} 點）！`, "heal");
         } else if (roll < 0.66) {
             const add = st.hero.trait === "turtlo" ? 20 : 18;
             st.player.shield += add;
@@ -1652,35 +1774,35 @@ function handleSpecialCard(card, prefix) {
         if (stolen > 0) {
             st.monster.shield -= stolen;
             st.player.shield += stolen;
-            log(`${prefix}🎭 <b>偷天換日</b>：偷取 ${stolen} 點護盾（魔王剩 ${st.monster.shield}，玩家 ${st.player.shield}）！`, "crit");
+            log(`${prefix}🎭 <b>偷天換日</b>：偷取魔王 ${stolen} 點護盾（魔王剩 ${st.monster.shield} 點，玩家現有 ${st.player.shield} 點）！`, "crit");
         } else {
             st.player.shield += 5;
-            log(`${prefix}🎭 <b>偷天換日</b>：魔王無護盾，獲得 5 點護盾！`, "shield");
+            log(`${prefix}🎭 <b>偷天換日</b>：魔王無護盾，改為獲得 5 點護盾！`, "shield");
         }
     }
     else if (card.subType === "mark") {
         st.monster.markedTurns = 3;
-        log(`${prefix}🎯🎯 <b>【弱點標記】</b>魔王 3 回合內受到的玩家攻擊 +25%！`, "mark");
+        log(`${prefix}🎯🎯 <b>【弱點標記】</b>魔王被標記 3 回合，期間玩家攻擊傷害 +25%！`, "mark");
     }
     else if (card.subType === "dark_contract") {
         if (st.player.darkContractsUsed >= 2) {
-            log(`${prefix}📜 <b>黑暗契約</b>：已達上限（永久 +12），無法再使用！`, "warn");
+            log(`${prefix}📜 <b>黑暗契約</b>：已達上限（永久 +12 點攻擊），無法再使用！`, "warn");
         } else {
             st.player.hp -= 12;
             st.player.permanentAtkBuff += 6;
             st.player.darkContractsUsed++;
-            log(`${prefix}📜 <b>黑暗契約</b>：失去 12 生命，永久 +6 攻擊（累積 +${st.player.permanentAtkBuff}，使用 ${st.player.darkContractsUsed}/2 次）！`, "crit");
+            log(`${prefix}📜 <b>黑暗契約</b>：失去 12 點生命，永久 +6 點攻擊（累積 +${st.player.permanentAtkBuff} 點，使用 ${st.player.darkContractsUsed}/2 次）！`, "crit");
         }
     }
     else if (card.subType === "time_hourglass") {
         st.player.nextTurnBonus = 1;
-        log(`${prefix}⏳ <b>時光沙漏</b>：下回合起始行動 +1！`, "crit");
+        log(`${prefix}⏳ <b>時光沙漏</b>：下回合起始行動數 +1！`, "crit");
     }
     else if (card.subType === "turtlo_stand") {
         const add = Math.round(15 * 1.1);
         st.player.shield += add;
         st.player.damageReduction = 5;
-        log(`${prefix}⛰️ <b>不動如山</b>：獲得 ${add} 點護盾，本回合受到傷害 -5！`, "shield");
+        log(`${prefix}⛰️ <b>不動如山</b>：獲得 ${add} 點護盾，本回合受到傷害 -5 點！`, "shield");
     }
     else if (card.subType === "thunder_double") {
         st.player.nextAttackMultiplier = 2;
@@ -1693,7 +1815,7 @@ function handleSpecialCard(card, prefix) {
     else if (card.subType === "copycat_boost") {
         st.player.nextAttacksBonus = 10;
         st.player.nextAttacksCount = 2;
-        log(`${prefix}✨ <b>魔法增幅</b>：接下來 2 次攻擊 +10 點傷害！`, "crit");
+        log(`${prefix}✨ <b>魔法增幅</b>：本回合接下來 2 次攻擊傷害 +10 點！`, "crit");
     }
     else if (card.subType === "copycat_echo") {
         const randomCommon = commonCards[Math.floor(Math.random() * commonCards.length)];
@@ -1731,7 +1853,6 @@ function monsterTurn() {
             continue;
         }
 
-        // 深淵霸主咆哮（受封印影響）
         if (S.boss.trait === "standard" && S.turn % 3 === 0 && !hasRoared) {
             if (S.monster.sealedTurns > 0) {
                 log(`🔒🔒 <b>禁錮封印：深淵咆哮被封印，無法釋放！</b>`, "seal");
@@ -1768,8 +1889,8 @@ function executeRoar() {
     if (!S.isTutorial) S.player.suppressNext = true;
 
     const detail = result.shieldAbsorbed > 0
-        ? `（護盾吸收 ${result.shieldAbsorbed}，實際 ${result.hpLost}）`
-        : `（實際 ${result.hpLost}）`;
+        ? `（護盾吸收 ${result.shieldAbsorbed} 點，實際 ${result.hpLost} 點）`
+        : `（實際 ${result.hpLost} 點）`;
     log(`📢💥 <b>【深淵咆哮】</b>造成 ${roarDmg} 點傷害${detail}${S.isTutorial ? "" : "，並施加【壓制】"}！`, "crit");
 
     if (S.player.reflectActive && result.hpLost > 0) {
@@ -1785,8 +1906,8 @@ function executeMonsterNormalAction() {
         if (S.mod.effect === "berserk") rawDmg = Math.round(rawDmg * 1.2);
         const result = dealDamageToPlayer(rawDmg, "attack");
         const detail = result.shieldAbsorbed > 0
-            ? `（護盾吸收 ${result.shieldAbsorbed}，實際 ${result.hpLost}）`
-            : `（實際 ${result.hpLost}）`;
+            ? `（護盾吸收 ${result.shieldAbsorbed} 點，實際 ${result.hpLost} 點）`
+            : `（實際 ${result.hpLost} 點）`;
         log(`⚠️ 魔王發動攻擊，造成 ${rawDmg} 點傷害${detail}。`, "dmg");
         return;
     }
@@ -1808,7 +1929,7 @@ function executeMonsterNormalAction() {
     }
     if (S.monster.atkBuffTurns <= 0 && Math.random() < 0.3) {
         S.monster.atkBuffTurns = 2;
-        log(`🔥 <b>魔王發動「暗影狂暴」！接下來 2 次攻擊 +8 點！</b>`, "crit");
+        log(`🔥 <b>魔王發動「暗影狂暴」！接下來 2 次攻擊傷害 +8 點！</b>`, "crit");
         return;
     }
 
@@ -1818,7 +1939,7 @@ function executeMonsterNormalAction() {
         rawDmg += 8;
         S.monster.atkBuffTurns--;
         if (Math.random() < 0.3) isBreakArmor = true;
-        log(`💥 魔王帶有【暗影狂暴】加成，本次攻擊 +8 點！`, "warn");
+        log(`💥 魔王帶有【暗影狂暴】加成，本次攻擊傷害 +8 點！`, "warn");
     }
     if (S.mod.effect === "berserk") rawDmg = Math.round(rawDmg * 1.2);
     if (S.difficulty === "easy") rawDmg = Math.round(rawDmg * 0.8);
@@ -1826,7 +1947,7 @@ function executeMonsterNormalAction() {
     if (S.monster.weakTurns > 0) {
         rawDmg = Math.round(rawDmg * 0.6);
         S.monster.weakTurns--;
-        log(`❄️ 魔王受【冰霜虛弱】影響，傷害 -40%！`, "status");
+        log(`❄️ 魔王受【冰霜虛弱】影響，攻擊傷害 -40%！`, "status");
     }
     if (isBreakArmor && S.player.shield > 0) {
         const destroyed = Math.floor(S.player.shield * 0.5);
@@ -1836,11 +1957,10 @@ function executeMonsterNormalAction() {
 
     const result = dealDamageToPlayer(rawDmg, "attack");
     const detail = result.shieldAbsorbed > 0
-        ? `（護盾吸收 ${result.shieldAbsorbed}，實際 ${result.hpLost}）`
-        : `（實際 ${result.hpLost}）`;
+        ? `（護盾吸收 ${result.shieldAbsorbed} 點，實際 ${result.hpLost} 點）`
+        : `（實際 ${result.hpLost} 點）`;
     log(`⚠️ 魔王發動猛擊，造成 ${rawDmg} 點傷害${detail}。`, "dmg");
 
-    // 吸血鬼吸血（受封印影響）
     if (S.boss.trait === "vampire" && result.hpLost > 0) {
         if (S.monster.sealedTurns > 0) {
             log(`🔒🔒 <b>禁錮封印：吸血鬼無法吸血！</b>`, "seal");
@@ -1861,7 +1981,6 @@ function executeMonsterNormalAction() {
    二十二、勝負判定
    ============================================================ */
 function checkWinLoss() {
-    // 巴洛克復活（受封印影響）
     if (S.boss.trait === "undying" && S.monster.hp <= 0 && !S.bossRevived) {
         if (S.monster.sealedTurns > 0) {
             S.monster.hp = 0;
@@ -1876,7 +1995,7 @@ function checkWinLoss() {
         S.bossRevived = true;
         S.monster.hp = Math.min(35, S.monster.maxHp);
         S.monster.atkBuffTurns = 99;
-        log(`☠️⚡ <b>【不滅之魂】</b>巴洛克生命歸零，但原地復活！恢復至 ${S.monster.hp} 點並進入永久狂暴！`, "crit");
+        log(`☠️⚡ <b>【不滅死魂】</b>巴洛克生命歸零，但原地復活！恢復至 ${S.monster.hp} 點生命並進入永久狂暴！`, "crit");
         updateStatus();
         return false;
     }
@@ -1950,7 +2069,7 @@ function updateStatus() {
         S.player.regenTurns > 0 && `<span class="status-icon regen">🌿 ${S.player.regenTurns}T</span>`,
         S.player.suppressNext && `<span class="status-icon warn">⚠️ 壓制</span>`,
         S.player.nextTurnBonus > 0 && `<span class="status-icon warn">⏳ +${S.player.nextTurnBonus}</span>`,
-        S.player.nextAttackMultiplier > 1 && `<span class="status-icon warn">×${S.player.nextAttackMultiplier} 攻擊</span>`,
+        S.player.nextAttackMultiplier > 1 && `<span class="status-icon warn">×${S.player.nextAttackMultiplier}</span>`,
         S.player.nextAttacksCount > 0 && `<span class="status-icon atk">✨ +${S.player.nextAttacksBonus} (${S.player.nextAttacksCount})</span>`,
         S.player.turtloCounter && `<span class="status-icon shield">🦔 反震</span>`,
         S.player.damageReduction > 0 && `<span class="status-icon shield">⛰️ -${S.player.damageReduction}</span>`,
@@ -2028,7 +2147,7 @@ function renderCards() {
 }
 
 /* ============================================================
-   二十四、卡牌數值 / 描述
+   二十四、卡牌數值 / 描述（統一文本）
    ============================================================ */
 function cardValueText(card) {
     const mod = S ? S.mod.effect : null;
@@ -2065,10 +2184,10 @@ function cardValueText(card) {
         }
         if (card.subType === "pierce") return `${D(card.value)} 點穿透`;
         if (card.subType === "shadow_burst") {
-            if (!S) return "×8/層";
+            if (!S) return "每層 8 點";
             return `${S.monster.poison * 8} 點（${S.monster.poison} 層）`;
         }
-        if (card.subType === "shadow_dead") return `${D(4)} 點+毒`;
+        if (card.subType === "shadow_dead") return `${D(4)} 點 + 中毒`;
         if (card.subType === "ignis_rage") {
             if (!S) return "20 / 30 點";
             return S.player.hp < S.player.maxHp * 0.5 ? `${D(30)} 點（低血）` : `${D(20)} 點`;
@@ -2082,44 +2201,44 @@ function cardValueText(card) {
         return `${D(card.value)} 點`;
     }
     if (card.type === "heal") {
-        if (card.subType === "regen") return `每回合 ${H(7)} 點`;
-        if (card.subType === "shield") return `回 ${H(card.value)} / 盾 ${Sh(card.shieldVal)}`;
+        if (card.subType === "regen") return `每回合 ${H(7)} 點生命`;
+        if (card.subType === "shield") return `回復 ${H(card.value)} / 護盾 ${Sh(card.shieldVal)}`;
         if (card.subType === "reverse_heal") {
             const lost = S ? Math.max(0, S.player.maxHp - S.player.hp) : 0;
-            return `回 ${Math.min(25, Math.round(lost * 0.4 * healMult))} 點`;
+            return `回復 ${Math.min(25, Math.round(lost * 0.4 * healMult))} 點`;
         }
         if (card.subType === "low_hp_shield") {
-            if (!S) return `12 / 20 盾`;
+            if (!S) return `12 / 20 點護盾`;
             const isLow = S.player.hp < S.player.maxHp / 2;
-            return `${Sh(isLow ? 20 : 12)} 盾`;
+            return `${Sh(isLow ? 20 : 12)} 點護盾`;
         }
         if (card.subType === "ignis_phoenix") {
             if (!S) return "15 / 30 點";
-            return S.player.hp < S.player.maxHp * 0.3 ? `回 ${H(30)}（低血）` : `回 ${H(15)} 點`;
+            return S.player.hp < S.player.maxHp * 0.3 ? `回復 ${H(30)}（低血）` : `回復 ${H(15)} 點`;
         }
-        if (card.subType === "turtlo_counter") return `${Sh(15)} 盾`;
-        if (card.subType === "turtlo_wall") return `${Sh(20)} 盾`;
-        return `回 ${H(card.value)} 點`;
+        if (card.subType === "turtlo_counter") return `${Sh(15)} 點護盾`;
+        if (card.subType === "turtlo_wall") return `${Sh(20)} 點護盾`;
+        return `回復 ${H(card.value)} 點`;
     }
-    if (card.subType === "sacrifice") return `+${card.buffVal} 攻`;
-    if (card.subType === "shield_bash") return `×1.5 傷害`;
-    if (card.subType === "reflect") return `${Sh(10)} 盾`;
+    if (card.subType === "sacrifice") return `+${card.buffVal} 點攻擊`;
+    if (card.subType === "shield_bash") return `×1.5 點傷害`;
+    if (card.subType === "reflect") return `${Sh(10)} 點護盾`;
     if (card.subType === "skip") return `跳 1 次 + 封印 2T`;
     if (card.subType === "steal_shield") {
-        if (!S) return "偷 50%";
-        return S.monster.shield > 0 ? `偷 ${Math.floor(S.monster.shield * 0.5)} 盾` : `+5 盾`;
+        if (!S) return "偷 50% 護盾";
+        return S.monster.shield > 0 ? `偷 ${Math.floor(S.monster.shield * 0.5)} 點護盾` : `+5 點護盾`;
     }
-    if (card.subType === "mark") return `+25% 3T`;
+    if (card.subType === "mark") return `+25% 3 回合`;
     if (card.subType === "dark_contract") {
-        if (!S) return "+6 攻";
-        return S.player.darkContractsUsed >= 2 ? "已達上限" : "+6 攻";
+        if (!S) return "+6 點攻擊";
+        return S.player.darkContractsUsed >= 2 ? "已達上限" : "+6 點攻擊";
     }
-    if (card.subType === "time_hourglass") return `+1 行動`;
-    if (card.subType === "turtlo_stand") return `${Sh(15)} 盾+減5`;
+    if (card.subType === "time_hourglass") return `+1 次行動`;
+    if (card.subType === "turtlo_stand") return `${Sh(15)} 點護盾 + 減 5`;
     if (card.subType === "thunder_double") return `攻擊 ×2`;
-    if (card.subType === "copycat_draw") return `抽 1 張`;
-    if (card.subType === "copycat_boost") return `2 次 +10`;
-    if (card.subType === "copycat_echo") return `抽 1 通用`;
+    if (card.subType === "copycat_draw") return `抽 1 張牌`;
+    if (card.subType === "copycat_boost") return `2 次 +10 點`;
+    if (card.subType === "copycat_echo") return `抽 1 張通用卡`;
     return "戰術";
 }
 
@@ -2130,109 +2249,109 @@ function getCardDesc(card) {
     const markMult = (S && S.monster.markedTurns > 0) ? 1.25 : 1.0;
     const markTag = (S && S.monster.markedTurns > 0) ? "（🎯 +25%）" : "";
     const D = (n) => Math.round(Math.round(n * dmgMult) * markMult);
-    const dmgTag = mod === "berserk" ? "（🔥+20%）" : "";
+    const dmgTag = mod === "berserk" ? "（🔥 +20%）" : "";
     const healMult = mod === "weak_heal" ? 0.6 : 1.0;
     const H = (n) => Math.round(n * healMult);
-    const healTag = mod === "weak_heal" ? "（💧-40%）" : "";
+    const healTag = mod === "weak_heal" ? "（💧 -40%）" : "";
     const Sh = (n) => hero === "turtlo" ? Math.round(n * 1.1) : n;
 
     switch (card.subType) {
         case "normal": return `造成 ${D(card.value)} 點傷害${dmgTag}${markTag}。`;
-        case "lifesteal": return `造成 ${D(card.value)} 點傷害${dmgTag}${markTag}，回復 ${H(7)} 點生命${healTag}。`;
-        case "crit": return `40% 機率造成 ${D(25)} 點，否則 ${D(12)} 點${dmgTag}${markTag}。`;
+        case "lifesteal": return `造成 ${D(card.value)} 點傷害${dmgTag}${markTag}，並回復 ${H(7)} 點生命${healTag}。`;
+        case "crit": return `40% 機率造成 ${D(25)} 點傷害，否則造成 ${D(12)} 點傷害${dmgTag}${markTag}。`;
         case "poison": {
             const turns = hero === "shadow" ? 4 : 3;
-            const tag = hero === "shadow" ? "（影爪貓 +1T）" : "";
-            return `造成 ${D(card.value)} 點傷害${markTag}，中毒 ${turns} 回合（每回合 -6）${tag}。`;
+            const tag = hero === "shadow" ? "（影爪貓 +1 回合）" : "";
+            return `造成 ${D(card.value)} 點傷害${markTag}，使魔王中毒 ${turns} 回合（每回合無視護盾扣除 6 點生命）${tag}。`;
         }
         case "recoil": return `失去 ${card.selfCost} 點生命，造成 ${D(card.value)} 點傷害${dmgTag}${markTag}。`;
-        case "frost": return `造成 ${D(card.value)} 點傷害${markTag}，魔王傷害 -40% 持續 1T。`;
-        case "pierce": return `造成 ${D(card.value)} 點穿透傷害${dmgTag}${markTag}（無視護盾）。`;
+        case "frost": return `造成 ${D(card.value)} 點傷害${markTag}，使魔王攻擊傷害 -40%（持續 1 回合）。`;
+        case "pierce": return `造成 ${D(card.value)} 點穿透傷害${dmgTag}${markTag}（無視魔王護盾）。`;
         case "detonate": {
-            if (!S) return "造成 10 點；有異常時 +22。";
+            if (!S) return "造成 10 點傷害；魔王有異常時額外 +22 點。";
             const has = S.monster.poison > 0 || S.monster.weakTurns > 0;
-            if (has) return `造成 ${D(32)} 點傷害${markTag}（引爆 +22，清除異常）。`;
-            return `造成 ${D(10)} 點傷害${markTag}（無異常，不引爆）。`;
+            if (has) return `造成 ${D(32)} 點傷害${markTag}（引爆 +22 點，並清除異常狀態）。`;
+            return `造成 ${D(10)} 點傷害${markTag}（魔王無異常，不觸發引爆）。`;
         }
         case "desperate": {
             const lost = S ? Math.max(0, S.player.maxHp - S.player.hp) : 0;
             const dmg = Math.round(Math.min(40, Math.round(lost * 0.4)) * dmgMult * markMult);
-            return `造成 ${dmg} 點傷害${markTag}（已損 ${lost} × 0.4，上限 40）。`;
+            return `造成 ${dmg} 點傷害${markTag}（已損失 ${lost} 點生命 × 0.4，上限 40 點）。`;
         }
         case "erosion": {
-            if (!S) return "12~30 點（每異常 +6）。";
+            if (!S) return "造成 12 點傷害，每異常 +6 點（上限 +18 點）。";
             let c = 0;
             if (S.monster.poison > 0) c++;
             if (S.monster.weakTurns > 0) c++;
             if (S.monster.markedTurns > 0) c++;
-            return `造成 ${D(12 + c * 6)} 點傷害${markTag}（${c} 個異常）。`;
+            return `造成 ${D(12 + c * 6)} 點傷害${markTag}（魔王有 ${c} 個異常狀態）。`;
         }
         case "finisher": {
-            if (!S) return "10 / 30 穿透（<30%）。";
+            if (!S) return "造成 10 點傷害；魔王生命 < 30% 時改為 30 點穿透傷害。";
             const isLow = S.monster.hp < S.monster.maxHp * 0.3;
             if (isLow) return `造成 ${D(30)} 點穿透傷害${markTag}（斬殺觸發）。`;
-            return `造成 ${D(10)} 點傷害${markTag}（<30% 時變 30 穿透）。`;
+            return `造成 ${D(10)} 點傷害${markTag}（魔王生命 < 30% 時變 30 點穿透）。`;
         }
         case "burst": return `回復 ${H(card.value)} 點生命${healTag}。`;
-        case "shield": return `回復 ${H(card.value)} 點生命${healTag}，獲得 ${Sh(card.shieldVal)} 護盾。`;
-        case "regen": return `3 回合內每回合回復 ${H(7)} 點${healTag}。不可疊加。`;
+        case "shield": return `回復 ${H(card.value)} 點生命${healTag}，並獲得 ${Sh(card.shieldVal)} 點護盾。`;
+        case "regen": return `獲得 3 回合【泉源祝福】，每回合回復 ${H(7)} 點生命${healTag}。不可疊加。`;
         case "reverse_heal": {
             const lost = S ? Math.max(0, S.player.maxHp - S.player.hp) : 0;
-            return `回復 ${Math.min(25, Math.round(lost * 0.4 * healMult))} 點${healTag}（已損 ${lost} × 0.4，上限 25）。`;
+            return `回復 ${Math.min(25, Math.round(lost * 0.4 * healMult))} 點生命${healTag}（已損失 ${lost} 點生命 × 0.4，上限 25 點）。`;
         }
         case "low_hp_shield": {
-            if (!S) return `12 盾（<50% 時 20 盾）。`;
+            if (!S) return `獲得 12 點護盾；生命 < 50% 時改為 20 點。`;
             const isLow = S.player.hp < S.player.maxHp / 2;
-            return `獲得 ${Sh(isLow ? 20 : 12)} 點護盾${isLow ? "（低血觸發）" : "（<50% 時 20）"}。`;
+            return `獲得 ${Sh(isLow ? 20 : 12)} 點護盾${isLow ? "（低血觸發 20 點）" : "（生命 < 50% 時 20 點）"}。`;
         }
-        case "sacrifice": return `失去 ${card.costHP} 生命，下次攻擊 +${card.buffVal} 點（可疊加）。`;
-        case "skip": return `魔王跳過 1 次行動，2 回合內專屬特質失效（深淵咆哮 / 復活 / 閃避 / 吸血 / 反傷）。`;
-        case "reflect": return `獲得 ${Sh(10)} 護盾，下回合反彈魔王穿透傷害的 50%。`;
-        case "roulette": return `隨機：回 ${H(18)} 且上限+10 / 18 護盾 / 22 點穿透${markTag}。`;
-        case "shield_bash": return `消耗全部護盾，每點造成 1.5 點傷害${markTag}。`;
-        case "steal_shield": return `偷魔王 50% 護盾；若無則得 5 點。不觸發反震。`;
-        case "mark": return `魔王 3 回合內受到玩家攻擊 +25%。`;
-        case "dark_contract": return `失去 12 生命，永久 +6 攻擊（上限 +12）。`;
-        case "time_hourglass": return `下回合起始行動 +1。`;
+        case "sacrifice": return `失去 ${card.costHP} 點生命，下次攻擊傷害 +${card.buffVal} 點（可疊加）。`;
+        case "skip": return `跳過魔王 1 次行動；接下來 2 回合內魔王的專屬特質失效。`;
+        case "reflect": return `獲得 ${Sh(10)} 點護盾，下回合反彈魔王穿透傷害的 50%。`;
+        case "roulette": return `隨機三選一：回復 ${H(18)} 點生命且生命上限 +10 / 獲得 18 點護盾 / 造成 22 點穿透傷害${markTag}。`;
+        case "shield_bash": return `消耗全部護盾，每 1 點護盾造成 1.5 點傷害${markTag}。`;
+        case "steal_shield": return `偷取魔王 50% 護盾；若魔王無護盾則獲得 5 點護盾。不觸發鋼鐵反震。`;
+        case "mark": return `標記魔王 3 回合，期間魔王受到的玩家攻擊傷害 +25%。`;
+        case "dark_contract": return `失去 12 點生命，永久 +6 點攻擊（上限 +12 點）。`;
+        case "time_hourglass": return `下回合起始行動數 +1。`;
         case "shield_break": {
-            if (!S) return "碎盾；若無盾造成 8 點。";
+            if (!S) return "打碎魔王全部護盾；若無護盾則造成 8 點傷害。";
             return S.monster.shield > 0 ? `打碎魔王 ${S.monster.shield} 點護盾。` : `魔王無護盾，造成 ${D(8)} 點傷害${markTag}。`;
         }
         case "ignis_rage": {
-            if (!S) return "失去 8 生命，20 傷；<50% 時 30 傷。";
+            if (!S) return "失去 8 點生命，造成 20 點傷害；生命 < 50% 時 30 點。";
             const isLow = S.player.hp < S.player.maxHp * 0.5;
-            return `失去 8 生命，造成 ${D(isLow ? 30 : 20)} 點傷害${markTag}${isLow ? "（低血 +10）" : ""}。`;
+            return `失去 8 點生命，造成 ${D(isLow ? 30 : 20)} 點傷害${markTag}${isLow ? "（低血觸發 +10！）" : ""}。`;
         }
         case "ignis_phoenix": {
-            if (!S) return "回 15；<30% 時 30。";
+            if (!S) return "回復 15 點生命；生命 < 30% 時改為 30 點。";
             const isLow = S.player.hp < S.player.maxHp * 0.3;
             return `回復 ${H(isLow ? 30 : 15)} 點生命${healTag}${isLow ? "（低血觸發）" : ""}。`;
         }
-        case "ignis_last": return `失去 10 生命，造成 ${D(25)} 點穿透傷害${markTag}。`;
-        case "turtlo_counter": return `獲得 ${Sh(15)} 護盾，本回合被攻擊反彈 50%。`;
+        case "ignis_last": return `失去 10 點生命，造成 ${D(25)} 點穿透傷害${markTag}。`;
+        case "turtlo_counter": return `獲得 ${Sh(15)} 點護盾，本回合被攻擊時反彈 50% 傷害給魔王。`;
         case "turtlo_wall": return `獲得 ${Sh(20)} 點護盾。`;
-        case "turtlo_stand": return `獲得 ${Sh(15)} 護盾，本回合受到傷害 -5 點。`;
+        case "turtlo_stand": return `獲得 ${Sh(15)} 點護盾，本回合受到的所有傷害 -5 點。`;
         case "shadow_poison": {
             const turns = hero === "shadow" ? 4 : 3;
-            return `造成 ${D(6)} 點傷害${markTag}，中毒 ${turns} 回合（每回合 -6）。`;
+            return `造成 ${D(6)} 點傷害${markTag}，使魔王中毒 ${turns} 回合（每回合無視護盾扣除 6 點生命）。`;
         }
         case "shadow_burst": {
-            if (!S) return "每層中毒 8 傷並清除。";
+            if (!S) return "每層中毒造成 8 點傷害並清除。";
             return S.monster.poison > 0 ? `引爆 ${S.monster.poison} 層中毒，造成 ${S.monster.poison * 8} 點傷害${markTag}。` : `魔王無中毒，引爆失敗。`;
         }
         case "shadow_dead": {
             const turns = hero === "shadow" ? 6 : 5;
-            return `造成 ${D(4)} 點穿透傷害${markTag}，中毒 ${turns} 回合（每回合 -6）。`;
+            return `造成 ${D(4)} 點穿透傷害${markTag}，使魔王中毒 ${turns} 回合（每回合無視護盾扣除 6 點生命）。`;
         }
-        case "thunder_strike": return `造成 ${D(12)} 點傷害${markTag}，35% 麻痺。`;
+        case "thunder_strike": return `造成 ${D(12)} 點傷害${markTag}，35% 機率使魔王跳過 1 次行動。`;
         case "thunder_double": return `本回合下次攻擊傷害 ×2。`;
         case "thunder_thunder": {
-            if (!S) return "15 傷；麻痺時 35 傷。";
+            if (!S) return "造成 15 點傷害；魔王麻痺時 35 點。";
             const p = S.monster.skipTurns > 0;
-            return p ? `造成 ${D(35)} 點傷害${markTag}（麻痺 +20！）。` : `造成 ${D(15)} 點傷害${markTag}（麻痺時 +20）。`;
+            return p ? `造成 ${D(35)} 點傷害${markTag}（麻痺觸發 +20！）。` : `造成 ${D(15)} 點傷害${markTag}（麻痺時 +20 點）。`;
         }
         case "copycat_draw": return `抽 1 張牌。`;
-        case "copycat_boost": return `本回合接下來 2 次攻擊 +10 點傷害。`;
+        case "copycat_boost": return `本回合接下來 2 次攻擊傷害 +10 點。`;
         case "copycat_echo": return `隨機獲得 1 張通用卡加入手牌。`;
         default: return card.desc;
     }
@@ -2253,36 +2372,32 @@ function updateTutorialUI() {
 }
 
 /* ============================================================
-   二十五、圖鑑
+   二十五、圖鑑（色彩分明）
    ============================================================ */
 function buildHeroUI() {
     document.getElementById("hero-body").innerHTML = heroes.map(h => {
         const hc = heroCards.filter(c => c.heroId === h.id);
         return `<div class="effect-item hero-item">
-            <b>${h.icon} ${h.name}</b>
-            <p><b>初始生命：</b>${h.hp}<br><b>天賦：</b>${h.desc}</p>
-            <p style="margin-top:6px;"><b>專屬卡：</b></p>
-            ${hc.map(c => `<p style="font-size:11px;">・<b>${c.name}</b>（${rarityName(c.rarity)}）：${c.desc}</p>`).join("")}
+            <div class="hero-name-big">${h.icon} ${h.name}</div>
+            <div class="talent-tag">初始生命 ${h.hp} · 英雄天賦</div>
+            <p style="margin-bottom:10px;">${h.desc}</p>
+            <div class="trait-tag" style="background:#f59e0b; color:#0f172a;">專屬卡（${hc.length} 張）</div>
+            ${hc.map(c => `<div class="card-in-compendium ${c.type}">
+                <span class="rarity-tag rarity-${c.rarity}">${rarityName(c.rarity)}</span>
+                <b>${c.name}</b>
+                <p>${c.desc}</p>
+            </div>`).join("")}
         </div>`;
     }).join("");
 }
 
 function buildBossUI() {
     document.getElementById("boss-body").innerHTML = bossTypes.map(b => {
-        // 專屬特質說明
-        const traitName = {
-            standard: "深淵咆哮（每 3 回合）",
-            undying: "不滅死魂（死亡復活）",
-            evasion: "鬼魅閃避（27% 機率）",
-            vampire: "嗜血吸取（穿透傷害 30%）",
-            guardian: "鋼鐵反震（破盾 12 真傷）"
-        }[b.trait];
         return `<div class="effect-item boss-item">
-            <b>${b.icon} ${b.name}</b>
-            <p><b>生命：</b>${b.hp}<br>
-            <b>專屬特質：</b>${traitName}<br>
-            <b>特性描述：</b>${b.desc}<br>
-            <b style="color:#fbbf24;">禁錮效果：</b>專屬特質失效 2 回合</p>
+            <div class="boss-name-big">${b.icon} ${b.name}</div>
+            <div class="trait-tag">專屬特質：${b.traitName}</div>
+            <p style="margin-bottom:6px;"><b style="color:#94a3b8;">基礎生命：</b>${b.hp} 點</p>
+            <p>${b.desc}</p>
         </div>`;
     }).join("");
 }
@@ -2332,21 +2447,14 @@ function updateCurrentBossUI() {
     const body = document.getElementById("current-boss-body");
     if (!S) { body.innerHTML = "<p>戰鬥尚未開始。</p>"; return; }
     const b = S.boss;
-    let extra = "";
-    if (b.trait === "standard") extra = `<div class="effect-item current-item"><b>📢 專屬特質：深淵咆哮</b><p>每 3 回合發動！造成 20 點傷害並施加壓制。<br><span style="color:#fbbf24;">禁錮可封鎖此特質 2 回合。</span></p></div>`;
-    if (b.trait === "guardian") extra = `<div class="effect-item current-item"><b>🏰 專屬特質：鋼鐵反震</b><p>護盾被非穿透攻擊擊破時，對玩家造成 12 點真實傷害（冷卻 2 回合）。<br><span style="color:#fbbf24;">禁錮可封鎖此特質 2 回合。</span></p></div>`;
-    if (b.trait === "undying") extra = `<div class="effect-item current-item"><b>☠️ 專屬特質：不滅死魂</b><p>首次被擊殺時原地復活（恢復 35 點生命）並進入永久狂暴。<br><span style="color:#fbbf24;">禁錮可封鎖此特質 2 回合——若在此期間擊殺，將永久死亡！</span></p></div>`;
-    if (b.trait === "evasion") extra = `<div class="effect-item current-item"><b>🥷 專屬特質：鬼魅閃避</b><p>27% 閃避率，完全躲開玩家的攻擊。<br><span style="color:#fbbf24;">禁錮可封鎖此特質 2 回合（期間 0% 閃避）。</span></p></div>`;
-    if (b.trait === "vampire") extra = `<div class="effect-item current-item"><b>🧛 專屬特質：嗜血吸取</b><p>造成穿透傷害時吸取 30% 生命值。<br><span style="color:#fbbf24;">禁錮可封鎖此特質 2 回合（期間無法吸血）。</span></p></div>`;
     body.innerHTML = `
-        ${extra}
         <div class="effect-item current-item">
-            <b>👹 當前魔王：${b.name}</b>
-            <p><b>基礎生命：</b>${S.monster.maxHp} 點（目前 ${S.monster.hp} 點）</p>
-            <p><b>核心特性：</b>${b.desc}</p>
+            <div class="boss-name-big" style="color:#fbbf24;">${b.icon} ${b.name}</div>
+            <div class="trait-tag">專屬特質：${b.traitName}</div>
+            <p style="margin-top:6px;"><b style="color:#94a3b8;">當前生命：</b>${S.monster.hp} / ${S.monster.maxHp} 點</p>
         </div>
-        <div class="effect-item boss-item"><b>⚔️ 招式 1：普通猛擊</b><p>造成 12 ~ 22 點隨機傷害。</p></div>
-        <div class="effect-item boss-item"><b>🔥 招式 2：暗影狂暴</b><p>接下來 2 次攻擊 +8 點，30% 機率破甲。</p></div>
+        <div class="effect-item boss-item"><b>⚔️ 招式 1：普通猛擊</b><p>造成 12 ~ 22 點傷害。</p></div>
+        <div class="effect-item boss-item"><b>🔥 招式 2：暗影狂暴</b><p>接下來 2 次攻擊傷害 +8 點，且攻擊時 30% 機率毀壞玩家 50% 護盾。</p></div>
         <div class="effect-item boss-item"><b>🛡️ 招式 3：暗黑護盾</b><p>獲得 15 點護盾。</p></div>
         <div class="effect-item boss-item"><b>🪄 招式 4：自我修復</b><p>回復 20 點生命。</p></div>
     `;
@@ -2365,4 +2473,4 @@ window.onload = () => {
 };
 </script>
 </body>
-</html>
+   </html>
