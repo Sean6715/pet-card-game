@@ -17,39 +17,68 @@
         border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         border: 1px solid #334155;
     }
-    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 10px; }
-    h1 { color: #38bdf8; margin: 0; font-size: 22px; }
-    .header-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
-    .btn-info {
-        color: white; border: none; padding: 6px 10px; border-radius: 6px;
-        cursor: pointer; font-weight: bold; font-size: 12px; transition: filter 0.2s;
+    h1 { color: #38bdf8; margin: 0 0 10px; font-size: 22px; text-align: center; }
+
+    /* ===== 功能列 ===== */
+    .action-bar {
+        display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+        padding: 10px 12px; margin-bottom: 12px;
+        background: #1a2538; border-radius: 10px; border: 1px solid #334155;
     }
-    .btn-info:hover { filter: brightness(1.15); }
-    .btn-hero { background: #10b981; }
+    .divider {
+        width: 1px; height: 24px; background: #475569;
+        margin: 0 4px; flex-shrink: 0;
+    }
+    .btn-info {
+        color: white; border: none; padding: 7px 12px; border-radius: 6px;
+        cursor: pointer; font-weight: bold; font-size: 12px;
+        transition: filter 0.2s, transform 0.1s;
+    }
+    .btn-info:hover { filter: brightness(1.15); transform: translateY(-1px); }
+    .btn-info:active { transform: translateY(0); }
     .btn-tutorial { background: #f59e0b; color: #0f172a; }
-    .btn-battlefield { background: #8b5cf6; }
-    .btn-boss { background: #ef4444; }
-    .btn-current-boss { background: #6366f1; }
     .btn-setup { background: #475569; }
+    .btn-current-boss { background: #6366f1; }
+    .btn-boss { background: #ef4444; }
+    .btn-battlefield { background: #8b5cf6; }
+    .btn-hero { background: #10b981; }
     .btn-info.btn-blue { background: #0ea5e9; }
 
-    .desc { color: #94a3b8; margin-bottom: 15px; font-size: 13px; }
+    .desc { color: #94a3b8; margin-bottom: 15px; font-size: 13px; text-align: center; }
+
+    /* ===== 教學引導條（加強版） ===== */
+    .tutorial-banner {
+        background: linear-gradient(135deg, #fbbf24, #f97316);
+        color: #0f172a; padding: 14px 18px; border-radius: 10px;
+        font-size: 14px; font-weight: bold;
+        margin-bottom: 15px; display: flex;
+        justify-content: space-between; align-items: center; gap: 12px;
+        box-shadow: 0 0 20px rgba(251, 191, 36, 0.6), 0 4px 15px rgba(239, 68, 68, 0.4);
+        border: 2px solid #fbbf24;
+        animation: tutorialGlow 2s ease-in-out infinite;
+    }
+    @keyframes tutorialGlow {
+        0%, 100% { box-shadow: 0 0 20px rgba(251, 191, 36, 0.6), 0 4px 15px rgba(239, 68, 68, 0.4); }
+        50% { box-shadow: 0 0 30px rgba(251, 191, 36, 0.95), 0 4px 20px rgba(239, 68, 68, 0.7); }
+    }
+    .tutorial-progress {
+        background: #0f172a; color: #fbbf24; padding: 4px 10px;
+        border-radius: 6px; font-size: 11px; white-space: nowrap; flex-shrink: 0;
+        letter-spacing: 0.5px;
+    }
+    #tutorial-text { flex: 1; }
+    .btn-skip-tutorial {
+        background: #0f172a; color: #fbbf24; border: 1px solid #fbbf24;
+        padding: 5px 10px; border-radius: 6px; cursor: pointer;
+        font-size: 11px; font-weight: bold; white-space: nowrap;
+    }
+    .btn-skip-tutorial:hover { background: #1e293b; }
+
+    /* ===== 狀態列 ===== */
     .battlefield-banner {
         background: #0284c7; color: white; padding: 10px; border-radius: 8px;
         text-align: center; font-weight: bold; font-size: 13px; margin-bottom: 12px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-    }
-    .tutorial-banner {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: #0f172a; padding: 12px; border-radius: 8px; font-size: 13px;
-        font-weight: bold; margin-bottom: 12px; display: flex;
-        justify-content: space-between; align-items: center; gap: 8px;
-        box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
-    }
-    .btn-skip-tutorial {
-        background: #0f172a; color: #f59e0b; border: 1px solid #f59e0b;
-        padding: 4px 10px; border-radius: 6px; cursor: pointer;
-        font-size: 11px; font-weight: bold; white-space: nowrap;
     }
     .status-panel {
         display: flex; justify-content: space-around; background: #334155;
@@ -73,6 +102,7 @@
     .status-icon.frost { background: #0e7490; }
     .status-icon.rage { background: #b91c1c; }
 
+    /* ===== 戰鬥日誌 ===== */
     .battle-log {
         background: #0f172a; border: 1px solid #475569; padding: 12px;
         border-radius: 8px; height: 180px; overflow-y: auto; font-size: 12px;
@@ -97,6 +127,7 @@
         border-radius: 0 4px 4px 0;
     }
 
+    /* ===== 卡牌 ===== */
     .card-container {
         display: flex; gap: 10px; justify-content: center;
         margin-bottom: 15px; flex-wrap: wrap; min-height: 190px;
@@ -137,6 +168,7 @@
     }
     .btn-reset:hover { background: #047857; }
 
+    /* ===== 彈窗 ===== */
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.78); display: none;
@@ -156,11 +188,28 @@
         background: #ef4444; color: white; border: none; padding: 5px 12px;
         border-radius: 6px; cursor: pointer; font-weight: bold;
     }
+
+    /* ===== 設定選單 ===== */
     .setup-group { margin-bottom: 14px; }
-    .setup-group label { display: block; font-size: 13px; color: #fbbf24; margin-bottom: 6px; font-weight: bold; }
+    .setup-group label {
+        display: flex; align-items: center; justify-content: space-between;
+        font-size: 13px; color: #fbbf24; margin-bottom: 6px; font-weight: bold;
+    }
     .setup-group select {
         width: 100%; padding: 9px; background: #0f172a; color: white;
         border: 1px solid #475569; border-radius: 8px; font-size: 13px;
+    }
+    .lock-btn {
+        background: #475569; border: none; color: #fbbf24;
+        padding: 4px 10px; border-radius: 6px; cursor: pointer;
+        font-size: 14px; transition: all 0.2s; line-height: 1;
+    }
+    .lock-btn:hover { background: #64748b; }
+    .lock-btn.locked { background: #f59e0b; color: #0f172a; }
+    .lock-btn.locked:hover { background: #d97706; }
+    .lock-hint {
+        font-size: 11px; color: #94a3b8; margin-top: 4px;
+        font-weight: normal; line-height: 1.4;
     }
     .btn-start-battle {
         width: 100%; padding: 12px; background: #2563eb; color: white;
@@ -169,6 +218,7 @@
     }
     .btn-start-battle:hover { background: #1d4ed8; }
 
+    /* ===== 圖鑑 ===== */
     .compendium-section { margin-bottom: 18px; }
     .compendium-section h3 { font-size: 14px; margin-bottom: 8px; padding-left: 8px; }
     .compendium-section h3.atk { color: #f87171; border-left: 3px solid #f87171; }
@@ -191,27 +241,49 @@
     .effect-item.boss-item b { color: #f87171; }
     .effect-item.current-item b { color: #fbbf24; }
     .effect-item p { margin: 0; font-size: 12px; color: #cbd5e1; line-height: 1.5; }
+
+    /* ===== 教學彈窗專用 ===== */
+    .tutorial-modal-intro { padding: 8px 0 12px; }
+    .tutorial-modal-intro > p { margin: 0 0 12px; color: #cbd5e1; font-size: 14px; line-height: 1.6; }
+    .tutorial-modal-intro .tip { color: #fbbf24; font-weight: bold; text-align: center; margin-top: 12px; }
+    .tutorial-end-body { padding: 8px 0 12px; }
+    .tutorial-end-body > p { margin: 0 0 12px; color: #cbd5e1; font-size: 14px; line-height: 1.6; }
+    .btn-secondary {
+        width: 100%; padding: 11px; background: #475569; color: white;
+        border: none; border-radius: 8px; font-size: 14px; font-weight: bold;
+        cursor: pointer; margin-top: 8px;
+    }
+    .btn-secondary:hover { background: #334155; }
+
+    @media (max-width: 600px) {
+        .container { padding: 15px; }
+        .btn-info { padding: 6px 9px; font-size: 11px; }
+        .card { width: 120px; }
+    }
 </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header-top">
-        <h1>⚔️ 萌寵冒險：進階策略對決</h1>
-        <div class="header-buttons">
-            <button class="btn-info btn-hero" onclick="toggleModal('hero-modal')">🐱 萌寵英雄</button>
-            <button class="btn-info btn-tutorial" onclick="startTutorialStage()">🎓 實戰教學</button>
-            <button class="btn-info btn-current-boss" onclick="toggleModal('current-boss-modal')">👁️ 當前魔王</button>
-            <button class="btn-info btn-boss" onclick="toggleModal('boss-modal')">👹 魔王圖鑑</button>
-            <button class="btn-info btn-battlefield" onclick="toggleModal('battlefield-modal')">⚡ 戰場效果</button>
-            <button class="btn-info btn-blue" onclick="toggleModal('compendium-modal')">📖 卡牌圖鑑</button>
-            <button class="btn-info btn-setup" onclick="openSetupModal()">⚙️ 自選配置</button>
-        </div>
+    <h1>⚔️ 萌寵冒險：進階策略對決</h1>
+
+    <!-- 功能列：教學/配置在最前，其餘為對戰資訊 -->
+    <div class="action-bar">
+        <button class="btn-info btn-tutorial" onclick="openTutorialStart()">🎓 實戰教學</button>
+        <button class="btn-info btn-setup" onclick="openSetupModal()">⚙️ 自選配置</button>
+        <span class="divider"></span>
+        <button class="btn-info btn-current-boss" onclick="toggleModal('current-boss-modal')">👁️ 當前魔王</button>
+        <button class="btn-info btn-boss" onclick="toggleModal('boss-modal')">👹 魔王圖鑑</button>
+        <button class="btn-info btn-battlefield" onclick="toggleModal('battlefield-modal')">⚡ 戰場效果</button>
+        <button class="btn-info btn-hero" onclick="toggleModal('hero-modal')">🐱 萌寵英雄</button>
+        <button class="btn-info btn-blue" onclick="toggleModal('compendium-modal')">📖 卡牌圖鑑</button>
     </div>
     <div class="desc">選擇適合的萌寵英雄與卡牌策略，擊敗強大的魔王！</div>
 
+    <!-- 教學引導條 -->
     <div class="tutorial-banner" id="tutorial-banner" style="display:none;">
-        <span id="tutorial-text">🎓 新手教學引導載入中...</span>
+        <span class="tutorial-progress" id="tutorial-progress">Step 1 / 3</span>
+        <span id="tutorial-text">引導載入中...</span>
         <button class="btn-skip-tutorial" onclick="skipTutorial()">⏩ 略過</button>
     </div>
 
@@ -238,11 +310,44 @@
     <button class="btn-reset" id="reset-btn" onclick="startRandomGame()" style="display:none;">⚔️ 重新開始冒險（隨機）</button>
 </div>
 
+<!-- ========== 教學開始彈窗 ========== -->
+<div class="modal-overlay" id="tutorial-start-modal">
+    <div class="modal-content">
+        <div class="modal-header"><h2>🎓 新手實戰教學</h2></div>
+        <div class="tutorial-modal-intro">
+            <p>歡迎來到萌寵冒險！接下來的教學會帶你掌握三個核心機制，約 1 分鐘即可完成：</p>
+            <div class="effect-item hero-item"><b>Step 1 · 中毒天賦</b><p>使用 <b>劇毒飛刀</b>，觀察影爪貓如何將中毒從 3 回合延長至 4 回合。</p></div>
+            <div class="effect-item hero-item"><b>Step 2 · 環境與回復</b><p>被狂暴磁場扣血後，使用 <b>瞬間大回復</b> 拉回血線。</p></div>
+            <div class="effect-item hero-item"><b>Step 3 · Combo 爆發</b><p>利用魔王身上的中毒狀態，打出 <b>元素引爆</b> 造成巨額傷害。</p></div>
+            <p class="tip">💡 開始後請跟著上方引導條打出「高亮卡牌」即可完成教學。</p>
+        </div>
+        <button class="btn-start-battle" onclick="beginTutorialBattle()">▶️ 開始教學</button>
+        <button class="btn-secondary" onclick="skipTutorial()">⏩ 跳過，直接開始標準對局</button>
+    </div>
+</div>
+
+<!-- ========== 教學結束彈窗 ========== -->
+<div class="modal-overlay" id="tutorial-end-modal">
+    <div class="modal-content">
+        <div class="modal-header"><h2 id="tutorial-end-title">🎉 教學完成</h2></div>
+        <div class="tutorial-end-body" id="tutorial-end-body"></div>
+        <button class="btn-start-battle" id="tutorial-end-btn-1"></button>
+        <button class="btn-secondary" id="tutorial-end-btn-2"></button>
+    </div>
+</div>
+
+<!-- ========== 自選配置彈窗 ========== -->
 <div class="modal-overlay" id="setup-modal">
     <div class="modal-content">
         <div class="modal-header"><h2>⚙️ 戰鬥自選配置</h2><button class="btn-close" onclick="toggleModal('setup-modal')">關閉</button></div>
+        <p class="lock-hint" style="margin-bottom:12px; font-size:12px; color:#94a3b8;">
+            💡 點擊 <b>🔓</b> 可鎖定該項配置，之後每局都會自動沿用；再次點擊 <b>🔒</b> 可解鎖。
+        </p>
         <div class="setup-group">
-            <label>指定萌寵英雄：</label>
+            <label>
+                <span>指定萌寵英雄：</span>
+                <button class="lock-btn" id="lock-hero" onclick="toggleLock('hero')" title="點擊鎖定此配置">🔓</button>
+            </label>
             <select id="hero-select">
                 <option value="random">🎲 隨機決定</option>
                 <option value="ignis">🔥 火狂小狐 (Ignis) - 爆發輸出型</option>
@@ -253,7 +358,10 @@
             </select>
         </div>
         <div class="setup-group">
-            <label>指定挑戰魔王：</label>
+            <label>
+                <span>指定挑戰魔王：</span>
+                <button class="lock-btn" id="lock-boss" onclick="toggleLock('boss')" title="點擊鎖定此配置">🔓</button>
+            </label>
             <select id="boss-select">
                 <option value="random">🎲 隨機決定</option>
                 <option value="standard">👹 深淵霸主（咆哮壓制型）</option>
@@ -264,7 +372,10 @@
             </select>
         </div>
         <div class="setup-group">
-            <label>指定戰場效果：</label>
+            <label>
+                <span>指定戰場效果：</span>
+                <button class="lock-btn" id="lock-mod" onclick="toggleLock('mod')" title="點擊鎖定此配置">🔓</button>
+            </label>
             <select id="modifier-select">
                 <option value="random">🎲 隨機決定</option>
                 <option value="double_action">✨ 雙倍協奏（雙方每回合 2 次行動）</option>
@@ -276,38 +387,35 @@
                 <option value="sacrifice_altar">🪦 獻祭祭壇（玩家血量上限 -10、魔王 -15）</option>
             </select>
         </div>
-        <button class="btn-start-battle" onclick="startConfiguredGame()">套用指定配置並開戰！</button>
+        <button class="btn-start-battle" onclick="startConfiguredGame()">套用配置並開戰！</button>
     </div>
 </div>
 
+<!-- ========== 圖鑑類彈窗 ========== -->
 <div class="modal-overlay" id="hero-modal">
     <div class="modal-content">
         <div class="modal-header"><h2>🐱 萌寵英雄天賦與列表</h2><button class="btn-close" onclick="toggleModal('hero-modal')">關閉</button></div>
         <div id="hero-body"></div>
     </div>
 </div>
-
 <div class="modal-overlay" id="current-boss-modal">
     <div class="modal-content">
         <div class="modal-header"><h2>👁️ 當前對決魔王詳細情報</h2><button class="btn-close" onclick="toggleModal('current-boss-modal')">關閉</button></div>
         <div id="current-boss-body"></div>
     </div>
 </div>
-
 <div class="modal-overlay" id="compendium-modal">
     <div class="modal-content">
         <div class="modal-header"><h2>📖 遊戲卡牌圖鑑</h2><button class="btn-close" onclick="toggleModal('compendium-modal')">關閉</button></div>
         <div id="compendium-body"></div>
     </div>
 </div>
-
 <div class="modal-overlay" id="battlefield-modal">
     <div class="modal-content">
         <div class="modal-header"><h2>⚡ 戰場效果總覽</h2><button class="btn-close" onclick="toggleModal('battlefield-modal')">關閉</button></div>
         <div id="battlefield-body"></div>
     </div>
 </div>
-
 <div class="modal-overlay" id="boss-modal">
     <div class="modal-content">
         <div class="modal-header"><h2>👹 全魔王圖鑑與特性說明</h2><button class="btn-close" onclick="toggleModal('boss-modal')">關閉</button></div>
@@ -455,7 +563,9 @@ function toggleModal(id) {
     const m = document.getElementById(id);
     m.style.display = m.style.display === "flex" ? "none" : "flex";
 }
-function openSetupModal() { document.getElementById("setup-modal").style.display = "flex"; }
+function closeModal(id) {
+    document.getElementById(id).style.display = "none";
+}
 
 /* ============================================================
    四、傷害管線
@@ -485,7 +595,6 @@ function applyDamageToMonster(dmg, opts = {}) {
         actualDmg = overflow;
     }
 
-    // 鋼鐵要塞反震（非穿透、護盾從有到無、冷卻結束）
     if (S.boss.trait === "guardian"
         && shieldBefore > 0
         && S.monster.shield === 0
@@ -497,7 +606,6 @@ function applyDamageToMonster(dmg, opts = {}) {
         dealDamageToPlayer(10, "shield_break", { ignoreShield: true });
     }
 
-    // 荊棘之地：玩家主動攻擊時反傷
     if (S.mod.effect === "thorns" && fromPlayer && (actualDmg > 0 || shieldLost > 0)) {
         log(`🌵 荊棘之地反刺：玩家受到 3 點反傷（無視護盾）`, "warn");
         dealDamageToPlayer(3, "thorns", { ignoreShield: true });
@@ -523,13 +631,11 @@ function dealDamageToPlayer(rawDmg, source, opts = {}) {
     }
     S.player.hp -= dmg;
 
-    // 堅甲龜被動（僅敵方主動傷害）
     if (S.hero.trait === "turtlo" && (source === "attack" || source === "roar") && dmg > 0) {
         S.player.shield += 3;
         log(`🛡️ 堅甲龜【堅甲防禦】：受傷後獲得 3 點護盾！`, "shield");
     }
 
-    // 荊棘之地：魔王攻擊玩家時反傷
     if (S.mod.effect === "thorns" && (source === "attack" || source === "roar")) {
         log(`🌵 荊棘之地反刺：魔王受到 3 點反傷（無視護盾）`, "warn");
         S.monster.hp -= 3;
@@ -538,17 +644,83 @@ function dealDamageToPlayer(rawDmg, source, opts = {}) {
 }
 
 /* ============================================================
-   五、遊戲啟動
+   五、鎖定配置
+   ============================================================ */
+const LOCK_KEY = "petAdventureLockedConfig";
+const DEFAULT_LOCK = {
+    hero: { locked: false, value: "random" },
+    boss: { locked: false, value: "random" },
+    mod:  { locked: false, value: "random" }
+};
+
+function loadLockedConfig() {
+    try {
+        const raw = JSON.parse(localStorage.getItem(LOCK_KEY));
+        if (raw && raw.hero && raw.boss && raw.mod) return raw;
+    } catch (e) { /* ignore */ }
+    return JSON.parse(JSON.stringify(DEFAULT_LOCK));
+}
+function saveLockedConfig(cfg) {
+    localStorage.setItem(LOCK_KEY, JSON.stringify(cfg));
+}
+function toggleLock(type) {
+    const cfg = loadLockedConfig();
+    const sel = document.getElementById(
+        type === "hero" ? "hero-select" : type === "boss" ? "boss-select" : "modifier-select"
+    );
+    cfg[type].locked = !cfg[type].locked;
+    cfg[type].value = sel.value;
+    saveLockedConfig(cfg);
+    updateLockUI();
+    if (cfg[type].locked) {
+        log(`🔒 已鎖定「${type === "hero" ? "英雄" : type === "boss" ? "魔王" : "戰場"}」配置，之後每局都會沿用。`, "info");
+    } else {
+        log(`🔓 已解除鎖定，之後每局將恢復隨機。`, "info");
+    }
+}
+function updateLockUI() {
+    const cfg = loadLockedConfig();
+    ["hero", "boss", "mod"].forEach(type => {
+        const btn = document.getElementById(`lock-${type}`);
+        if (!btn) return;
+        if (cfg[type].locked) {
+            btn.innerText = "🔒";
+            btn.classList.add("locked");
+            btn.title = "已鎖定（點擊解鎖）";
+        } else {
+            btn.innerText = "🔓";
+            btn.classList.remove("locked");
+            btn.title = "點擊鎖定此配置";
+        }
+    });
+}
+
+/* ============================================================
+   六、遊戲啟動
    ============================================================ */
 function startRandomGame() {
     document.getElementById("tutorial-banner").style.display = "none";
-    const h = heroes[Math.floor(Math.random() * heroes.length)];
-    const b = bossTypes[Math.floor(Math.random() * bossTypes.length)];
-    const m = battlefieldModifiers[Math.floor(Math.random() * battlefieldModifiers.length)];
-    initGameWithConfig(h, b, m, false);
+    const cfg = loadLockedConfig();
+
+    const hero = (cfg.hero.locked && cfg.hero.value !== "random")
+        ? heroes.find(h => h.id === cfg.hero.value) || heroes[Math.floor(Math.random() * heroes.length)]
+        : heroes[Math.floor(Math.random() * heroes.length)];
+    const boss = (cfg.boss.locked && cfg.boss.value !== "random")
+        ? bossTypes.find(b => b.id === cfg.boss.value) || bossTypes[Math.floor(Math.random() * bossTypes.length)]
+        : bossTypes[Math.floor(Math.random() * bossTypes.length)];
+    const mod = (cfg.mod.locked && cfg.mod.value !== "random")
+        ? battlefieldModifiers.find(m => m.effect === cfg.mod.value) || battlefieldModifiers[Math.floor(Math.random() * battlefieldModifiers.length)]
+        : battlefieldModifiers[Math.floor(Math.random() * battlefieldModifiers.length)];
+
+    initGameWithConfig(hero, boss, mod, false);
 }
 
-function startTutorialStage() {
+function openTutorialStart() {
+    document.getElementById("tutorial-start-modal").style.display = "flex";
+}
+
+function beginTutorialBattle() {
+    closeModal("tutorial-start-modal");
     const h = heroes.find(x => x.id === "shadow");
     const b = bossTypes.find(x => x.id === "standard");
     const m = battlefieldModifiers.find(x => x.effect === "berserk");
@@ -558,18 +730,76 @@ function startTutorialStage() {
 }
 
 function skipTutorial() {
+    closeModal("tutorial-start-modal");
+    closeModal("tutorial-end-modal");
     document.getElementById("tutorial-banner").style.display = "none";
     startRandomGame();
+}
+
+function showTutorialEndModal(success) {
+    const title = document.getElementById("tutorial-end-title");
+    const body = document.getElementById("tutorial-end-body");
+    const btn1 = document.getElementById("tutorial-end-btn-1");
+    const btn2 = document.getElementById("tutorial-end-btn-2");
+
+    if (success) {
+        title.innerText = "🎉 教學完成！";
+        body.innerHTML = `
+            <p>你已經掌握了英雄天賦與卡牌 Combo 的核心機制！</p>
+            <div class="effect-item hero-item">
+                <b>下一步建議</b>
+                <p>試試不同的英雄與魔王搭配，探索更多戰術可能。<br>
+                想挑戰自我，可在「自選配置」中開啟 <b>雙倍協奏</b> 或 <b>狂暴磁場</b>。</p>
+            </div>
+        `;
+        btn1.innerText = "🚀 開始標準對局";
+        btn1.onclick = () => { closeModal("tutorial-end-modal"); startRandomGame(); };
+        btn2.innerText = "🔁 再看一次教學";
+        btn2.onclick = () => { closeModal("tutorial-end-modal"); openTutorialStart(); };
+    } else {
+        title.innerText = "❌ 教學失敗";
+        body.innerHTML = `
+            <p>別灰心！教學中的魔王雖已削弱，但仍需要策略應對。</p>
+            <div class="effect-item hero-item">
+                <b>小提示</b>
+                <p>注意上方引導條的提示，依序打出「發光的高亮卡牌」即可完成教學。</p>
+            </div>
+        `;
+        btn1.innerText = "🔁 重新開始教學";
+        btn1.onclick = () => { closeModal("tutorial-end-modal"); beginTutorialBattle(); };
+        btn2.innerText = "⏩ 跳過教學，開始標準對局";
+        btn2.onclick = () => { closeModal("tutorial-end-modal"); startRandomGame(); };
+    }
+    document.getElementById("tutorial-banner").style.display = "none";
+    document.getElementById("tutorial-end-modal").style.display = "flex";
+}
+
+function openSetupModal() {
+    const cfg = loadLockedConfig();
+    document.getElementById("hero-select").value = cfg.hero.value;
+    document.getElementById("boss-select").value = cfg.boss.value;
+    document.getElementById("modifier-select").value = cfg.mod.value;
+    updateLockUI();
+    document.getElementById("setup-modal").style.display = "flex";
 }
 
 function startConfiguredGame() {
     const hv = document.getElementById("hero-select").value;
     const bv = document.getElementById("boss-select").value;
     const mv = document.getElementById("modifier-select").value;
+
+    // 同步保存選擇到鎖定設定（保留鎖定狀態）
+    const cfg = loadLockedConfig();
+    cfg.hero.value = hv;
+    cfg.boss.value = bv;
+    cfg.mod.value = mv;
+    saveLockedConfig(cfg);
+
     const hero = hv === "random" ? heroes[Math.floor(Math.random() * heroes.length)] : heroes.find(x => x.id === hv);
     const boss = bv === "random" ? bossTypes[Math.floor(Math.random() * bossTypes.length)] : bossTypes.find(x => x.id === bv);
     const mod = mv === "random" ? battlefieldModifiers[Math.floor(Math.random() * battlefieldModifiers.length)] : battlefieldModifiers.find(x => x.effect === mv);
-    toggleModal("setup-modal");
+
+    closeModal("setup-modal");
     initGameWithConfig(hero, boss, mod, false);
 }
 
@@ -596,7 +826,7 @@ function initGameWithConfig(hero, boss, mod, isTutorial) {
 }
 
 /* ============================================================
-   六、回合流程
+   七、回合流程
    ============================================================ */
 function startNewTurn() {
     if (S.gameOver) return;
@@ -604,21 +834,18 @@ function startNewTurn() {
     S.copycatUsedThisTurn = false;
     if (S.monster.guardianCd > 0) S.monster.guardianCd--;
 
-    // 中毒（無視護盾）
     if (S.monster.poison > 0) {
         S.monster.hp -= 6;
         S.monster.poison--;
         log(`☠️ 魔王受到劇毒侵蝕，扣除 6 點血量！（剩餘 ${S.monster.poison} 回合）`, "status");
     }
 
-    // 自然泉源
     if (S.player.regenTurns > 0) {
         const healed = healPlayer(7);
         S.player.regenTurns--;
         log(`🌿 自然泉源生效：回復 <b>${healed}</b> 點生命！（剩餘 ${S.player.regenTurns} 回合）`, "heal");
     }
 
-    // 狂暴磁場（雙方都無視護盾）
     if (S.mod.effect === "berserk") {
         log(`🔥 狂暴磁場生效：雙方各承受 4 點環境扣血（無視護盾）！`, "warn");
         S.player.hp -= 4;
@@ -631,7 +858,7 @@ function startNewTurn() {
 }
 
 /* ============================================================
-   七、玩家出牌
+   八、玩家出牌
    ============================================================ */
 function playCard(card) {
     if (S.gameOver || S.actionsLeft <= 0) return;
@@ -646,7 +873,6 @@ function playCard(card) {
     executeCardEffect(card, false);
     if (checkWinLoss()) { finishPlayerAction(); return; }
 
-    // 複製兔：每回合第一次特殊卡（禁錮、盾擊除外）
     if (S.hero.trait === "copycat"
         && !S.copycatUsedThisTurn
         && card.type === "special"
@@ -677,7 +903,6 @@ function executeCardEffect(card, isCopy = false) {
     const prefix = isCopy ? "🐰 [複製] " : "";
     const dmgMult = S.mod.effect === "berserk" ? 1.2 : 1.0;
 
-    // 教學推進（僅主效果）
     if (S.isTutorial && !isCopy) {
         const expected = { 1: "poison", 2: "burst", 3: "detonate" }[S.tutorialStep];
         if (expected && card.subType === expected) {
@@ -743,7 +968,6 @@ function executeCardEffect(card, isCopy = false) {
                 S.monster.weakTurns = 1;
                 log(`${prefix}❄️ 寒冰凍結：魔王【冰霜虛弱】1 回合，攻擊 -40%！`, "status");
             }
-            // 閃電鳥麻痺
             if (S.hero.trait === "thunder" && Math.random() < 0.25) {
                 S.monster.skipTurns += 1;
                 log(`⚡ <b>【雷霆麻痺】閃電鳥電擊麻痺魔王，下一次行動將被跳過！</b>`, "crit");
@@ -824,7 +1048,7 @@ function executeCardEffect(card, isCopy = false) {
 }
 
 /* ============================================================
-   八、魔王回合
+   九、魔王回合
    ============================================================ */
 function monsterTurn() {
     if (S.gameOver) return;
@@ -881,14 +1105,12 @@ function executeRoar() {
 }
 
 function executeMonsterNormalAction() {
-    // 鋼鐵要塞優先補盾
     if (S.boss.trait === "guardian" && S.monster.shield === 0 && Math.random() < 0.7) {
         S.monster.shield += 15;
         log(`🏰 鋼鐵要塞張開「鋼鐵壁壘」，獲得 15 點護盾！`, "shield");
         return;
     }
 
-    // 低血時回血或加盾
     if (S.monster.hp < S.monster.maxHp * 0.5 && Math.random() < 0.45) {
         if (Math.random() < 0.5) {
             const healed = healMonster(20);
@@ -900,14 +1122,12 @@ function executeMonsterNormalAction() {
         return;
     }
 
-    // 暗影狂暴
     if (S.monster.atkBuffTurns <= 0 && Math.random() < 0.3) {
         S.monster.atkBuffTurns = 2;
         log(`🔥 <b>魔王發動「暗影狂暴」！未來 2 次攻擊威力 +8！</b>`, "crit");
         return;
     }
 
-    // 普通攻擊
     let rawDmg = Math.floor(Math.random() * 11) + 12;
     let isBreakArmor = false;
     if (S.monster.atkBuffTurns > 0) {
@@ -934,13 +1154,11 @@ function executeMonsterNormalAction() {
         : `（實際承受 ${result.hpLost}）`;
     log(`⚠️ 魔王發動猛擊，造成 <b>${rawDmg}</b> 點總傷害${detail}。`, "dmg");
 
-    // 吸血鬼吸血（基於穿透血量 + 治療枯竭）
     if (S.boss.trait === "vampire" && result.hpLost > 0) {
         const vampHeal = Math.round(result.hpLost * 0.3 * healModifier());
         S.monster.hp = Math.min(S.monster.maxHp, S.monster.hp + vampHeal);
         log(`🧛 <b>【嗜血吸取】德古拉汲取了 ${vampHeal} 點生命治療自己！</b>`, "heal");
     }
-    // 反彈護鏡（基於穿透血量）
     if (S.player.reflectActive && result.hpLost > 0) {
         const reflectDmg = Math.round(result.hpLost * 0.5);
         applyDamageToMonster(reflectDmg, { cardName: "鏡面反射", canEvade: false, fromPlayer: false });
@@ -949,10 +1167,9 @@ function executeMonsterNormalAction() {
 }
 
 /* ============================================================
-   九、勝負判定
+   十、勝負判定
    ============================================================ */
 function checkWinLoss() {
-    // 不死魔王復活（30 血）
     if (S.boss.trait === "undying" && S.monster.hp <= 0 && !S.bossRevived) {
         S.bossRevived = true;
         S.monster.hp = Math.min(30, S.monster.maxHp);
@@ -970,6 +1187,7 @@ function checkWinLoss() {
         updateStatus();
         log(`🤝 <b>驚天大對決！你與魔王同時倒下，達成【同歸於盡】平局！</b>`, "crit");
         endGame();
+        if (S.isTutorial) showTutorialEndModal(false);
         return true;
     }
     if (mDead) {
@@ -977,17 +1195,25 @@ function checkWinLoss() {
         updateStatus();
         if (S.isTutorial) {
             log(`🎉🎓 <b>恭喜完成實戰教學！你已掌握英雄與卡牌 Combo 的核心！</b>`, "crit");
+            endGame();
+            showTutorialEndModal(true);
         } else {
             log(`🎉 <b>太強了！你成功擊敗【${S.boss.name}】，完美獲得勝利！</b>`, "crit");
+            endGame();
         }
-        endGame();
         return true;
     }
     if (pDead) {
         S.player.hp = 0;
         updateStatus();
-        log(`❌ <b>冒險失敗：你的生命值歸零。</b>`, "dmg");
-        endGame();
+        if (S.isTutorial) {
+            log(`❌ <b>教學失敗：你的生命值歸零。</b>`, "dmg");
+            endGame();
+            showTutorialEndModal(false);
+        } else {
+            log(`❌ <b>冒險失敗：你的生命值歸零。</b>`, "dmg");
+            endGame();
+        }
         return true;
     }
     return false;
@@ -1001,7 +1227,7 @@ function endGame() {
 }
 
 /* ============================================================
-   十、介面渲染
+   十一、介面渲染
    ============================================================ */
 function updateStatus() {
     if (!S) return;
@@ -1154,15 +1380,25 @@ function getCardDesc(card) {
 
 function updateTutorialUI() {
     if (!S || !S.isTutorial) return;
-    const el = document.getElementById("tutorial-text");
-    if (S.tutorialStep === 1) el.innerHTML = `<b>🎓 Step 1：</b>觀察影爪貓天賦！請打出 <b>【劇毒飛刀】</b>，觸發被動延長中毒至 4 回合！`;
-    else if (S.tutorialStep === 2) el.innerHTML = `<b>🎓 Step 2：</b>被狂暴磁場扣血了！請打出 <b>【瞬間大回復】</b> 拉回血線！`;
-    else if (S.tutorialStep === 3) el.innerHTML = `<b>🎓 Step 3：</b>魔王身上帶有劇毒！請打出 <b>【元素引爆】</b> 引爆巨額爆發傷害！`;
-    else el.innerHTML = `🎓 教學完成，繼續戰鬥吧！`;
+    const textEl = document.getElementById("tutorial-text");
+    const progEl = document.getElementById("tutorial-progress");
+    if (S.tutorialStep === 1) {
+        textEl.innerHTML = `觀察影爪貓天賦！請打出 <b>【劇毒飛刀】</b>，觸發被動延長中毒至 4 回合！`;
+        progEl.innerText = "Step 1 / 3";
+    } else if (S.tutorialStep === 2) {
+        textEl.innerHTML = `被狂暴磁場扣血了！請打出 <b>【瞬間大回復】</b> 拉回血線！`;
+        progEl.innerText = "Step 2 / 3";
+    } else if (S.tutorialStep === 3) {
+        textEl.innerHTML = `魔王身上帶有劇毒！請打出 <b>【元素引爆】</b> 引爆巨額爆發傷害！`;
+        progEl.innerText = "Step 3 / 3";
+    } else {
+        textEl.innerHTML = `教學完成，繼續戰鬥吧！`;
+        progEl.innerText = "✓ 完成";
+    }
 }
 
 /* ============================================================
-   十一、圖鑑渲染
+   十二、圖鑑渲染
    ============================================================ */
 function buildHeroUI() {
     document.getElementById("hero-body").innerHTML = heroes.map(h =>
@@ -1224,12 +1460,12 @@ function updateCurrentBossUI() {
 }
 
 /* ============================================================
-   十二、初始化
+   十三、初始化
    ============================================================ */
 window.onload = () => {
     if (!localStorage.getItem("hasVisitedPetAdventureStep")) {
         localStorage.setItem("hasVisitedPetAdventureStep", "true");
-        startTutorialStage();
+        openTutorialStart();
     } else {
         startRandomGame();
     }
