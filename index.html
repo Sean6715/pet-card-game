@@ -132,7 +132,7 @@
 <!-- 自選配置 -->
 <div class="modal-overlay" id="setup-modal">
     <div class="modal-content">
-        <div class="modal-header"><h2>⚙️ 戰鬥自選配置</h2><button class="btn-close" onclick="toggleModal('setup-modal')">關閉</button></div>
+        <div class="modal-header"><h2>⚙️ 戰鬥自選配置與設定</h2><button class="btn-close" onclick="toggleModal('setup-modal')">關閉</button></div>
         <div class="setup-group">
             <label><span>指定萌寵英雄：</span><button class="lock-btn" id="lock-hero" onclick="toggleLock('hero')">🔓</button></label>
             <select id="hero-select" onchange="onSetupHeroChange()">
@@ -169,13 +169,29 @@
             </select>
         </div>
         <div class="setup-group">
-            <label><span>難度：</span></label>
+            <label><span>難度選擇：</span></label>
             <select id="difficulty-select">
                 <option value="normal">🟡 標準（預設）</option>
                 <option value="easy">🟢 休閒（魔王生命 & 傷害 ×0.8）</option>
                 <option value="hard">🔴 挑戰（魔王生命 & 傷害 ×1.2）</option>
             </select>
         </div>
+
+        <div class="setup-group" style="background:#0f172a; padding:10px 12px; border-radius:8px; border:1px solid #334155;">
+            <label style="color:#38bdf8; margin-bottom:8px;"><span>🎮 遊戲體驗設定 (預設關閉)</span></label>
+            <div style="display:flex; flex-direction:column; gap:6px; font-size:13px; color:#cbd5e1;">
+                <label style="cursor:pointer; font-weight:normal; justify-content:flex-start; gap:8px;">
+                    <input type="checkbox" id="sfx-toggle"> 🔊 啟用打擊與回復音效 (Web Audio)
+                </label>
+                <label style="cursor:pointer; font-weight:normal; justify-content:flex-start; gap:8px;">
+                    <input type="checkbox" id="vib-toggle"> 📳 啟用觸覺震動回饋 (Vibration)
+                </label>
+                <label style="cursor:pointer; font-weight:normal; justify-content:flex-start; gap:8px;">
+                    <input type="checkbox" id="vfx-toggle"> ✨ 啟用畫面震動特效 (Screen Shake)
+                </label>
+            </div>
+        </div>
+
         <div class="setup-group">
             <label><span>當前牌庫：</span></label>
             <div class="lock-hint" id="deck-preview" style="margin-top:4px; padding:8px; background:#0f172a; border-radius:6px;">
