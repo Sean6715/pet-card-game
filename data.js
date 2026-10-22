@@ -15,7 +15,7 @@ const bossTypes = [
     { id: "vampire", name: "德古拉", icon: "🧛", hp: 110, trait: "vampire", traitName: "嗜血吸取（穿透 30%）", desc: "造成穿透傷害時，吸取該傷害 30% 的生命值。" },
     { id: "guardian", name: "鋼鐵要塞", icon: "🏰", hp: 120, trait: "guardian", traitName: "鋼鐵反震（破盾 12 真傷）", desc: "護盾被擊破時對玩家造成 12 點真實傷害（無視護盾，冷卻 2 回合）。" },
     { id: "elementalist", name: "元素巫師", icon: "🧙‍♂️", hp: 115, trait: "elementalist", traitName: "元素輪轉（每 2 回合）", desc: "每 2 回合切換形態：🔥烈焰（攻擊+30%）/ 🧊寒冰（受傷-30%）/ ⚡迅雷（閃避率 20%）。" },
-    { id: "time_phantom", name: "時空幻影", icon: "⏳", hp: 120, trait: "time_phantom", traitName: "熵增回溯（殘血觸發）", desc: "生命首次低於 30% 時強制回升至 50%，並清空雙方所有的護盾、臨時 Buff、Debuff 與定時炸彈（保留永久成長）！" }
+    { id: "time_phantom", name: "時空幻影", icon: "⏳", hp: 120, trait: "time_phantom", traitName: "熵增回溯（殘血觸發）", desc: "生命首次低於 30% 時（若未被擊殺）強制回升至 50%，並清空雙方所有的護盾、臨時 Buff、Debuff 與定時炸彈（保留永久成長）！" }
 ];
 
 const battlefieldModifiers = [
@@ -60,7 +60,7 @@ const commonCards = [
     { id: 11, name: "捨身一擊", type: "attack", subType: "recoil", category: "攻擊", rarity: "legendary", value: 28, selfCost: 7, desc: "扣除 7 點生命，造成 28 點傷害。" },
     { id: 15, name: "元素引爆", type: "attack", subType: "detonate", category: "攻擊", rarity: "legendary", value: 10, desc: "造成 10 點傷害；若魔王有中毒或冰霜虛弱，額外 +22 點傷害並清除該狀態。" },
     { id: 24, name: "黑暗契約", type: "special", subType: "dark_contract", category: "特殊", rarity: "legendary", desc: "扣除 12 點生命，永久 +6 點攻擊（上限 +12 點）。" },
-    { id: 19, name: "致命一擊", type: "attack", subType: "finisher", category: "攻擊", rarity: "legendary", rarity: "legendary", value: 10, desc: "造成 10 點傷害；若魔王生命低於 30%，改為造成 30 點穿透傷害。" },
+    { id: 19, name: "致命一擊", type: "attack", subType: "finisher", category: "攻擊", rarity: "legendary", value: 10, desc: "造成 10 點傷害；若魔王生命低於 30%，改為造成 30 點穿透傷害。" },
     { id: 30, name: "萬象天引", type: "attack", subType: "universal_pull", category: "攻擊", rarity: "legendary", value: 16, desc: "造成 16 點傷害；本局戰鬥中每使用過 1 張特殊卡，傷害額外 +4 點（上限 +20 點）。" }
 ];
 
@@ -90,7 +90,7 @@ const heroCards = [
     { id: "raccoon_3", heroId: "raccoon", name: "星象護符", type: "heal", subType: "raccoon_amulet", category: "回復", rarity: "legendary", desc: "回復 14 點生命，並獲得 10 點護盾。" },
 
     { id: "hedgehog_1", heroId: "hedgehog", name: "蒸氣噴射", type: "heal", subType: "hedgehog_steam", category: "回復", rarity: "rare", freeAction: true, desc: "【不扣行動】獲得 15 點護盾；若當前護盾值 ≥ 15 點，額外獲得 1 次行動。[每回合限一次]" },
-    { id: "hedgehog_2", heroId: "hedgehog", name: "刺針射擊", type: "attack", subType: "hedgehog_needle", category: "攻擊", rarity: "rare", value: 16, desc: "造成 16 點傷害；消耗全部護盾，每 1 點護盾額外 +1.5 點傷害。" },
+    { id: "hedgehog_2", heroId: "hedgehog", name: "刺針射擊", type: "attack", subType: "hedgehog_needle", category: "攻擊", rarity: "rare", value: 16, desc: "造成 16 點傷害；消耗全部護盾，每 1 點護盾額外 +1 點傷害。" },
     { id: "hedgehog_3", heroId: "hedgehog", name: "鋼鐵刺裝", type: "special", subType: "hedgehog_armor", category: "特殊", rarity: "legendary", freeAction: true, desc: "【不扣行動】獲得 22 點護盾，且本回合下次攻擊傷害 +10 點。[不可疊加]" }
 ];
 
@@ -104,7 +104,7 @@ const defaultDecks = {
     shadow: ["shadow_1","shadow_2","shadow_3", 4,15,27,18,1,12,5,10,13,23,14,25],
     thunder:["thunder_1","thunder_2","thunder_3", 3,12,8,23,13,1,5,6,16,25,22,14],
     copycat:["copycat_1","copycat_2","copycat_3", 28,29,7,24,23,14,9,22,15,1,5,25],
-    raccoon:["raccoon_1","raccoon_2","raccoon_3", 27,30,23,1,3,13,5,6,14,25,12,7],
+    raccoon:["raccoon_1","raccoon_2","raccoon_3", 27,30,23,1,3,13,5,6,14,25,12,7], 
     hedgehog:["hedgehog_1","hedgehog_2","hedgehog_3", 6,21,16,22,9,26,5,10,1,13,23,14]
 };
 
