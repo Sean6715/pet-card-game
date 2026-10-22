@@ -1,9 +1,3 @@
-// ============================================================
-// rules.js — 戰鬥規則純函式
-// 依賴：utils.js（S、EFFECT、log）、data.js
-// ============================================================
-
-// ===== 治療 =====
 function healModifier() { return S.mod.effect === EFFECT.WEAK_HEAL ? 0.6 : 1.0; }
 function healPlayer(amount) {
     const actual = Math.round(amount * healModifier());
@@ -17,7 +11,6 @@ function healMonster(amount) {
     return actual;
 }
 
-// ===== 抽牌 =====
 function drawCards(n) {
     for (let i = 0; i < n; i++) {
         if (S.drawPile.length === 0) {
@@ -49,7 +42,6 @@ async function refillHandIfEmpty() {
     return false;
 }
 
-// ===== 攻擊傷害核心（純函式，不改 log） =====
 function computeAttackDamage(base, { consume = true } = {}) {
     let mult = 1;
     if (S.player.nextAttackMultiplier > 1) {
@@ -73,7 +65,6 @@ function computeAttackDamage(base, { consume = true } = {}) {
     return Math.round(Math.round(dmg * dmgMult));
 }
 
-// 實際攻擊（含 log 副作用）
 function applyPlayerAttackModifiers(base) {
     const hadMagicBoost = S.player.nextAttacksCount > 0;
     const magicBonus = S.player.nextAttacksBonus;
@@ -87,13 +78,11 @@ function applyPlayerAttackModifiers(base) {
     return dmg;
 }
 
-// 純預覽（含弱點標記）
 function previewDamage(base) {
     const dmg = computeAttackDamage(base, { consume: false });
     return S.monster.markedTurns > 0 ? Math.round(dmg * 1.25) : dmg;
 }
 
-// ===== 護盾 =====
 async function addShieldToPlayer(amount) {
     const add = S.hero.trait === "turtlo" ? Math.round(amount * 1.1) : amount;
     S.player.shield += add;
@@ -113,7 +102,6 @@ async function addShieldToPlayer(amount) {
     return S.player.shield;
 }
 
-// ===== 清空 =====
 function clearPlayerAllBuffsAndShields() {
     S.player.shield = 0;
     S.player.atkBuff = 0;
@@ -135,7 +123,6 @@ function clearMonsterAllBuffsAndShields() {
     S.delayedBombs = [];
 }
 
-// ===== 時空回溯 =====
 async function checkTimePhantom() {
     if (S.boss.trait === TRAIT.TIME_PHANTOM && !S.monster.timeRewound
         && S.monster.hp > 0 && S.monster.hp <= S.monster.maxHp * 0.3) {
@@ -151,7 +138,6 @@ async function checkTimePhantom() {
     }
 }
 
-// ===== 對魔王造成傷害 =====
 async function applyDamageToMonster(dmg, opts = {}) {
     const { ignoreShield = false, cardName = null, canEvade = true, fromPlayer = true } = opts;
 
@@ -218,7 +204,6 @@ async function applyDamageToMonster(dmg, opts = {}) {
     return { hit: true, actualDmg, finalDmg: dmg, markApplied };
 }
 
-// ===== 對玩家造成傷害 =====
 async function dealDamageToPlayer(rawDmg, source, opts = {}) {
     const { ignoreShield = false } = opts;
     let dmg = rawDmg, shieldAbsorbed = 0;
