@@ -1,6 +1,6 @@
 const heroes = [
     { id: "ignis",  name: "火狂小狐", icon: "🦊", hp: 96, trait: "ignis", desc: "【烈焰血脈】打出攻擊型卡牌時，35% 機率額外造成 5 點傷害。" },
-    { id: "turtlo", name: "堅甲龜",   icon: "🐢", hp: 100, trait: "turtlo", desc: "【堅甲防禦】受到敵方傷害時獲得 3 點護盾；所有護盾效果提升 10%。" },
+    { id: "turtlo", name: "堅甲龜",   icon: "🐢", hp: 100, trait: "turtlo", desc: "【堅甲防禦】受擊獲得 3 點護盾，所有護盾提升 10%；護盾 > 20 點時攻擊額外造成 [當前護盾 × 25%] 反震傷害。" },
     { id: "shadow", name: "影爪貓",   icon: "🐱", hp: 100, trait: "shadow", desc: "【劇毒爪痕】對魔王造成的中毒持續回合數額外增加 1 回合。" },
     { id: "thunder",name: "閃電鳥",   icon: "⚡", hp: 96, trait: "thunder", desc: "【雷霆麻痺】攻擊命中時，25% 機率使魔王跳過 1 次行動。" },
     { id: "copycat",name: "複製兔",   icon: "🐰", hp: 98, trait: "copycat", desc: "【鏡像戰術】每回合首次打出「需消耗行動」的特殊卡時，額外觸發一次效果（禁錮、盾擊除外）。" },
@@ -15,7 +15,7 @@ const bossTypes = [
     { id: "vampire", name: "德古拉", icon: "🧛", hp: 110, trait: "vampire", traitName: "嗜血吸取（穿透 30%）", desc: "造成穿透傷害時，吸取該傷害 30% 的生命值。" },
     { id: "guardian", name: "鋼鐵要塞", icon: "🏰", hp: 120, trait: "guardian", traitName: "鋼鐵反震（破盾 12 真傷）", desc: "護盾被擊破時對玩家造成 12 點真實傷害（無視護盾，冷卻 2 回合）。" },
     { id: "elementalist", name: "元素巫師", icon: "🧙‍♂️", hp: 115, trait: "elementalist", traitName: "元素輪轉（每 2 回合）", desc: "每 2 回合切換形態：🔥烈焰（攻擊+30%）/ 🧊寒冰（受傷-30%）/ ⚡迅雷（閃避率 20%）。" },
-    { id: "time_phantom", name: "時空幻影", icon: "⏳", hp: 120, trait: "time_phantom", traitName: "熵增回溯（殘血觸發）", desc: "生命首次低於 30% 時強制回升至 50%，並清空雙方所有的護盾、Buff、Debuff 與定時炸彈！" }
+    { id: "time_phantom", name: "時空幻影", icon: "⏳", hp: 120, trait: "time_phantom", traitName: "熵增回溯（殘血觸發）", desc: "生命首次低於 30% 時強制回升至 50%，並清空雙方所有的護盾、臨時 Buff、Debuff 與定時炸彈（保留永久成長）！" }
 ];
 
 const battlefieldModifiers = [
@@ -40,15 +40,15 @@ const commonCards = [
     
     { id: 5, name: "瞬間回復", type: "heal", subType: "burst", category: "回復", rarity: "common", value: 20, desc: "回復 20 點生命。" },
     { id: 6, name: "聖光護盾", type: "heal", subType: "shield", category: "回復", rarity: "common", value: 10, shieldVal: 12, desc: "回復 10 點生命，並獲得 12 點護盾。" },
-    { id: 10, name: "自然泉源", type: "heal", subType: "regen", category: "回復", rarity: "common", value: 0, desc: "獲得 3 回合【泉源祝福】，每回合回復 7 點生命。[不可疊加]" },
+    { id: 10, name: "自然泉源", type: "heal", subType: "regen", category: "回復", rarity: "common", value: 0, desc: "獲得 3 回合【泉源祝福】：每回合回復 6 點生命，且期間受到的傷害 -3 點。[不可疊加]" },
 
     { id: 7, name: "血之狂熱", type: "special", subType: "sacrifice", category: "特殊", rarity: "rare", costHP: 10, buffVal: 15, desc: "扣除 10 點生命，下次攻擊傷害 +15 點。" },
     { id: 21, name: "堅壁清野", type: "heal", subType: "low_hp_shield", category: "回復", rarity: "rare", value: 12, desc: "獲得 12 點護盾；若自身生命低於 50%，改為獲得 20 點護盾。" },
     { id: 20, name: "逆轉治癒", type: "heal", subType: "reverse_heal", category: "回復", rarity: "rare", desc: "回復「已損失生命值 × 0.4」點生命（上限 25 點）。" },
     { id: 17, name: "破釜沉舟", type: "attack", subType: "desperate", category: "攻擊", rarity: "rare", desc: "造成「已損失生命值 × 0.4」點傷害（上限 40 點）。" },
     { id: 18, name: "魔能侵蝕", type: "attack", subType: "erosion", category: "攻擊", rarity: "rare", value: 12, desc: "造成 12 點傷害；魔王每有 1 個異常狀態，額外 +6 點傷害（上限 +18 點）。" },
-    { id: 14, name: "命運之輪", type: "special", subType: "roulette", category: "特殊", rarity: "rare", desc: "隨機三選一：① 回複 18 點生命且生命上限 +10 點；② 獲得 18 點護盾；③ 造成 22 點穿透傷害。" },
-    { id: 9, name: "反彈護鏡", type: "special", subType: "reflect", category: "特殊", rarity: "rare", desc: "獲得 10 點護盾，下回合反彈魔王穿透傷害的 50%。[不可疊加]" },
+    { id: 14, name: "命運之輪", type: "special", subType: "roulette", category: "特殊", rarity: "rare", desc: "隨機三選一：① 回復 18 點生命且生命上限 +10 點；② 獲得 18 點護盾；③ 造成 22 點穿透傷害。" },
+    { id: 9, name: "反彈護鏡", type: "special", subType: "reflect", category: "特殊", rarity: "rare", desc: "獲得 10 點護盾，下回合被魔王攻擊時反彈 50% 傷害給魔王。[不可疊加]" },
     { id: 16, name: "盾擊破敵", type: "special", subType: "shield_bash", category: "特殊", rarity: "rare", desc: "消耗全部護盾，每 1 點護盾造成 1.5 點傷害。[不可複製]" },
     { id: 22, name: "偷天換日", type: "special", subType: "steal_shield", category: "特殊", rarity: "rare", desc: "偷取魔王 50% 護盾；若魔王無護盾則獲得 5 點護盾。" },
     { id: 23, name: "弱點標記", type: "special", subType: "mark", category: "特殊", rarity: "rare", desc: "標記魔王 3 回合，期間魔王受到的玩家攻擊傷害 +25%。[不可疊加]" },
@@ -70,7 +70,7 @@ const heroCards = [
     { id: "ignis_3", heroId: "ignis", name: "絕境焚身", type: "attack", subType: "ignis_last", category: "攻擊", rarity: "legendary", desc: "扣除 10 點生命，造成 25 點穿透傷害。" },
 
     { id: "turtlo_1", heroId: "turtlo", name: "反震裝甲", type: "heal", subType: "turtlo_counter", category: "回復", rarity: "rare", desc: "獲得 15 點護盾，本回合被攻擊時反彈 50% 傷害給魔王。[不可疊加]" },
-    { id: "turtlo_2", heroId: "turtlo", name: "銅牆鐵壁", type: "heal", subType: "turtlo_wall", category: "回復", rarity: "rare", desc: "獲得 20 點護盾。" },
+    { id: "turtlo_2", heroId: "turtlo", name: "銅牆鐵壁", type: "heal", subType: "turtlo_wall", category: "回復", rarity: "rare", desc: "獲得 20 點護盾，且下次攻擊傷害 +8 點。" },
     { id: "turtlo_3", heroId: "turtlo", name: "不動如山", type: "special", subType: "turtlo_stand", category: "特殊", rarity: "legendary", desc: "獲得 15 點護盾，本回合受到的所有傷害減少 5 點。[不可疊加]" },
 
     { id: "shadow_1", heroId: "shadow", name: "猛毒蔓延", type: "attack", subType: "shadow_poison", category: "攻擊", rarity: "rare", value: 6, desc: "造成 6 點傷害，使魔王中毒 3 回合（每回合無視護盾扣除 6 點生命）。[不可疊加]" },
@@ -90,8 +90,8 @@ const heroCards = [
     { id: "raccoon_3", heroId: "raccoon", name: "星象護符", type: "heal", subType: "raccoon_amulet", category: "回復", rarity: "legendary", desc: "回復 14 點生命，並獲得 10 點護盾。" },
 
     { id: "hedgehog_1", heroId: "hedgehog", name: "蒸氣噴射", type: "heal", subType: "hedgehog_steam", category: "回復", rarity: "rare", freeAction: true, desc: "【不扣行動】獲得 15 點護盾；若當前護盾值 ≥ 15 點，額外獲得 1 次行動。[不可疊加]" },
-    { id: "hedgehog_2", heroId: "hedgehog", name: "刺針射擊", type: "attack", subType: "hedgehog_needle", category: "攻擊", rarity: "rare", value: 16, desc: "造成 16 點傷害；若自身擁有護盾，消耗全部護盾，每消耗 1 點護盾使本次傷害 +1 點。" },
-    { id: "hedgehog_3", heroId: "hedgehog", name: "鋼鐵刺裝", type: "special", subType: "hedgehog_armor", category: "特殊", rarity: "legendary", desc: "獲得 22 點護盾，並清除自身所有的負面狀態。" }
+    { id: "hedgehog_2", heroId: "hedgehog", name: "刺針射擊", type: "attack", subType: "hedgehog_needle", category: "攻擊", rarity: "rare", value: 16, desc: "造成 16 點傷害；消耗全部護盾，每 1 點護盾額外 +1.5 點傷害。" },
+    { id: "hedgehog_3", heroId: "hedgehog", name: "鋼鐵刺裝", type: "special", subType: "hedgehog_armor", category: "特殊", rarity: "legendary", freeAction: true, desc: "【不扣行動】獲得 22 點護盾，且本回合下次攻擊傷害 +10 點。[不可疊加]" }
 ];
 
 const cardPool = [...commonCards, ...heroCards];
