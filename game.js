@@ -5,7 +5,6 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 let isBatching = false;
 let batchedLogHTML = "";
 
-// 玩家設定 (音效、震動、特效，預設全關)
 const SETTINGS_KEY = "petAdventureGameSettings_v3";
 function loadSettings() {
     try {
@@ -16,7 +15,6 @@ function loadSettings() {
 }
 function saveSettings(cfg) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(cfg)); }
 
-// 內建 Web Audio API 音效系統
 function playSfx(type) {
     const st = loadSettings();
     if (!st.sfx) return;
@@ -210,8 +208,7 @@ async function refillHandIfEmpty() {
     if (S.hand.length > 0) return true;
     
     let drawCount = 3;
-    // 預言浣熊調整：改為每 2 回合（偶數回合）額外抽 1 張，平衡強度
-    if (S.hero.trait === "raccoon" && S.turn % 2 === 0) drawCount += 1;
+    if (S.hero.trait === "raccoon") drawCount += 1; // 預言浣熊每回合額外抽 1 張
     if (S.mod.effect === "fog_choice") drawCount = Math.max(1, drawCount - 1);
     
     let initialLength = S.hand.length;
@@ -250,7 +247,6 @@ function showPileInfo(type) {
     toggleModal('pile-modal');
 }
 
-// 統一的玩家攻擊傷害計算核心
 function applyPlayerAttackModifiers(baseValue) {
     let mult = S.player.nextAttackMultiplier;
     if (mult > 1) {
@@ -276,32 +272,29 @@ function applyPlayerAttackModifiers(baseValue) {
 
 async function addShieldToPlayer(amount) {
     let add = S.hero.trait === "turtlo" ? Math.round(amount * 1.1) : amount;
-    
+    S.player.shield += add;
+
+    // 機械刺蝟超頻核心：護盾達 15 點時溢出轉化為永久攻擊力（上限 +12 點）；達上限後護盾可自由向上突破 15 點！
     if (S.hero.trait === "hedgehog") {
-        const currentShield = S.player.shield;
-        const totalAfter = currentShield + add;
-        if (totalAfter >= 15) {
-            const overflow = totalAfter - 15;
-            S.player.shield = 15;
-            if (overflow > 0 && S.player.hedgehogBuff < 12) {
+        if (S.player.hedgehogBuff < 12 && S.player.shield >= 15) {
+            const overflow = S.player.shield - 15;
+            if (overflow > 0) {
                 const atkGain = Math.min(Math.floor(overflow / 2), 12 - S.player.hedgehogBuff);
                 if (atkGain > 0) {
                     S.player.permanentAtkBuff += atkGain;
                     S.player.hedgehogBuff += atkGain;
-                    await log(`🦔 <b>【超頻核心】</b>護盾達到 15 點溢出！轉化為永久攻擊力 +${atkGain}（累積 +${S.player.hedgehogBuff}/12）！`, "crit");
+                    S.player.shield = 15; // 轉換期間重置回 15 點
+                    await log(`🦔 <b>【超頻核心】</b>護盾溢出 15 點！轉化為永久攻擊力 +${atkGain}（累積 +${S.player.hedgehogBuff}/12）！`, "crit");
                 }
             }
-        } else {
-            S.player.shield += add;
         }
-    } else {
-        S.player.shield += add;
+        // 當 hedgehogBuff >= 12 後，護盾將不再被強制卡死在 15 點，可無限向上累積突破！
     }
+
     playSfx('shield');
     return S.player.shield;
 }
 
-// 統一的清除核心：用於時空幻影熵增回溯或其他需要重置狀態的機制
 function clearPlayerAllBuffsAndShields() {
     S.player.shield = 0;
     S.player.atkBuff = 0;
@@ -321,7 +314,7 @@ function clearMonsterAllBuffsAndShields() {
     S.monster.weakTurns = 0;
     S.monster.markedTurns = 0;
     S.monster.atkBuffTurns = 0;
-    S.delayedBombs = []; // 同步清除定時炸彈
+    S.delayedBombs = [];
 }
 
 async function applyDamageToMonster(dmg, opts = {}) {
@@ -387,7 +380,6 @@ async function applyDamageToMonster(dmg, opts = {}) {
         await dealDamageToPlayer(3, "thorns", { ignoreShield: true });
     }
 
-    // 時空幻影：低於 30% 觸發【熵增回溯】（回升至 50%，統一清空雙方護盾、Buff 與炸彈）
     if (S.boss.trait === "time_phantom" && !S.monster.timeRewound && S.monster.hp > 0 && S.monster.hp <= S.monster.maxHp * 0.3) {
         if (S.monster.sealedTurns > 0) {
             await log(`🔒🔒 <b>【禁錮封印】封鎖了時空幻影的熵增回溯！</b>`, "seal");
@@ -590,7 +582,6 @@ async function startNewTurn() {
     S.copycatUsedThisTurn = false;
     S.specialPlayedThisTurn = false;
 
-    // 元素巫師切換形態 (每 2 回合)
     if (S.boss.trait === "elementalist") {
         const stances = ["fire", "ice", "thunder"];
         const stanceNames = { fire: "🔥 烈焰（攻擊+30%）", ice: "🧊 寒冰（受傷-30%）", thunder: "⚡ 迅雷（閃避率20%）" };
@@ -620,7 +611,6 @@ async function startNewTurn() {
         }
     }
 
-    // 定時炸彈結算
     if (S.delayedBombs && S.delayedBombs.length > 0) {
         const remaining = [];
         for (let b of S.delayedBombs) {
@@ -637,7 +627,6 @@ async function startNewTurn() {
         S.delayedBombs = remaining;
     }
 
-    // 中毒效果
     if (S.monster.poison > 0) {
         S.monster.hp -= 6;
         S.monster.poison--;
@@ -664,8 +653,7 @@ async function startNewTurn() {
 
     if (!S.isTutorial) {
         let drawCount = 3;
-        // 預言浣熊調整：每 2 回合（偶數回合）額外抽 1 張牌
-        if (S.hero.trait === "raccoon" && S.turn % 2 === 0) drawCount += 1;
+        if (S.hero.trait === "raccoon") drawCount += 1; // 預言浣熊每回合額外抽 1 張牌
         if (S.mod.effect === "fog_choice") drawCount = Math.max(1, drawCount - 1);
         
         if (S.player.suppressNext) {
@@ -1081,16 +1069,10 @@ async function handleHealCard(card, prefix) {
             await log(`${prefix}💨 <b>蒸氣噴射</b>：獲得護盾。`, "shield");
         }
     }
-    else if (card.subType === "raccoon_treasure") {
-        const healed = healPlayer(12);
-        let retName = "";
-        if (S.discardPile.length > 0) {
-            const randIdx = Math.floor(Math.random() * S.discardPile.length);
-            const picked = S.discardPile.splice(randIdx, 1)[0];
-            const c = cardById[picked];
-            if (c) { S.hand.push(c); retName = c.name; }
-        }
-        await log(`${prefix}💎 <b>寶藏翻找</b>：回復 ${healed} 點生命${retName ? `，並從棄牌堆抓回【${retName}】` : ""}！`, "crit");
+    else if (card.subType === "raccoon_amulet") {
+        const healed = healPlayer(14);
+        await addShieldToPlayer(10);
+        await log(`${prefix}✨ <b>星象護符</b>：回復 ${healed} 點生命並獲得 10 點護盾！`, "heal");
     }
     else {
         const healed = healPlayer(card.value);
@@ -1363,7 +1345,6 @@ async function actionAttack() {
     let rawDmg = Math.floor(Math.random() * 11) + 12;
     let isBreakArmor = false;
     
-    // 元素巫師 烈焰形態 增傷 30%
     if (S.boss.trait === "elementalist" && S.monster.elemStance === "fire" && S.monster.sealedTurns <= 0) {
         rawDmg = Math.round(rawDmg * 1.3);
     }
@@ -1538,6 +1519,14 @@ function updateStatus() {
         S.boss.trait === "elementalist" && `<span class="status-icon rage">🧙‍♂️ ${S.monster.elemStance}</span>`,
         S.boss.trait === "time_phantom" && S.monster.timeRewound && `<span class="status-icon warn">⏳ 已回溯</span>`
     ];
+
+    // 同步顯示定時炸彈在魔王狀態列
+    if (S.delayedBombs && S.delayedBombs.length > 0) {
+        S.delayedBombs.forEach(b => {
+            mTags.push(`<span class="status-icon poison">💣 炸彈 ${b.turns}T</span>`);
+        });
+    }
+
     document.getElementById("monster-buff").innerHTML = mTags.filter(Boolean).join(" ") || "正常";
 
     if (S.turn >= 15) {
@@ -1653,7 +1642,6 @@ function showInfoModal(type) {
 function cardValueText(card) {
     if (!S) return card.value ? `${card.value} 點` : "效果";
     const mod = S.mod.effect;
-    const hero = S.hero.trait;
     const dmgMult = mod === "berserk" ? 1.2 : 1.0;
     const markMult = S.monster.markedTurns > 0 ? 1.25 : 1.0;
     const healMult = mod === "weak_heal" ? 0.6 : 1.0;
@@ -1667,53 +1655,56 @@ function cardValueText(card) {
     const H = (n) => Math.round(n * healMult);
 
     if (card.type === "attack") {
-        if (card.subType === "crit") return `${D(12)} / ${D(25)} 點`;
+        if (card.subType === "crit") return `${D(12)} / ${D(25)} 點傷害`;
         if (card.subType === "detonate") {
             const hasDebuff = S.monster.poison > 0 || S.monster.weakTurns > 0;
-            return hasDebuff ? `${D(32)} 點(引爆)` : `${D(10)} 點`;
+            return hasDebuff ? `${D(32)} 點傷害(引爆)` : `${D(10)} 點傷害`;
         }
         if (card.subType === "desperate") {
             const lost = Math.max(0, S.player.maxHp - S.player.hp);
-            return `${Math.round(Math.min(40, Math.round(lost * 0.4) + extraAtk) * dmgMult * markMult)} 點`;
+            return `${Math.round(Math.min(40, Math.round(lost * 0.4) + extraAtk) * dmgMult * markMult)} 點傷害`;
         }
         if (card.subType === "erosion") {
             let c = 0;
             if (S.monster.poison > 0) c++;
             if (S.monster.weakTurns > 0) c++;
             if (S.monster.markedTurns > 0) c++;
-            return `${D(12 + c * 6)} 點`;
+            return `${D(12 + c * 6)} 點傷害`;
         }
         if (card.subType === "finisher") {
-            return S.monster.hp < S.monster.maxHp * 0.3 ? `${D(30)} 點穿透` : `${D(10)} 點`;
+            return S.monster.hp < S.monster.maxHp * 0.3 ? `${D(30)} 點穿透` : `${D(10)} 點傷害`;
         }
         if (card.subType === "pierce") return `${D(card.value)} 點穿透`;
-        if (card.subType === "shadow_burst") return `${S.monster.poison * 8} 點`;
-        if (card.subType === "shadow_dead") return `${D(4)} 點+中毒`;
+        if (card.subType === "shadow_burst") return `${S.monster.poison * 8} 點傷害`;
+        if (card.subType === "shadow_dead") return `${D(4)} 點穿透+中毒`;
         if (card.subType === "shadow_poison") return `${D(6)} 點+中毒`;
-        if (card.subType === "thunder_strike") return `${D(12)} 點`;
+        if (card.subType === "thunder_strike") return `${D(12)} 點傷害`;
         if (card.subType === "ignis_rage") {
             const isLow = S.player.hp < S.player.maxHp * 0.5;
-            return isLow ? `${D(30)} 點(低血)` : `${D(20)} 點`;
+            return isLow ? `${D(30)} 點傷害(低血)` : `${D(20)} 點傷害`;
         }
         if (card.subType === "ignis_last") return `${D(25)} 點穿透`;
         if (card.subType === "thunder_thunder") {
             const p = S.monster.skipTurns > 0;
-            return p ? `${D(35)} 點(麻痺)` : `${D(15)} 點`;
+            return p ? `${D(35)} 點傷害(麻痺)` : `${D(15)} 點傷害`;
         }
-        if (card.subType === "raccoon_flash") return S.specialPlayedThisTurn ? `${D(24)} 點` : `${D(14)} 點`;
-        if (card.subType === "hedgehog_needle") return `${D(16 + S.player.shield)} 點`;
+        if (card.subType === "raccoon_flash") return S.specialPlayedThisTurn ? `${D(24)} 點傷害` : `${D(14)} 點傷害`;
+        if (card.subType === "hedgehog_needle") return `${D(16 + S.player.shield)} 點傷害`;
         if (card.subType === "delayed_bomb") return `${D(10)} 點+炸彈`;
-        if (card.subType === "universal_pull") return `${D(16 + Math.min(5, S.specialPlayedTotal || 0) * 4)} 點`;
+        if (card.subType === "universal_pull") {
+            const count = Math.min(5, S.specialPlayedTotal || 0);
+            return `${D(16 + count * 4)} 點傷害`;
+        }
         if (card.subType === "shield_break") return `碎盾 / ${D(8)} 點`;
-        if (card.subType === "recoil") return `${D(28)} 點`;
-        if (card.subType === "lifesteal") return `${D(14)} 點`;
+        if (card.subType === "recoil") return `${D(28)} 點傷害`;
+        if (card.subType === "lifesteal") return `${D(14)} 點+回血`;
         if (card.subType === "poison") return `${D(10)} 點+中毒`;
-        if (card.subType === "frost") return `${D(12)} 點`;
-        if (card.subType === "normal") return `${D(18)} 點`;
-        return `${D(card.value || 0)} 點`;
+        if (card.subType === "frost") return `${D(12)} 點+冰霜`;
+        if (card.subType === "normal") return `${D(18)} 點傷害`;
+        return `${D(card.value || 0)} 點傷害`;
     }
     if (card.type === "heal") {
-        if (card.subType === "regen") return `每回合 ${H(7)} 點`;
+        if (card.subType === "regen") return `每回合回 ${H(7)} 點`;
         if (card.subType === "shield") return `回${H(card.value)} / 護盾`;
         if (card.subType === "reverse_heal") {
             const lost = Math.max(0, S.player.maxHp - S.player.hp);
@@ -1727,7 +1718,7 @@ function cardValueText(card) {
         if (card.subType === "turtlo_counter") return `15 點護盾`;
         if (card.subType === "turtlo_wall") return `20 點護盾`;
         if (card.subType === "hedgehog_steam") return `15 護盾+行動`;
-        if (card.subType === "raccoon_treasure") return `回${H(12)} / 抓牌`;
+        if (card.subType === "raccoon_amulet") return `回14/10護盾`;
         return `回 ${H(card.value || 0)} 點`;
     }
     if (card.subType === "sacrifice") return `+${card.buffVal} 點攻擊`;
@@ -1803,7 +1794,7 @@ function getCardDesc(card) {
         }
         case "burst": return `回復 ${H(card.value)} 點生命${healTag}。`;
         case "shield": return `回復 ${H(card.value)} 點生命${healTag}，並獲得 12 點護盾。`;
-        case "regen": return `獲得 3 回合【泉源祝福】，每回合回復 ${H(7)} 點生命${healTag}。[不可疊加]`;
+        case "regen": return `獲得 3 回合【泉源祝福】，每回合回 ${H(7)} 點生命${healTag}。[不可疊加]`;
         case "reverse_heal": {
             const lost = S ? Math.max(0, S.player.maxHp - S.player.hp) : 0;
             return `回復 ${Math.min(25, Math.round(lost * 0.4 * healMult))} 點生命${healTag}（已損失 ${lost} 點生命 × 0.4，上限 25 點）。`;
@@ -1867,15 +1858,15 @@ function getCardDesc(card) {
         case "delayed_bomb": return `造成 ${D(10)} 點傷害，並施加【定時炸彈】（2 回合後爆發 28 點穿透傷害）。`;
         case "universal_pull": {
             const count = Math.min(5, S ? (S.specialPlayedTotal || 0) : 0);
-            return `造成 ${D(16 + count * 4)} 點傷害（本局已使用 ${S ? (S.specialPlayedTotal || 0) : 0} 張特殊卡，最高 +20）。`;
+            return `造成 ${D(16 + count * 4)} 點傷害（本局已使用 ${S ? (S.specialPlayedTotal || 0) : 0} 張特殊卡，每張 +4，最高 +20）。`;
         }
-        case "raccoon_search": return `【不扣行動】隨機將抽牌堆中的 1 張「攻擊卡」直接抓回手牌。`;
+        case "raccoon_search": return `【不扣行動】從抽牌堆中精準檢索 1 張「攻擊卡」加入手牌。`;
         case "raccoon_flash": {
             const isSpec = S ? S.specialPlayedThisTurn : false;
             return `造成 ${D(isSpec ? 24 : 14)} 點傷害${isSpec ? "（本回合已打出特殊卡，觸發 +10！）" : "（若本回合打出過特殊卡，額外 +10 點）"}。`;
         }
-        case "raccoon_treasure": return `【不扣行動】回復 ${H(12)} 點生命，並隨機將棄牌堆中 1 張卡牌抓回手牌。`;
-        case "hedgehog_steam": return `獲得 15 點護盾；若當前護盾值 ≥ 15 點，額外獲得 1 次行動。`;
+        case "raccoon_amulet": return `回復 ${H(14)} 點生命，並獲得 10 點護盾。`;
+        case "hedgehog_steam": return `【不扣行動】獲得 15 點護盾；若當前護盾值 ≥ 15 點，額外獲得 1 次行動。`;
         case "hedgehog_needle": {
             const shieldVal = S ? S.player.shield : 0;
             return `造成 ${D(16 + shieldVal)} 點傷害（消耗全部 ${shieldVal} 點護盾，每點護盾 +1 點傷害）。`;
@@ -1965,7 +1956,6 @@ function buildCompendiumUI() {
     body.innerHTML = html;
 }
 
-// 修正：完整動態顯示當前魔王的專屬特質與說明
 function updateCurrentBossUI() {
     const body = document.getElementById("current-boss-body");
     if (!S) { body.innerHTML = "<p>戰鬥尚未開始。</p>"; return; }
@@ -2214,7 +2204,6 @@ function updateLockUI() {
     });
 }
 
-// 修正：動態生成設定選單選項，確保新英雄與魔王完整加入自選配置
 function populateSetupOptions() {
     const heroSelect = document.getElementById("hero-select");
     const bossSelect = document.getElementById("boss-select");
@@ -2245,7 +2234,6 @@ function openSetupModal() {
     document.getElementById("modifier-select").value = cfg.mod.value || "random";
     document.getElementById("difficulty-select").value = cfg.difficulty || "normal";
     
-    // 載入遊戲體驗設定
     const st = loadSettings();
     document.getElementById("sfx-toggle").checked = !!st.sfx;
     document.getElementById("vib-toggle").checked = !!st.vibration;
@@ -2275,7 +2263,6 @@ function startConfiguredGame() {
     const mv = document.getElementById("modifier-select").value;
     const dv = document.getElementById("difficulty-select").value;
 
-    // 儲存遊戲體驗設定
     const st = {
         sfx: document.getElementById("sfx-toggle").checked,
         vibration: document.getElementById("vib-toggle").checked,
