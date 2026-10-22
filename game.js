@@ -16,7 +16,7 @@ function loadSettings() {
 }
 function saveSettings(cfg) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(cfg)); }
 
-// 內建 Web Audio API 音效系統 (免外部音檔)
+// 內建 Web Audio API 音效系統
 function playSfx(type) {
     const st = loadSettings();
     if (!st.sfx) return;
@@ -613,9 +613,10 @@ async function playCard(card) {
         && !card.freeAction
         && card.type === "special"
         && card.subType !== "skip"
-        && card.subType !== "shield_bash") {
+        && card.subType !== "shield_bash"
+        && card.subType !== "shield_break") {
         S.copycatUsedThisTurn = true;
-        await log(`🐰 <b>【鏡像戰術】</b>複製兔複製了卡牌效果！`, "crit");
+        await log(`🐰 <b>【鏡像戰術】</b>複製了卡牌效果！`, "crit");
         await executeCardEffect(card, true);
     }
 
@@ -687,11 +688,11 @@ async function handleAttackCard(card, prefix, dmgMult) {
     if (S.player.nextAttacksCount > 0) {
         attackBonus = S.player.nextAttacksBonus;
         S.player.nextAttacksCount--;
-        await log(`✨ <b>魔法增幅</b>：本次攻擊傷害 +${attackBonus} 點！`, "crit");
+        await log(`✨ <b>魔法增幅</b>：本次攻擊傷害 +${attackBonus} 點！（剩餘 ${S.player.nextAttacksCount} 次）`, "crit");
     }
 
     let extraAtk = (S.player.atkBuff || 0) + (S.player.permanentAtkBuff || 0);
-    S.player.atkBuff = 0; // 消費暫時攻擊加成
+    S.player.atkBuff = 0;
 
     let dmg = card.value || 0;
 
@@ -901,7 +902,7 @@ async function handleHealCard(card, prefix) {
     if (card.subType === "regen") {
         S.player.regenTurns = 3;
         playSfx('heal');
-        await log(`${prefix}🌿 <b>自然泉源</b>：獲得 3 回合【泉源祝福】（每回合回復 7 點生命，不可疊加）！`, "heal");
+        await log(`${prefix}🌿 <b>自然泉源</b>：獲得 3 回合【泉源祝福】（每回合回復 7 點生命）！`, "heal");
     }
     else if (card.subType === "reverse_heal") {
         const lost = Math.max(0, S.player.maxHp - S.player.hp);
@@ -1043,7 +1044,7 @@ async function handleSpecialCard(card, prefix) {
     }
     else if (card.subType === "thunder_double") {
         st.player.nextAttackMultiplier = 2;
-        await log(`${prefix}🌩️ <b>電光石火</b>：本回合下次攻擊傷害倍率 ×2！`, "crit");
+        await log(`${prefix}🌩️ <b>電光石火</b>：下次攻擊傷害倍率 ×2！`, "crit");
     }
     else if (card.subType === "copycat_draw") {
         drawCards(1);
@@ -1052,7 +1053,7 @@ async function handleSpecialCard(card, prefix) {
     else if (card.subType === "copycat_boost") {
         st.player.nextAttacksBonus = 10;
         st.player.nextAttacksCount = 2;
-        await log(`${prefix}✨ <b>魔法增幅</b>：本回合接下來 2 次攻擊傷害 +10 點！`, "crit");
+        await log(`${prefix}✨ <b>魔法增幅</b>：接下來 2 次攻擊傷害 +10 點！`, "crit");
     }
     else if (card.subType === "copycat_echo") {
         const randomCommon = commonCards[Math.floor(Math.random() * commonCards.length)];
@@ -1463,7 +1464,6 @@ function showInfoModal(type) {
     toggleModal('info-modal');
 }
 
-// 動態傷害預覽 (即時計算玩家當前 buff、易傷、狂暴與倍率)
 function cardValueText(card) {
     if (!S) return card.value ? `${card.value} 點` : "效果";
     const mod = S.mod.effect;
@@ -1580,10 +1580,10 @@ function getCardDesc(card) {
         case "poison": {
             const turns = hero === "shadow" ? 4 : 3;
             const tag = hero === "shadow" ? "（影爪貓 +1 回合）" : "";
-            return `造成 ${D(card.value)} 點傷害${markTag}，使魔王中毒 ${turns} 回合（每回合無視護盾扣除 6 點生命）${tag}。`;
+            return `造成 ${D(card.value)} 點傷害${markTag}，使魔王中毒 ${turns} 回合（每回合無視護盾扣除 6 點生命）${tag}。[不可疊加]`;
         }
         case "recoil": return `失去 ${card.selfCost} 點生命，造成 ${D(card.value)} 點傷害${dmgTag}${markTag}。`;
-        case "frost": return `造成 ${D(card.value)} 點傷害${markTag}，使魔王攻擊傷害減少 40%（持續 1 回合）。`;
+        case "frost": return `造成 ${D(card.value)} 點傷害${markTag}，使魔王攻擊傷害減少 40%（持續 1 回合）。[不可疊加]`;
         case "pierce": return `造成 ${D(card.value)} 點穿透傷害${dmgTag}${markTag}（無視魔王護盾）。`;
         case "detonate": {
             if (!S) return "造成 10 點傷害；魔王有異常時額外 +22 點。";
@@ -1612,7 +1612,7 @@ function getCardDesc(card) {
         }
         case "burst": return `回復 ${H(card.value)} 點生命${healTag}。`;
         case "shield": return `回復 ${H(card.value)} 點生命${healTag}，並獲得 ${Sh(card.shieldVal)} 點護盾。`;
-        case "regen": return `獲得 3 回合【泉源祝福】，每回合回復 ${H(7)} 點生命${healTag}。`;
+        case "regen": return `獲得 3 回合【泉源祝福】，每回合回復 ${H(7)} 點生命${healTag}。[不可疊加]`;
         case "reverse_heal": {
             const lost = S ? Math.max(0, S.player.maxHp - S.player.hp) : 0;
             return `回復 ${Math.min(25, Math.round(lost * 0.4 * healMult))} 點生命${healTag}（已損失 ${lost} 點生命 × 0.4，上限 25 點）。`;
@@ -1622,18 +1622,18 @@ function getCardDesc(card) {
             const isLow = S.player.hp < S.player.maxHp / 2;
             return `獲得 ${Sh(isLow ? 20 : 12)} 點護盾${isLow ? "（低血觸發 20 點）" : "（生命 < 50% 時 20 點）"}。`;
         }
-        case "sacrifice": return `失去 ${card.costHP} 點生命，下次攻擊傷害 +${card.buffVal} 點。【可疊加】`;
-        case "skip": return `跳過魔王 1 次行動；接下來 2 回合內魔王的專屬特質失效。【複製兔無法複製】`;
-        case "reflect": return `獲得 ${Sh(10)} 點護盾，下回合反彈魔王穿透傷害的 50%。`;
+        case "sacrifice": return `失去 ${card.costHP} 點生命，下次攻擊傷害 +${card.buffVal} 點。`;
+        case "skip": return `跳過魔王 1 次行動，並【封印特質】2 回合。[不可複製]`;
+        case "reflect": return `獲得 ${Sh(10)} 點護盾，下回合反彈魔王穿透傷害的 50%。[不可疊加]`;
         case "roulette": return `隨機三選一：回復 ${H(18)} 點生命且生命上限 +10 / 獲得 18 點護盾 / 造成 22 點穿透傷害${markTag}。`;
-        case "shield_bash": return `消耗全部護盾，每 1 點護盾造成 1.5 點傷害${markTag}。【複製兔無法複製】`;
-        case "steal_shield": return `偷取魔王 50% 護盾；若魔王無護盾則獲得 5 點護盾（不觸發鋼鐵反震）。`;
-        case "mark": return `標記魔王 3 回合，期間受到的玩家攻擊傷害 +25%。`;
+        case "shield_bash": return `消耗全部護盾，每 1 點護盾造成 1.5 點傷害${markTag}。[不可複製]`;
+        case "steal_shield": return `偷取魔王 50% 護盾；若魔王無護盾則獲得 5 點護盾。`;
+        case "mark": return `標記魔王 3 回合，期間受到的玩家攻擊傷害 +25%。[不可疊加]`;
         case "dark_contract": return `失去 12 點生命，永久 +6 點攻擊（上限 +12 點）。`;
-        case "time_hourglass": return `下回合起始行動數 +1。`;
+        case "time_hourglass": return `下回合起始行動數 +1。[不可疊加]`;
         case "shield_break": {
             if (!S) return "打碎魔王全部護盾；若無護盾則造成 8 點傷害。";
-            return S.monster.shield > 0 ? `打碎魔王 ${S.monster.shield} 點護盾。【複製兔無法複製】` : `魔王無護盾，造成 ${D(8)} 點傷害${markTag}。【複製兔無法複製】`;
+            return S.monster.shield > 0 ? `打碎魔王 ${S.monster.shield} 點護盾。[不可複製]` : `魔王無護盾，造成 ${D(8)} 點傷害${markTag}。[不可複製]`;
         }
         case "ignis_rage": {
             if (!S) return "失去 8 點生命，造成 20 點傷害；生命 < 50% 時 30 點。";
@@ -1651,7 +1651,7 @@ function getCardDesc(card) {
         case "turtlo_stand": return `獲得 ${Sh(15)} 點護盾，本回合受到的所有傷害減少 5 點。`;
         case "shadow_poison": {
             const turns = hero === "shadow" ? 4 : 3;
-            return `造成 ${D(6)} 點傷害${markTag}，使魔王中毒 ${turns} 回合（每回合無視護盾扣除 6 點生命）。`;
+            return `造成 ${D(6)} 點傷害${markTag}，使魔王中毒 ${turns} 回合（每回合無視護盾扣除 6 點生命）。[不可疊加]`;
         }
         case "shadow_burst": {
             if (!S) return "每層中毒造成 8 點傷害並清除。";
@@ -1659,17 +1659,17 @@ function getCardDesc(card) {
         }
         case "shadow_dead": {
             const turns = hero === "shadow" ? 6 : 5;
-            return `造成 ${D(4)} 點穿透傷害${markTag}，使魔王中毒 ${turns} 回合（每回合無視護盾扣除 6 點生命）。`;
+            return `造成 ${D(4)} 點穿透傷害${markTag}，使魔王中毒 ${turns} 回合（每回合無視護盾扣除 6 點生命）。[不可疊加]`;
         }
         case "thunder_strike": return `造成 ${D(12)} 點傷害${markTag}，35% 機率使魔王跳過 1 次行動。`;
-        case "thunder_double": return `【不扣行動】本回合下次攻擊傷害倍率 ×2。`;
+        case "thunder_double": return `【不扣行動】下次攻擊傷害 ×2。[不可疊加]`;
         case "thunder_thunder": {
             if (!S) return "造成 15 點傷害；魔王麻痺時 35 點。";
             const p = S.monster.skipTurns > 0;
             return p ? `造成 ${D(35)} 點傷害${markTag}（麻痺觸發 +20！）。` : `造成 ${D(15)} 點傷害${markTag}（麻痺時 +20 點）。`;
         }
         case "copycat_draw": return `【不扣行動】抽 1 張牌。`;
-        case "copycat_boost": return `【不扣行動】本回合接下來 2 次攻擊傷害 +10 點。`;
+        case "copycat_boost": return `【不扣行動】接下來 2 次攻擊傷害 +10 點。[不可疊加]`;
         case "copycat_echo": return `【不扣行動】隨機獲得 1 張通用卡加入手牌。`;
         default: return card.desc;
     }
