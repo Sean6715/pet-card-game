@@ -820,7 +820,7 @@ async function handleAttackCard(card, prefix) {
         const stacks = S.monster.poison;
         if (stacks > 0) {
             S.monster.poison = 0;
-            finalDmg = applyPlayerAttackModifiers(stacks * 8);
+            finalDmg = applyPlayerAttackModifiers(stacks * 6); // 每層改為 6 點
             const result = await applyDamageToMonster(finalDmg, { cardName: card.name });
             if (result.hit) await log(`${prefix}☠️ <b>毒爆</b>：引爆 ${stacks} 層中毒，造成 ${result.finalDmg} 點傷害！`, "crit");
         } else {
@@ -871,7 +871,7 @@ async function handleAttackCard(card, prefix) {
         let extraVal = 0;
         if (S.player.shield > 0) {
             const usedShield = S.player.shield;
-            extraVal = Math.min(30, Math.round(usedShield * 1.0)); // 上限 30
+            extraVal = Math.min(30, Math.round(usedShield * 1.0)); 
             S.player.shield = 0;
             await log(`${prefix}🦔 消耗全部 ${usedShield} 點護盾，刺針威力大增 (+${extraVal} 傷害)！`, "crit");
         }
@@ -941,7 +941,7 @@ async function handleAttackCard(card, prefix) {
         baseVal = isCrit ? 25 : 12;
     }
 
-    if (S.hero.trait === "ignis" && Math.random() < 0.40) { // 40%
+    if (S.hero.trait === "ignis" && Math.random() < 0.40) {
         baseVal += 5;
         await log(`${prefix}🔥 <b>【烈焰血脈】</b>追加 5 點傷害！`, "crit");
     }
@@ -1014,7 +1014,7 @@ async function handleAttackCard(card, prefix) {
 }
 
 function maybeThunderParalysis(prefix) {
-    if (S.hero.trait === "thunder" && Math.random() < 0.30) { // 30%
+    if (S.hero.trait === "thunder" && Math.random() < 0.30) {
         S.monster.skipTurns += 1;
         log(`${prefix}⚡ <b>【雷霆麻痺】</b>閃電鳥電擊麻痺魔王，跳過 1 次行動！`, "crit");
     }
@@ -1138,8 +1138,9 @@ async function handleSpecialCard(card, prefix) {
             await addShieldToPlayer(stolen);
             await log(`${prefix}🎭 <b>偷天換日</b>：偷取魔王 ${stolen} 點護盾（魔王剩 ${st.monster.shield} 點護盾）！`, "crit");
         } else {
-            await addShieldToPlayer(5);
-            await log(`${prefix}🎭 <b>偷天換日</b>：魔王無護盾，改為獲得 5 點護盾！`, "shield");
+            const finalDmg = applyPlayerAttackModifiers(12);
+            const result = await applyDamageToMonster(finalDmg, { ignoreShield: true, cardName: card.name });
+            if (result.hit) await log(`${prefix}🎭 <b>偷天換日</b>：魔王無護盾，轉化為 12 點穿透傷害！`, "dmg");
         }
     }
     else if (card.subType === "mark") {
@@ -1153,12 +1154,12 @@ async function handleSpecialCard(card, prefix) {
     }
     else if (card.subType === "dark_contract") {
         if (st.player.darkContractsUsed >= 2) {
-            await log(`${prefix}📜 <b>黑暗契約</b>：已達上限（永久 +12 點攻擊），無法再使用！`, "warn");
+            await log(`${prefix}📜 <b>黑暗契約</b>：已達上限（永久 +16 點攻擊），無法再使用！`, "warn");
         } else {
-            st.player.hp -= 12;
-            st.player.permanentAtkBuff += 6;
+            st.player.hp -= 10;
+            st.player.permanentAtkBuff += 8;
             st.player.darkContractsUsed++;
-            await log(`${prefix}📜 <b>黑暗契約</b>：扣除 12 點生命，永久 +6 點攻擊（累積 +${st.player.permanentAtkBuff} 點）！`, "crit");
+            await log(`${prefix}📜 <b>黑暗契約</b>：扣除 10 點生命，永久 +8 點攻擊（累積 +${st.player.permanentAtkBuff} 點）！`, "crit");
         }
     }
     else if (card.subType === "time_hourglass") {
@@ -1249,7 +1250,7 @@ async function monsterTurn() {
         S.monster.hp -= 6;
         S.monster.poison--;
         await log(`☠️ 魔王受到劇毒侵蝕，扣除 6 點生命！（剩餘 ${S.monster.poison} 回合）`, "status");
-        await checkTimePhantom(); // 中毒後檢查時空幻影
+        await checkTimePhantom();
     }
     
     isBatching = false;
@@ -1671,7 +1672,7 @@ function cardValueText(card) {
             return S.monster.hp < S.monster.maxHp * 0.3 ? `${D(30)} 點穿透` : `${D(10)} 點傷害`;
         }
         if (card.subType === "pierce") return `${D(card.value)} 點穿透`;
-        if (card.subType === "shadow_burst") return `${S.monster.poison * 8} 點傷害`;
+        if (card.subType === "shadow_burst") return `${S.monster.poison * 6} 點傷害`;
         if (card.subType === "shadow_dead") return `${D(4)} 點穿透+中毒`;
         if (card.subType === "shadow_poison") return `${D(6)} 點傷害+中毒`;
         if (card.subType === "thunder_strike") return `${D(12)} 點傷害`;
@@ -1724,10 +1725,10 @@ function cardValueText(card) {
     if (card.subType === "reflect") return `10點護盾+反彈`;
     if (card.subType === "skip") return `跳過行動+封印`;
     if (card.subType === "steal_shield") {
-        return S.monster.shield > 0 ? `偷 ${Math.floor(S.monster.shield * 0.5)} 點護盾` : `+5 點護盾`;
+        return S.monster.shield > 0 ? `偷 ${Math.floor(S.monster.shield * 0.5)} 點護盾` : `12 點穿透`;
     }
     if (card.subType === "mark") return `易傷 +25%`;
-    if (card.subType === "dark_contract") return `扣12血/+6點攻擊`;
+    if (card.subType === "dark_contract") return `扣10血/+8點攻擊`;
     if (card.subType === "time_hourglass") return `+1 次行動`;
     if (card.subType === "turtlo_stand") return `15點護盾+減傷`;
     if (card.subType === "thunder_double") return `攻擊 ×2`;
@@ -1807,9 +1808,9 @@ function getCardDesc(card) {
         case "reflect": return `獲得 10 點護盾，下回合被魔王攻擊時反彈 50% 傷害給魔王。[不可疊加]`;
         case "roulette": return `隨機三選一：回復 ${H(18)} 點生命且生命上限 +10 點（上限 +50） / 獲得 18 點護盾 / 造成 ${D(22)} 點穿透傷害${markTag}。`;
         case "shield_bash": return `消耗全部護盾，每 1 點護盾造成 1.5 點傷害${markTag}。[不可複製]`;
-        case "steal_shield": return `偷取魔王 50% 護盾；若魔王無護盾則獲得 5 點護盾。`;
+        case "steal_shield": return `偷取魔王 50% 護盾；若魔王無護盾，改為造成 12 點穿透傷害。`;
         case "mark": return `標記魔王 3 回合，期間受到的玩家攻擊傷害 +25%。[不可疊加]`;
-        case "dark_contract": return `扣除 12 點生命，永久 +6 點攻擊（上限 +12 點）。`;
+        case "dark_contract": return `扣除 10 點生命，本局永久 +8 點攻擊（上限 +16 點）。`;
         case "time_hourglass": return `下回合起始行動數 +1。[不可疊加]`;
         case "shield_break": {
             if (!S) return "打碎魔王全部護盾；若無護盾則造成 8 點傷害。";
@@ -1834,8 +1835,8 @@ function getCardDesc(card) {
             return `造成 ${D(6)} 點傷害${markTag}，使魔王中毒 ${turns} 回合（每回合無視護盾扣除 6 點生命）。[不可疊加]`;
         }
         case "shadow_burst": {
-            if (!S) return "每層中毒造成 8 點傷害並清除。";
-            return S.monster.poison > 0 ? `引爆 ${S.monster.poison} 層中毒，造成 ${S.monster.poison * 8} 點傷害${markTag}。` : `魔王無中毒，引爆失敗。`;
+            if (!S) return "每層中毒造成 6 點傷害並清除。";
+            return S.monster.poison > 0 ? `引爆 ${S.monster.poison} 層中毒，造成 ${S.monster.poison * 6} 點傷害${markTag}。` : `魔王無中毒，引爆失敗。`;
         }
         case "shadow_dead": {
             const turns = hero === "shadow" ? 6 : 5;
