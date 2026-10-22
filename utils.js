@@ -1,9 +1,3 @@
-// ============================================================
-// utils.js — 全域狀態、常數、工具函式
-// 必須最先載入（提供 S、$、log、sleep 等）
-// ============================================================
-
-// ===== 全域狀態 =====
 let S = null;
 let isBatching = false;
 let batchedLogHTML = "";
@@ -11,11 +5,9 @@ let deckManagerState = { heroId: "ignis", mode: "preset", commons: [] };
 let tooltipEl = null;
 let tooltipTimeout = null;
 
-// ===== DOM 與非同步工具 =====
 const $ = (id) => document.getElementById(id);
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-// ===== 魔法字串常數 =====
 const EFFECT = {
     BERSERK: "berserk", DOUBLE_ACTION: "double_action", WEAK_HEAL: "weak_heal",
     IRON_WALL: "iron_wall", FOG: "fog_choice", THORNS: "thorns", SACRIFICE: "sacrifice_altar"
@@ -26,7 +18,6 @@ const TRAIT = {
 };
 const DIFF = { EASY: "easy", NORMAL: "normal", HARD: "hard" };
 
-// ===== Storage 讀取 =====
 function readStorage(key, fallback) {
     try {
         const v = JSON.parse(localStorage.getItem(key));
@@ -34,13 +25,11 @@ function readStorage(key, fallback) {
     } catch { return fallback; }
 }
 
-// ===== 設定 =====
 const SETTINGS_KEY = "petAdventureGameSettings_v3";
 const DEFAULT_SETTINGS = { sfx: false, vibration: false, vfx: false };
 function loadSettings() { return { ...DEFAULT_SETTINGS, ...readStorage(SETTINGS_KEY, {}) }; }
 function saveSettings(cfg) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(cfg)); }
 
-// ===== 音效 / 震動 / 特效 =====
 function playSfx(type) {
     const st = loadSettings();
     if (!st.sfx) return;
@@ -77,7 +66,6 @@ function triggerShake() {
     if (c) { c.classList.add('shake'); setTimeout(() => c.classList.remove('shake'), 300); }
 }
 
-// ===== 日誌 =====
 function formatLogHTML(html, type) {
     if (type === "player-turn" || type === "monster-turn")
         return `<div class="log-${type}">${html}</div>`;
@@ -97,7 +85,6 @@ function flushLogBatch() {
     batchedLogHTML = "";
 }
 
-// ===== 通用 =====
 function shuffleArray(arr) {
     for (let i = arr.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
