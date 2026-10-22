@@ -210,7 +210,8 @@ async function refillHandIfEmpty() {
     if (S.hand.length > 0) return true;
     
     let drawCount = 3;
-    if (S.hero.trait === "raccoon") drawCount += 1;
+    // 預言浣熊調整：改為每 2 回合（偶數回合）額外抽 1 張，平衡強度
+    if (S.hero.trait === "raccoon" && S.turn % 2 === 0) drawCount += 1;
     if (S.mod.effect === "fog_choice") drawCount = Math.max(1, drawCount - 1);
     
     let initialLength = S.hand.length;
@@ -300,10 +301,32 @@ async function addShieldToPlayer(amount) {
     return S.player.shield;
 }
 
+// 統一的清除核心：用於時空幻影熵增回溯或其他需要重置狀態的機制
+function clearPlayerAllBuffsAndShields() {
+    S.player.shield = 0;
+    S.player.atkBuff = 0;
+    S.player.permanentAtkBuff = 0;
+    S.player.nextAttackMultiplier = 1;
+    S.player.nextAttacksBonus = 0;
+    S.player.nextAttacksCount = 0;
+    S.player.regenTurns = 0;
+    S.player.reflectActive = false;
+    S.player.damageReduction = 0;
+    S.player.turtloCounter = false;
+}
+
+function clearMonsterAllBuffsAndShields() {
+    S.monster.shield = 0;
+    S.monster.poison = 0;
+    S.monster.weakTurns = 0;
+    S.monster.markedTurns = 0;
+    S.monster.atkBuffTurns = 0;
+    S.delayedBombs = []; // 同步清除定時炸彈
+}
+
 async function applyDamageToMonster(dmg, opts = {}) {
     const { ignoreShield = false, cardName = null, canEvade = true, fromPlayer = true } = opts;
 
-    // 元素巫師 迅雷形態 或 影魔 閃避判定
     const isElemThunder = S.boss.trait === "elementalist" && S.monster.elemStance === "thunder";
     const evasionChance = isElemThunder ? 0.20 : (S.boss.trait === "evasion" ? 0.27 : 0);
 
@@ -313,7 +336,6 @@ async function applyDamageToMonster(dmg, opts = {}) {
         return { hit: false, actualDmg: 0, finalDmg: 0, markApplied: false };
     }
 
-    // 元素巫師 寒冰形態 減傷判定
     if (S.boss.trait === "elementalist" && S.monster.elemStance === "ice" && S.monster.sealedTurns <= 0) {
         dmg = Math.round(dmg * 0.7);
         await log(`🧊 <b>元素巫師【寒冰形態】</b>受到傷害減少 30%！`, "status");
@@ -365,25 +387,16 @@ async function applyDamageToMonster(dmg, opts = {}) {
         await dealDamageToPlayer(3, "thorns", { ignoreShield: true });
     }
 
-    // 時空幻影：低於 30% 觸發【熵增回溯】（回升至 50%，清空雙方護盾與 Buff）
+    // 時空幻影：低於 30% 觸發【熵增回溯】（回升至 50%，統一清空雙方護盾、Buff 與炸彈）
     if (S.boss.trait === "time_phantom" && !S.monster.timeRewound && S.monster.hp > 0 && S.monster.hp <= S.monster.maxHp * 0.3) {
         if (S.monster.sealedTurns > 0) {
             await log(`🔒🔒 <b>【禁錮封印】封鎖了時空幻影的熵增回溯！</b>`, "seal");
         } else {
             S.monster.timeRewound = true;
             S.monster.hp = Math.round(S.monster.maxHp * 0.5);
-            S.player.shield = 0;
-            S.monster.shield = 0;
-            S.player.atkBuff = 0;
-            S.player.permanentAtkBuff = 0;
-            S.player.nextAttackMultiplier = 1;
-            S.player.nextAttacksCount = 0;
-            S.player.regenTurns = 0;
-            S.monster.poison = 0;
-            S.monster.markedTurns = 0;
-            S.monster.weakTurns = 0;
-            S.monster.atkBuffTurns = 0;
-            await log(`⏳💥 <b>【熵增回溯發動！】</b>時空幻影生命回升至 50%（${S.monster.hp} 點），並強制<b>清空雙方所有的護盾與 Buff/Debuff！</b>`, "crit");
+            clearPlayerAllBuffsAndShields();
+            clearMonsterAllBuffsAndShields();
+            await log(`⏳💥 <b>【熵增回溯發動！】</b>時空幻影生命回升至 50%（${S.monster.hp} 點），並強制<b>清空雙方所有的護盾、Buff、Debuff 與定時炸彈！</b>`, "crit");
         }
     }
 
@@ -651,7 +664,8 @@ async function startNewTurn() {
 
     if (!S.isTutorial) {
         let drawCount = 3;
-        if (S.hero.trait === "raccoon") drawCount += 1; // 預言浣熊手牌 +1
+        // 預言浣熊調整：每 2 回合（偶數回合）額外抽 1 張牌
+        if (S.hero.trait === "raccoon" && S.turn % 2 === 0) drawCount += 1;
         if (S.mod.effect === "fog_choice") drawCount = Math.max(1, drawCount - 1);
         
         if (S.player.suppressNext) {
@@ -1951,20 +1965,29 @@ function buildCompendiumUI() {
     body.innerHTML = html;
 }
 
+// 修正：完整動態顯示當前魔王的專屬特質與說明
 function updateCurrentBossUI() {
     const body = document.getElementById("current-boss-body");
     if (!S) { body.innerHTML = "<p>戰鬥尚未開始。</p>"; return; }
     const b = S.boss;
+    let traitDetail = "";
+    if (b.trait === "standard") traitDetail = "<p>每 3 回合釋放【深淵咆哮】，造成 20 點傷害並施加壓制（下回合抽牌減少）。</p>";
+    else if (b.trait === "undying") traitDetail = "<p>首次被擊殺時原地復活，恢復 35 點生命並進入永久狂暴（攻擊 +8 點）。</p>";
+    else if (b.trait === "evasion") traitDetail = "<p>被動擁有 27% 閃避率，完全躲開玩家的攻擊。</p>";
+    else if (b.trait === "vampire") traitDetail = "<p>造成穿透傷害時，吸取該傷害 30% 的生命值。</p>";
+    else if (b.trait === "guardian") traitDetail = "<p>護盾被擊破時對玩家造成 12 點真實傷害（冷卻 2 回合）。</p>";
+    else if (b.trait === "elementalist") traitDetail = `<p>每 2 回合切換形態：🔥烈焰（攻擊+30%）/ 🧊寒冰（受傷-30%）/ ⚡迅雷（閃避率20%）。<br><b>當前形態：${S.monster.elemStance}</b></p>`;
+    else if (b.trait === "time_phantom") traitDetail = "<p>生命首次低於 30% 時觸發【熵增回溯】：生命回升至 50%，並清空雙方所有的護盾、Buff、Debuff 與定時炸彈！</p>";
+
     body.innerHTML = `
         <div class="effect-item current-item">
             <div class="boss-name-big" style="color:#fbbf24;">${b.icon} ${b.name}</div>
             <div class="trait-tag">專屬特質：${b.traitName}</div>
             <p style="margin-top:8px;"><b style="color:#94a3b8;">當前生命：</b>${S.monster.hp} / ${S.monster.maxHp} 點</p>
+            <p style="margin-top:6px;">${b.desc}</p>
         </div>
-        <div class="effect-item boss-item"><b>⚔️ 招式 1：普通猛擊</b><p>造成 12 ~ 22 點傷害。</p></div>
-        <div class="effect-item boss-item"><b>🔥 招式 2：暗影狂暴</b><p>接下來 2 次攻擊傷害 +8 點，且攻擊時 30% 機率毀壞玩家 50% 護盾。</p></div>
-        <div class="effect-item boss-item"><b>🛡️ 招式 3：暗黑護盾</b><p>獲得 15 點護盾。</p></div>
-        <div class="effect-item boss-item"><b>🪄 招式 4：自我修復</b><p>回復 20 點生命。</p></div>
+        <div class="effect-item boss-item"><b>🔮 特質機制詳解</b>${traitDetail}</div>
+        <div class="effect-item boss-item"><b>⚔️ 常規 AI 招式</b><p>包含普通猛擊（12~22傷）、暗影狂暴（+8傷且破盾）、暗黑護盾（+15盾）、自我修復（回20血）。</p></div>
     `;
 }
 
@@ -2191,7 +2214,31 @@ function updateLockUI() {
     });
 }
 
+// 修正：動態生成設定選單選項，確保新英雄與魔王完整加入自選配置
+function populateSetupOptions() {
+    const heroSelect = document.getElementById("hero-select");
+    const bossSelect = document.getElementById("boss-select");
+    const modSelect = document.getElementById("modifier-select");
+    
+    if (heroSelect) {
+        const cur = heroSelect.value;
+        heroSelect.innerHTML = `<option value="random">🔀 隨機英雄</option>` + heroes.map(h => `<option value="${h.id}">${h.icon} ${h.name}</option>`).join("");
+        heroSelect.value = cur;
+    }
+    if (bossSelect) {
+        const cur = bossSelect.value;
+        bossSelect.innerHTML = `<option value="random">🔀 隨機魔王</option>` + bossTypes.map(b => `<option value="${b.id}">${b.icon} ${b.name}</option>`).join("");
+        bossSelect.value = cur;
+    }
+    if (modSelect) {
+        const cur = modSelect.value;
+        modSelect.innerHTML = `<option value="random">🔀 隨機戰場</option>` + battlefieldModifiers.map(m => `<option value="${m.effect}">${m.name}</option>`).join("");
+        modSelect.value = cur;
+    }
+}
+
 function openSetupModal() {
+    populateSetupOptions();
     const cfg = loadLockedConfig();
     document.getElementById("hero-select").value = cfg.hero.value || "random";
     document.getElementById("boss-select").value = cfg.boss.value || "random";
@@ -2253,6 +2300,7 @@ function startConfiguredGame() {
 }
 
 window.onload = () => {
+    populateSetupOptions();
     if (!localStorage.getItem("hasVisitedPetAdventureStep")) {
         localStorage.setItem("hasVisitedPetAdventureStep", "true");
         openTutorialStart();
