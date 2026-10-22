@@ -520,7 +520,7 @@ function initGameWithConfig(hero, boss, mod, isTutorial, difficulty, deck) {
             atkBuff: 0, reflectActive: false, regenTurns: 0, suppressNext: false,
             permanentAtkBuff: 0, darkContractsUsed: 0, nextTurnBonus: 0,
             nextAttackMultiplier: 1, nextAttacksBonus: 0, nextAttacksCount: 0,
-            turtloCounter: false, damageReduction: 0, hedgehogBuff: 0
+            turtloCounter: false, damageReduction: 0, hedgehogBuff: 0, steamUsedThisTurn: false
         },
         monster: {
             hp: isTutorial ? 160 : boss.hp, maxHp: isTutorial ? 160 : boss.hp, shield: 0,
@@ -581,6 +581,7 @@ async function startNewTurn() {
     if (S.gameOver) return;
     S.isMonsterActing = false;
     S.actionsLeft = S.mod.effect === "double_action" ? 2 : 1;
+    S.player.steamUsedThisTurn = false;
 
     isBatching = true;
 
@@ -639,12 +640,6 @@ async function startNewTurn() {
             }
         }
         S.delayedBombs = remaining;
-    }
-
-    if (S.monster.poison > 0) {
-        S.monster.hp -= 6;
-        S.monster.poison--;
-        await log(`☠️ 魔王受到劇毒侵蝕，扣除 6 點生命！（剩餘 ${S.monster.poison} 回合）`, "status");
     }
 
     if (S.player.regenTurns > 0) {
@@ -1076,7 +1071,8 @@ async function handleHealCard(card, prefix) {
     }
     else if (card.subType === "hedgehog_steam") {
         await addShieldToPlayer(15);
-        if (S.player.shield >= 15) {
+        if (S.player.shield >= 15 && !S.player.steamUsedThisTurn) {
+            S.player.steamUsedThisTurn = true;
             S.actionsLeft += 1;
             await log(`${prefix}💨 <b>蒸氣噴射</b>：獲得 15 點護盾，並觸發超頻獲得 +1 次行動！`, "crit");
         } else {
@@ -1265,6 +1261,13 @@ async function monsterTurn() {
     }
 
     await log(`◀ 【${S.boss.name}】反擊回合`, "monster-turn");
+    
+    // 中毒結算移至魔王回合開始，更能直觀感受到毒傷阻止魔王行動
+    if (S.monster.poison > 0) {
+        S.monster.hp -= 6;
+        S.monster.poison--;
+        await log(`☠️ 魔王受到劇毒侵蝕，扣除 6 點生命！（剩餘 ${S.monster.poison} 回合）`, "status");
+    }
     
     isBatching = false;
     flushLogBatch();
@@ -1817,7 +1820,7 @@ function getCardDesc(card) {
         case "sacrifice": return `扣除 ${card.costHP} 點生命，下次攻擊傷害 +${card.buffVal} 點。`;
         case "skip": return `跳過魔王 1 次行動，並【封印特質】2 回合。[不可複製]`;
         case "reflect": return `獲得 10 點護盾，下回合被魔王攻擊時反彈 50% 傷害給魔王。[不可疊加]`;
-        case "roulette": return `隨機三選一：回復 ${H(18)} 點生命且生命上限 +10 點 / 獲得 18 點護盾 / 造成 ${D(22)} 點穿透傷害${markTag}。`;
+        case "roulette": return `隨機三選一：回復 ${H(18)} 點生命且生命上限 +10 點（上限 +50） / 獲得 18 點護盾 / 造成 ${D(22)} 點穿透傷害${markTag}。`;
         case "shield_bash": return `消耗全部護盾，每 1 點護盾造成 1.5 點傷害${markTag}。[不可複製]`;
         case "steal_shield": return `偷取魔王 50% 護盾；若魔王無護盾則獲得 5 點護盾。`;
         case "mark": return `標記魔王 3 回合，期間受到的玩家攻擊傷害 +25%。[不可疊加]`;
@@ -1863,20 +1866,20 @@ function getCardDesc(card) {
         case "copycat_draw": return `【不扣行動】抽 1 張牌。`;
         case "copycat_boost": return `【不扣行動】接下來 2 次攻擊傷害 +10 點。[不可疊加]`;
         case "copycat_echo": return `【不扣行動】隨機獲得 1 張通用卡加入手牌。`;
-        case "deep_meditation": return `【不扣行動】抽 1 張牌，下次攻擊傷害 +8 點。[不可疊加]`;
+        case "deep_meditation": return `【不扣行動】抽 1 張牌，下次攻擊傷害 +8 點。`;
         case "resurrection": return `【不扣行動】隨機將棄牌堆 1 張卡牌抓回手牌，並回復 ${H(10)} 點生命。[不可複製]`;
         case "delayed_bomb": return `造成 ${D(10)} 點傷害，並施加【定時炸彈】（2 回合後爆發 28 點穿透傷害）。`;
         case "universal_pull": {
             const count = Math.min(5, S ? (S.specialPlayedTotal || 0) : 0);
             return `造成 ${D(16 + count * 4)} 點傷害（本局已使用 ${S ? (S.specialPlayedTotal || 0) : 0} 張特殊卡，每張 +4，最高 +20）。`;
         }
-        case "raccoon_search": return `【不扣行動】檢索 1 張攻擊卡，且該卡本次傷害 +5 點。`;
+        case "raccoon_search": return `【不扣行動】檢索 1 張攻擊卡加入手牌，且下次攻擊傷害 +5 點。`;
         case "raccoon_flash": {
             const isSpec = S ? S.specialPlayedThisTurn : false;
             return `造成 ${D(isSpec ? 24 : 14)} 點傷害${isSpec ? "（本回合已打出特殊卡，觸發 +10！）" : "（若本回合打出過特殊卡，額外 +10 點）"}。`;
         }
         case "raccoon_amulet": return `回復 ${H(14)} 點生命，並獲得 10 點護盾。`;
-        case "hedgehog_steam": return `【不扣行動】獲得 15 點護盾；若當前護盾值 ≥ 15 點，額外獲得 1 次行動。[不可疊加]`;
+        case "hedgehog_steam": return `【不扣行動】獲得 15 點護盾；若當前護盾值 ≥ 15 點，額外獲得 1 次行動。[每回合限一次]`;
         case "hedgehog_needle": {
             const shieldVal = S ? S.player.shield : 0;
             const extraDmg = Math.round(shieldVal * 1.5);
