@@ -5,6 +5,78 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 let isBatching = false;
 let batchedLogHTML = "";
 
+// 玩家設定 (音效、震動、特效，預設全關)
+const SETTINGS_KEY = "petAdventureGameSettings_v3";
+function loadSettings() {
+    try {
+        const raw = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+        if (raw && typeof raw === "object") return raw;
+    } catch (e) {}
+    return { sfx: false, vibration: false, vfx: false };
+}
+function saveSettings(cfg) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(cfg)); }
+
+// 內建 Web Audio API 音效系統 (免外部音檔)
+function playSfx(type) {
+    const st = loadSettings();
+    if (!st.sfx) return;
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (type === 'attack') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(160, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.25, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+            osc.start(); osc.stop(ctx.currentTime + 0.15);
+        } else if (type === 'heal') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(300, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.2, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+            osc.start(); osc.stop(ctx.currentTime + 0.2);
+        } else if (type === 'shield') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(220, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(380, ctx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.25, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+            osc.start(); osc.stop(ctx.currentTime + 0.15);
+        } else if (type === 'crit') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(400, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(850, ctx.currentTime + 0.25);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+            osc.start(); osc.stop(ctx.currentTime + 0.25);
+        }
+    } catch (e) {}
+}
+
+function triggerVib(pattern = 40) {
+    const st = loadSettings();
+    if (!st.vibration) return;
+    if (navigator.vibrate) {
+        try { navigator.vibrate(pattern); } catch (e) {}
+    }
+}
+
+function triggerShake() {
+    const st = loadSettings();
+    if (!st.vfx) return;
+    const container = document.querySelector('.container');
+    if (container) {
+        container.classList.add('shake');
+        setTimeout(() => container.classList.remove('shake'), 300);
+    }
+}
+
 function formatLogHTML(html, type) {
     if (type === "player-turn" || type === "monster-turn") {
         return `<div class="log-${type}">${html}</div>`;
@@ -91,6 +163,7 @@ function healModifier() { return S.mod.effect === "weak_heal" ? 0.6 : 1.0; }
 function healPlayer(amount) {
     const actual = Math.round(amount * healModifier());
     S.player.hp = Math.min(S.player.maxHp, S.player.hp + actual);
+    playSfx('heal');
     return actual;
 }
 function healMonster(amount) {
@@ -132,7 +205,6 @@ function drawCards(n) {
     }
 }
 
-// 封裝的自動補牌邏輯，防止遊戲卡死
 async function refillHandIfEmpty() {
     if (S.isTutorial) return true;
     if (S.hand.length > 0) return true;
@@ -184,7 +256,6 @@ async function applyDamageToMonster(dmg, opts = {}) {
         return { hit: false, actualDmg: 0, finalDmg: 0, markApplied: false };
     }
 
-    // 在這裡統一處理血之狂熱的消耗與加成
     if (fromPlayer && S.player.atkBuff > 0) {
         const bonus = S.player.atkBuff;
         S.player.atkBuff = 0;
@@ -216,6 +287,10 @@ async function applyDamageToMonster(dmg, opts = {}) {
         actualDmg = overflow;
     }
 
+    playSfx('attack');
+    triggerVib(50);
+    triggerShake();
+
     if (markApplied) {
         await log(`🎯🎯 <b>【弱點標記生效】</b>傷害 ×1.25：${baseDmg} → ${dmg}`, "mark");
     }
@@ -242,7 +317,7 @@ async function dealDamageToPlayer(rawDmg, source, opts = {}) {
 
     if (S.player.damageReduction > 0 && (source === "attack" || source === "roar")) {
         dmg = Math.max(0, dmg - S.player.damageReduction);
-        await log(`⛰️ 不動如山：本次傷害 -${S.player.damageReduction} 點（剩餘 ${dmg} 點）`, "shield");
+        await log(`⛰️ 不動如山：本次傷害減少 ${S.player.damageReduction} 點（剩餘 ${dmg} 點）`, "shield");
     }
 
     if (!ignoreShield && S.player.shield > 0) {
@@ -258,8 +333,13 @@ async function dealDamageToPlayer(rawDmg, source, opts = {}) {
     }
     S.player.hp -= dmg;
 
+    playSfx('attack');
+    triggerVib(60);
+    triggerShake();
+
     if (S.hero.trait === "turtlo" && (source === "attack" || source === "roar") && dmg > 0) {
         S.player.shield += 3;
+        playSfx('shield');
         await log(`🛡️ 堅甲龜【堅甲防禦】：受傷後獲得 3 點護盾！`, "shield");
     }
 
@@ -410,7 +490,7 @@ async function startNewTurn() {
 
     if (S.player.nextTurnBonus > 0) {
         S.actionsLeft += S.player.nextTurnBonus;
-        await log(`⏳ <b>時光沙漏</b>：本回合額外 +${S.player.nextTurnBonus} 次行動！`, "crit");
+        await log(`⏳ <b>時光沙漏</b>：本回合額外獲得 +${S.player.nextTurnBonus} 次行動！`, "crit");
         S.player.nextTurnBonus = 0;
     }
 
@@ -455,7 +535,7 @@ async function startNewTurn() {
 
     if (S.turn >= 15) {
         const fatigueDmg = (S.turn - 14) * 3;
-        await log(`⏳ <b>【死鬥階段】</b>戰鬥拖得夠久了！雙方受到 <b>${fatigueDmg}</b> 點疲勞傷害（無視護盾）。`, "fatigue");
+        await log(`⏳ <b>【死鬥階段】</b>戰鬥進入膠着！雙方受到 <b>${fatigueDmg}</b> 點疲勞傷害（無視護盾）。`, "fatigue");
         S.player.hp -= fatigueDmg;
         S.monster.hp -= fatigueDmg;
     }
@@ -487,17 +567,15 @@ async function finishPlayerAction() {
     updateStatus();
 
     if (S.actionsLeft > 0) {
-        // 檢查手牌是否為空，如果為空則自動補牌
         const canContinue = await refillHandIfEmpty();
         if (!canContinue) {
-            S.actionsLeft = 0; // 強制結束行動
+            S.actionsLeft = 0;
         } else {
             renderCards();
             return;
         }
     }
     
-    // 回合結束處理
     isBatching = true;
     if (!S.isTutorial && S.hand.length > 0) {
         await log(`🗑️ 回合結束，${S.hand.length} 張手牌已丟棄。`, "info");
@@ -601,7 +679,7 @@ async function executeCardEffect(card, isCopy = false) {
 async function handleAttackCard(card, prefix, dmgMult) {
     let multiplier = S.player.nextAttackMultiplier;
     if (multiplier > 1) {
-        await log(`🌩️ <b>電光石火</b>：攻擊傷害 ×${multiplier}！`, "crit");
+        await log(`🌩️ <b>電光石火</b>：攻擊傷害倍率 ×${multiplier}！`, "crit");
         S.player.nextAttackMultiplier = 1;
     }
 
@@ -612,13 +690,16 @@ async function handleAttackCard(card, prefix, dmgMult) {
         await log(`✨ <b>魔法增幅</b>：本次攻擊傷害 +${attackBonus} 點！`, "crit");
     }
 
+    let extraAtk = (S.player.atkBuff || 0) + (S.player.permanentAtkBuff || 0);
+    S.player.atkBuff = 0; // 消費暫時攻擊加成
+
     let dmg = card.value || 0;
 
     if (card.subType === "ignis_rage") {
         S.player.hp -= 8;
         const isLow = S.player.hp < S.player.maxHp * 0.5;
-        const base = isLow ? 30 : 20;
-        const final = Math.round(base * dmgMult * multiplier) + attackBonus;
+        const base = (isLow ? 30 : 20) + extraAtk;
+        const final = Math.round(Math.round(base * dmgMult) * multiplier) + attackBonus;
         const result = await applyDamageToMonster(final, { cardName: card.name });
         if (result.hit) await log(`${prefix}🔥 <b>燃血狂怒</b>：失去 8 點生命，造成 ${result.finalDmg} 點傷害${isLow ? "（低血觸發 +10！）" : ""}！`, "crit");
         maybeThunderParalysis(prefix);
@@ -626,14 +707,16 @@ async function handleAttackCard(card, prefix, dmgMult) {
     }
     if (card.subType === "ignis_last") {
         S.player.hp -= 10;
-        const final = Math.round(25 * dmgMult * multiplier) + attackBonus;
+        const base = 25 + extraAtk;
+        const final = Math.round(Math.round(base * dmgMult) * multiplier) + attackBonus;
         const result = await applyDamageToMonster(final, { ignoreShield: true, cardName: card.name });
         if (result.hit) await log(`${prefix}🌋 <b>絕境焚身</b>：失去 10 點生命，造成 ${result.finalDmg} 點穿透傷害！`, "crit");
         maybeThunderParalysis(prefix);
         return;
     }
     if (card.subType === "shadow_poison") {
-        const final = Math.round(6 * dmgMult * multiplier) + attackBonus;
+        const base = 6 + extraAtk;
+        const final = Math.round(Math.round(base * dmgMult) * multiplier) + attackBonus;
         const result = await applyDamageToMonster(final, { cardName: card.name });
         if (result.hit) {
             const extra = S.hero.trait === "shadow" ? 1 : 0;
@@ -647,7 +730,8 @@ async function handleAttackCard(card, prefix, dmgMult) {
         const stacks = S.monster.poison;
         if (stacks > 0) {
             S.monster.poison = 0;
-            const final = Math.round(stacks * 8 * multiplier) + attackBonus;
+            const base = (stacks * 8) + extraAtk;
+            const final = Math.round(Math.round(base * dmgMult) * multiplier) + attackBonus;
             const result = await applyDamageToMonster(final, { cardName: card.name });
             if (result.hit) await log(`${prefix}☠️ <b>毒爆</b>：引爆 ${stacks} 層中毒，造成 ${result.finalDmg} 點傷害！`, "crit");
         } else {
@@ -657,7 +741,8 @@ async function handleAttackCard(card, prefix, dmgMult) {
         return;
     }
     if (card.subType === "shadow_dead") {
-        const final = Math.round(4 * dmgMult * multiplier) + attackBonus;
+        const base = 4 + extraAtk;
+        const final = Math.round(Math.round(base * dmgMult) * multiplier) + attackBonus;
         const result = await applyDamageToMonster(final, { ignoreShield: true, cardName: card.name });
         if (result.hit) {
             const extra = S.hero.trait === "shadow" ? 1 : 0;
@@ -668,7 +753,8 @@ async function handleAttackCard(card, prefix, dmgMult) {
         return;
     }
     if (card.subType === "thunder_strike") {
-        const final = Math.round(12 * dmgMult * multiplier) + attackBonus;
+        const base = 12 + extraAtk;
+        const final = Math.round(Math.round(base * dmgMult) * multiplier) + attackBonus;
         const result = await applyDamageToMonster(final, { cardName: card.name });
         if (result.hit) {
             await log(`${prefix}⚡ <b>迅雷麻痺</b>：造成 ${result.finalDmg} 點傷害！`, "dmg");
@@ -681,8 +767,8 @@ async function handleAttackCard(card, prefix, dmgMult) {
     }
     if (card.subType === "thunder_thunder") {
         const wasParalyzed = S.monster.skipTurns > 0;
-        const base = wasParalyzed ? 35 : 15;
-        const final = Math.round(base * dmgMult * multiplier) + attackBonus;
+        const base = (wasParalyzed ? 35 : 15) + extraAtk;
+        const final = Math.round(Math.round(base * dmgMult) * multiplier) + attackBonus;
         const result = await applyDamageToMonster(final, { cardName: card.name });
         if (result.hit) await log(`${prefix}🌪️ <b>雷霆萬鈞</b>：造成 ${result.finalDmg} 點傷害${wasParalyzed ? "（麻痺觸發 +20！）" : ""}！`, "crit");
         return;
@@ -690,7 +776,8 @@ async function handleAttackCard(card, prefix, dmgMult) {
 
     if (card.subType === "desperate") {
         const lost = Math.max(0, S.player.maxHp - S.player.hp);
-        const final = Math.round(Math.min(40, Math.round(lost * 0.4)) * dmgMult * multiplier) + attackBonus;
+        const base = Math.min(40, Math.round(lost * 0.4)) + extraAtk;
+        const final = Math.round(Math.round(base * dmgMult) * multiplier) + attackBonus;
         const result = await applyDamageToMonster(final, { cardName: card.name });
         if (result.hit) await log(`${prefix}🩹 <b>破釜沉舟</b>：已損失 ${lost} 點生命，造成 ${result.finalDmg} 點傷害！`, "dmg");
         maybeThunderParalysis(prefix);
@@ -701,7 +788,8 @@ async function handleAttackCard(card, prefix, dmgMult) {
         if (S.monster.poison > 0) count++;
         if (S.monster.weakTurns > 0) count++;
         if (S.monster.markedTurns > 0) count++;
-        const final = Math.round((12 + count * 6) * dmgMult * multiplier) + attackBonus;
+        const base = (12 + count * 6) + extraAtk;
+        const final = Math.round(Math.round(base * dmgMult) * multiplier) + attackBonus;
         const result = await applyDamageToMonster(final, { cardName: card.name });
         if (result.hit) await log(`${prefix}🌀 <b>魔能侵蝕</b>：魔王有 ${count} 個異常狀態，造成 ${result.finalDmg} 點傷害！`, "dmg");
         maybeThunderParalysis(prefix);
@@ -710,11 +798,13 @@ async function handleAttackCard(card, prefix, dmgMult) {
     if (card.subType === "finisher") {
         const isLow = S.monster.hp < S.monster.maxHp * 0.3;
         if (isLow) {
-            const final = Math.round(30 * dmgMult * multiplier) + attackBonus;
+            const base = 30 + extraAtk;
+            const final = Math.round(Math.round(base * dmgMult) * multiplier) + attackBonus;
             const result = await applyDamageToMonster(final, { ignoreShield: true, cardName: card.name });
             if (result.hit) await log(`${prefix}💀 <b>致命一擊！</b>魔王生命低於 30%，造成 ${result.finalDmg} 點穿透傷害！`, "crit");
         } else {
-            const final = Math.round(10 * dmgMult * multiplier) + attackBonus;
+            const base = 10 + extraAtk;
+            const final = Math.round(Math.round(base * dmgMult) * multiplier) + attackBonus;
             const result = await applyDamageToMonster(final, { cardName: card.name });
             if (result.hit) await log(`${prefix}💀 <b>致命一擊</b>：魔王生命尚高，僅造成 ${result.finalDmg} 點傷害。`, "dmg");
         }
@@ -727,13 +817,13 @@ async function handleAttackCard(card, prefix, dmgMult) {
         isCrit = Math.random() < 0.4;
         dmg = isCrit ? 25 : 12;
     }
-    if (S.player.permanentAtkBuff > 0) dmg += S.player.permanentAtkBuff;
+    dmg += extraAtk;
     if (S.hero.trait === "ignis" && Math.random() < 0.35) {
         dmg += 5;
         await log(`🔥 <b>【烈焰血脈】</b>追加 5 點傷害！`, "crit");
     }
 
-    dmg = Math.round(dmg * dmgMult * multiplier) + attackBonus;
+    dmg = Math.round(Math.round(dmg * dmgMult) * multiplier) + attackBonus;
 
     if (card.subType === "detonate") {
         const hasDebuff = S.monster.poison > 0 || S.monster.weakTurns > 0;
@@ -761,6 +851,7 @@ async function handleAttackCard(card, prefix, dmgMult) {
         if (S.monster.shield > 0) {
             const broken = S.monster.shield;
             S.monster.shield = 0;
+            playSfx('shield');
             await log(`${prefix}💢 <b>碎盾擊</b>：打碎魔王 ${broken} 點護盾！`, "crit");
         } else {
             const result = await applyDamageToMonster(dmg, { cardName: card.name });
@@ -773,7 +864,10 @@ async function handleAttackCard(card, prefix, dmgMult) {
     const result = await applyDamageToMonster(dmg, { cardName: card.name });
 
     if (result.hit) {
-        if (card.subType === "crit") await log(`${prefix}⚡ 暴擊判定：${isCrit ? "成功暴擊！" : "普通命中。"}`, "info");
+        if (card.subType === "crit") {
+            if (isCrit) playSfx('crit');
+            await log(`${prefix}⚡ 暴擊判定：${isCrit ? "成功暴擊！" : "普通命中。"}`, "info");
+        }
         await log(`${prefix}⚔️ <b>${card.name}</b> 對魔王造成 ${result.finalDmg} 點傷害！`, "dmg");
 
         if (card.subType === "lifesteal") {
@@ -785,7 +879,7 @@ async function handleAttackCard(card, prefix, dmgMult) {
             await log(`${prefix}🗡️ 劇毒命中：魔王中毒 ${S.monster.poison} 回合（每回合無視護盾扣除 6 點生命）！`, "status");
         } else if (card.subType === "frost") {
             S.monster.weakTurns = 1;
-            await log(`${prefix}❄️ 寒冰凍結：魔王攻擊傷害 -40%（持續 1 回合）！`, "status");
+            await log(`${prefix}❄️ 寒冰凍結：魔王攻擊傷害減少 40%（持續 1 回合）！`, "status");
         }
         maybeThunderParalysis(prefix);
     }
@@ -806,6 +900,7 @@ function maybeThunderParalysis(prefix) {
 async function handleHealCard(card, prefix) {
     if (card.subType === "regen") {
         S.player.regenTurns = 3;
+        playSfx('heal');
         await log(`${prefix}🌿 <b>自然泉源</b>：獲得 3 回合【泉源祝福】（每回合回復 7 點生命，不可疊加）！`, "heal");
     }
     else if (card.subType === "reverse_heal") {
@@ -819,6 +914,7 @@ async function handleHealCard(card, prefix) {
         const baseShield = isLow ? 20 : 12;
         const add = S.hero.trait === "turtlo" ? Math.round(baseShield * 1.1) : baseShield;
         S.player.shield += add;
+        playSfx('shield');
         await log(`${prefix}🏰 <b>堅壁清野</b>：獲得 ${add} 點護盾${isLow ? "（低血觸發 20 點）" : ""}！`, "shield");
     }
     else if (card.subType === "ignis_phoenix") {
@@ -830,11 +926,13 @@ async function handleHealCard(card, prefix) {
         const add = Math.round(15 * 1.1);
         S.player.shield += add;
         S.player.turtloCounter = true;
+        playSfx('shield');
         await log(`${prefix}🦔 <b>反震裝甲</b>：獲得 ${add} 點護盾，本回合被攻擊時反彈 50% 傷害！`, "shield");
     }
     else if (card.subType === "turtlo_wall") {
         const add = Math.round(20 * 1.1);
         S.player.shield += add;
+        playSfx('shield');
         await log(`${prefix}🧱 <b>銅牆鐵壁</b>：獲得 ${add} 點護盾！`, "shield");
     }
     else {
@@ -843,6 +941,7 @@ async function handleHealCard(card, prefix) {
         if (card.subType === "shield") {
             const add = S.hero.trait === "turtlo" ? Math.round(card.shieldVal * 1.1) : card.shieldVal;
             S.player.shield += add;
+            playSfx('shield');
             await log(`${prefix}🛡️ 額外獲得 ${add} 點護盾！`, "shield");
         }
     }
@@ -869,6 +968,7 @@ async function handleSpecialCard(card, prefix) {
         const add = st.hero.trait === "turtlo" ? 11 : 10;
         st.player.shield += add;
         st.player.reflectActive = true;
+        playSfx('shield');
         await log(`${prefix}🪞 <b>反彈護鏡</b>：獲得 ${add} 點護盾，下回合反彈魔王穿透傷害的 50%！`, "shield");
     }
     else if (card.subType === "shield_bash") {
@@ -896,6 +996,7 @@ async function handleSpecialCard(card, prefix) {
         } else if (roll < 0.66) {
             const add = st.hero.trait === "turtlo" ? 20 : 18;
             st.player.shield += add;
+            playSfx('shield');
             await log(`${prefix}🎰 <b>命運之輪：絕對防禦！</b>獲得 ${add} 點護盾！`, "shield");
         } else {
             const result = await applyDamageToMonster(22, { ignoreShield: true, cardName: "烈風風刃" });
@@ -907,15 +1008,17 @@ async function handleSpecialCard(card, prefix) {
         if (stolen > 0) {
             st.monster.shield -= stolen;
             st.player.shield += stolen;
+            playSfx('shield');
             await log(`${prefix}🎭 <b>偷天換日</b>：偷取魔王 ${stolen} 點護盾（魔王剩 ${st.monster.shield} 點，玩家現有 ${st.player.shield} 點）！`, "crit");
         } else {
             st.player.shield += 5;
+            playSfx('shield');
             await log(`${prefix}🎭 <b>偷天換日</b>：魔王無護盾，改為獲得 5 點護盾！`, "shield");
         }
     }
     else if (card.subType === "mark") {
         st.monster.markedTurns = 3;
-        await log(`${prefix}🎯🎯 <b>【弱點標記】</b>魔王被標記 3 回合，期間玩家攻擊傷害 +25%！`, "mark");
+        await log(`${prefix}🎯🎯 <b>【弱點標記】</b>魔王被標記 3 回合，期間受到的玩家攻擊傷害 +25%！`, "mark");
     }
     else if (card.subType === "dark_contract") {
         if (st.player.darkContractsUsed >= 2) {
@@ -935,11 +1038,12 @@ async function handleSpecialCard(card, prefix) {
         const add = Math.round(15 * 1.1);
         st.player.shield += add;
         st.player.damageReduction = 5;
-        await log(`${prefix}⛰️ <b>不動如山</b>：獲得 ${add} 點護盾，本回合受到傷害 -5 點！`, "shield");
+        playSfx('shield');
+        await log(`${prefix}⛰️ <b>不動如山</b>：獲得 ${add} 點護盾，本回合受到傷害減少 5 點！`, "shield");
     }
     else if (card.subType === "thunder_double") {
         st.player.nextAttackMultiplier = 2;
-        await log(`${prefix}🌩️ <b>電光石火</b>：本回合下次攻擊傷害 ×2！`, "crit");
+        await log(`${prefix}🌩️ <b>電光石火</b>：本回合下次攻擊傷害倍率 ×2！`, "crit");
     }
     else if (card.subType === "copycat_draw") {
         drawCards(1);
@@ -1091,7 +1195,7 @@ async function actionAttack() {
     if (S.monster.weakTurns > 0) {
         rawDmg = Math.round(rawDmg * 0.6);
         S.monster.weakTurns--;
-        await log(`❄️ 魔王受【冰霜虛弱】影響，攻擊傷害 -40%！`, "status");
+        await log(`❄️ 魔王受【冰霜虛弱】影響，攻擊傷害減少 40%！`, "status");
     }
     if (isBreakArmor && S.player.shield > 0) {
         const destroyed = Math.floor(S.player.shield * 0.5);
@@ -1101,8 +1205,8 @@ async function actionAttack() {
 
     const result = await dealDamageToPlayer(rawDmg, "attack");
     const detail = result.shieldAbsorbed > 0
-        ? `（護盾吸收 ${result.shieldAbsorbed} 點，實際 ${result.hpLost} 點）`
-        : `（實際 ${result.hpLost} 點）`;
+        ? `（護盾吸收 ${result.shieldAbsorbed} 點，實際扣血 ${result.hpLost} 點）`
+        : `（實際扣血 ${result.hpLost} 點）`;
     await log(`⚠️ 魔王發動猛擊，造成 ${rawDmg} 點傷害${detail}。`, "dmg");
 
     if (S.boss.trait === "vampire" && result.hpLost > 0) {
@@ -1129,15 +1233,15 @@ async function executeRoar() {
     if (S.monster.weakTurns > 0) {
         roarDmg = Math.round(roarDmg * 0.6);
         S.monster.weakTurns--;
-        await log(`❄️ 魔王受【冰霜虛弱】影響，深淵咆哮傷害 -40%！`, "status");
+        await log(`❄️ 魔王受【冰霜虛弱】影響，深淵咆哮傷害減少 40%！`, "status");
     }
 
     const result = await dealDamageToPlayer(roarDmg, "roar");
     if (!S.isTutorial) S.player.suppressNext = true;
 
     const detail = result.shieldAbsorbed > 0
-        ? `（護盾吸收 ${result.shieldAbsorbed} 點，實際 ${result.hpLost} 點）`
-        : `（實際 ${result.hpLost} 點）`;
+        ? `（護盾吸收 ${result.shieldAbsorbed} 點，實際扣血 ${result.hpLost} 點）`
+        : `（實際扣血 ${result.hpLost} 點）`;
     await log(`📢💥 <b>【深淵咆哮】</b>造成 ${roarDmg} 點傷害${detail}${S.isTutorial ? "" : "，並施加【壓制】"}！`, "crit");
 
     if (S.player.reflectActive && result.hpLost > 0) {
@@ -1359,29 +1463,35 @@ function showInfoModal(type) {
     toggleModal('info-modal');
 }
 
+// 動態傷害預覽 (即時計算玩家當前 buff、易傷、狂暴與倍率)
 function cardValueText(card) {
-    const mod = S ? S.mod.effect : null;
-    const hero = S ? S.hero.trait : null;
+    if (!S) return card.value ? `${card.value} 點` : "效果";
+    const mod = S.mod.effect;
+    const hero = S.hero.trait;
     const dmgMult = mod === "berserk" ? 1.2 : 1.0;
-    const markMult = (S && S.monster.markedTurns > 0) ? 1.25 : 1.0;
+    const markMult = S.monster.markedTurns > 0 ? 1.25 : 1.0;
     const healMult = mod === "weak_heal" ? 0.6 : 1.0;
-    const D = (n) => Math.round(Math.round(n * dmgMult) * markMult);
+    const extraAtk = (S.player.atkBuff || 0) + (S.player.permanentAtkBuff || 0);
+    const mult = S.player.nextAttackMultiplier || 1;
+    
+    const D = (n) => {
+        let base = (n + extraAtk) * mult;
+        return Math.round(Math.round(base * dmgMult) * markMult);
+    };
     const H = (n) => Math.round(n * healMult);
     const Sh = (n) => hero === "turtlo" ? Math.round(n * 1.1) : n;
 
     if (card.type === "attack") {
         if (card.subType === "crit") return `${D(12)} / ${D(25)} 點`;
         if (card.subType === "detonate") {
-            if (!S) return "10 / 32 點";
             const hasDebuff = S.monster.poison > 0 || S.monster.weakTurns > 0;
-            return hasDebuff ? `${D(32)} 點（引爆）` : `${D(10)} 點`;
+            return hasDebuff ? `${D(32)} 點(引爆)` : `${D(10)} 點`;
         }
         if (card.subType === "desperate") {
-            const lost = S ? Math.max(0, S.player.maxHp - S.player.hp) : 0;
-            return `${Math.round(Math.min(40, Math.round(lost * 0.4)) * dmgMult * markMult)} 點`;
+            const lost = Math.max(0, S.player.maxHp - S.player.hp);
+            return `${Math.round(Math.min(40, Math.round(lost * 0.4) + extraAtk) * dmgMult * markMult)} 點`;
         }
         if (card.subType === "erosion") {
-            if (!S) return "12~30 點";
             let c = 0;
             if (S.monster.poison > 0) c++;
             if (S.monster.weakTurns > 0) c++;
@@ -1389,73 +1499,64 @@ function cardValueText(card) {
             return `${D(12 + c * 6)} 點`;
         }
         if (card.subType === "finisher") {
-            if (!S) return "10 / 30 點";
             return S.monster.hp < S.monster.maxHp * 0.3 ? `${D(30)} 點穿透` : `${D(10)} 點`;
         }
         if (card.subType === "pierce") return `${D(card.value)} 點穿透`;
-        if (card.subType === "shadow_burst") {
-            if (!S) return "每層 8 點";
-            return `${S.monster.poison * 8} 點（${S.monster.poison} 層）`;
-        }
-        if (card.subType === "shadow_dead") return `${D(4)} 點 + 中毒`;
-        if (card.subType === "shadow_poison") return `${D(6)} 點 + 中毒`;
+        if (card.subType === "shadow_burst") return `${S.monster.poison * 8} 點`;
+        if (card.subType === "shadow_dead") return `${D(4)} 點+中毒`;
+        if (card.subType === "shadow_poison") return `${D(6)} 點+中毒`;
         if (card.subType === "thunder_strike") return `${D(12)} 點`;
         if (card.subType === "ignis_rage") {
-            if (!S) return "20 / 30 點";
-            return S.player.hp < S.player.maxHp * 0.5 ? `${D(30)} 點（低血）` : `${D(20)} 點`;
+            const isLow = S.player.hp < S.player.maxHp * 0.5;
+            return isLow ? `${D(30)} 點(低血)` : `${D(20)} 點`;
         }
         if (card.subType === "ignis_last") return `${D(25)} 點穿透`;
         if (card.subType === "thunder_thunder") {
-            if (!S) return "15 / 35 點";
-            return S.monster.skipTurns > 0 ? `${D(35)} 點（麻痺）` : `${D(15)} 點`;
+            const p = S.monster.skipTurns > 0;
+            return p ? `${D(35)} 點(麻痺)` : `${D(15)} 點`;
         }
         if (card.subType === "shield_break") return `碎盾 / ${D(8)} 點`;
         if (card.subType === "recoil") return `${D(28)} 點`;
         if (card.subType === "lifesteal") return `${D(14)} 點`;
-        if (card.subType === "poison") return `${D(10)} 點 + 中毒`;
+        if (card.subType === "poison") return `${D(10)} 點+中毒`;
         if (card.subType === "frost") return `${D(12)} 點`;
         if (card.subType === "normal") return `${D(18)} 點`;
         return `${D(card.value || 0)} 點`;
     }
     if (card.type === "heal") {
-        if (card.subType === "regen") return `每回合 ${H(7)} 點生命`;
-        if (card.subType === "shield") return `回復 ${H(card.value)} / 護盾 ${Sh(card.shieldVal)}`;
+        if (card.subType === "regen") return `每回合 ${H(7)} 點`;
+        if (card.subType === "shield") return `回${H(card.value)} / 護${Sh(card.shieldVal)}`;
         if (card.subType === "reverse_heal") {
-            const lost = S ? Math.max(0, S.player.maxHp - S.player.hp) : 0;
-            return `回復 ${Math.min(25, Math.round(lost * 0.4 * healMult))} 點`;
+            const lost = Math.max(0, S.player.maxHp - S.player.hp);
+            return `回 ${Math.min(25, Math.round(lost * 0.4 * healMult))} 點`;
         }
         if (card.subType === "low_hp_shield") {
-            if (!S) return `12 / 20 點護盾`;
             const isLow = S.player.hp < S.player.maxHp / 2;
             return `${Sh(isLow ? 20 : 12)} 點護盾`;
         }
         if (card.subType === "ignis_phoenix") {
-            if (!S) return "15 / 30 點";
-            return S.player.hp < S.player.maxHp * 0.3 ? `回復 ${H(30)}（低血）` : `回復 ${H(15)} 點`;
+            const isLow = S.player.hp < S.player.maxHp * 0.3;
+            return isLow ? `回 ${H(30)} 點` : `回 ${H(15)} 點`;
         }
         if (card.subType === "turtlo_counter") return `${Sh(15)} 點護盾`;
         if (card.subType === "turtlo_wall") return `${Sh(20)} 點護盾`;
-        return `回復 ${H(card.value || 0)} 點`;
+        return `回 ${H(card.value || 0)} 點`;
     }
     if (card.subType === "sacrifice") return `+${card.buffVal} 點攻擊`;
     if (card.subType === "shield_bash") return `×1.5 點傷害`;
     if (card.subType === "reflect") return `${Sh(10)} 點護盾`;
-    if (card.subType === "skip") return `跳 1 次 + 封印 2T`;
+    if (card.subType === "skip") return `跳過行動+封印`;
     if (card.subType === "steal_shield") {
-        if (!S) return "偷 50% 護盾";
         return S.monster.shield > 0 ? `偷 ${Math.floor(S.monster.shield * 0.5)} 點護盾` : `+5 點護盾`;
     }
-    if (card.subType === "mark") return `+25% 3 回合`;
-    if (card.subType === "dark_contract") {
-        if (!S) return "+6 點攻擊";
-        return S.player.darkContractsUsed >= 2 ? "已達上限" : "+6 點攻擊";
-    }
+    if (card.subType === "mark") return `易傷 +25%`;
+    if (card.subType === "dark_contract") return `+6 點攻擊`;
     if (card.subType === "time_hourglass") return `+1 次行動`;
-    if (card.subType === "turtlo_stand") return `${Sh(15)} 點護盾 + 減 5`;
+    if (card.subType === "turtlo_stand") return `${Sh(15)} 護盾+減傷`;
     if (card.subType === "thunder_double") return `攻擊 ×2`;
     if (card.subType === "copycat_draw") return `抽 1 張牌`;
-    if (card.subType === "copycat_boost") return `2 次 +10 點`;
-    if (card.subType === "copycat_echo") return `抽 1 張通用卡`;
+    if (card.subType === "copycat_boost") return `2次 +10 點`;
+    if (card.subType === "copycat_echo") return `獲得通用卡`;
     return "戰術";
 }
 
@@ -1479,10 +1580,10 @@ function getCardDesc(card) {
         case "poison": {
             const turns = hero === "shadow" ? 4 : 3;
             const tag = hero === "shadow" ? "（影爪貓 +1 回合）" : "";
-            return `造成 ${D(card.value)} 點傷害${markTag}，使魔王中毒 ${turns} 回合（每回合無視護盾扣除 6 點生命）${tag}。【不可疊加】`;
+            return `造成 ${D(card.value)} 點傷害${markTag}，使魔王中毒 ${turns} 回合（每回合無視護盾扣除 6 點生命）${tag}。`;
         }
         case "recoil": return `失去 ${card.selfCost} 點生命，造成 ${D(card.value)} 點傷害${dmgTag}${markTag}。`;
-        case "frost": return `造成 ${D(card.value)} 點傷害${markTag}，使魔王攻擊傷害 -40%（持續 1 回合）。【不可疊加】`;
+        case "frost": return `造成 ${D(card.value)} 點傷害${markTag}，使魔王攻擊傷害減少 40%（持續 1 回合）。`;
         case "pierce": return `造成 ${D(card.value)} 點穿透傷害${dmgTag}${markTag}（無視魔王護盾）。`;
         case "detonate": {
             if (!S) return "造成 10 點傷害；魔王有異常時額外 +22 點。";
@@ -1511,7 +1612,7 @@ function getCardDesc(card) {
         }
         case "burst": return `回復 ${H(card.value)} 點生命${healTag}。`;
         case "shield": return `回復 ${H(card.value)} 點生命${healTag}，並獲得 ${Sh(card.shieldVal)} 點護盾。`;
-        case "regen": return `獲得 3 回合【泉源祝福】，每回合回復 ${H(7)} 點生命${healTag}。【不可疊加，重複使用僅刷新回合數】`;
+        case "regen": return `獲得 3 回合【泉源祝福】，每回合回復 ${H(7)} 點生命${healTag}。`;
         case "reverse_heal": {
             const lost = S ? Math.max(0, S.player.maxHp - S.player.hp) : 0;
             return `回復 ${Math.min(25, Math.round(lost * 0.4 * healMult))} 點生命${healTag}（已損失 ${lost} 點生命 × 0.4，上限 25 點）。`;
@@ -1523,13 +1624,13 @@ function getCardDesc(card) {
         }
         case "sacrifice": return `失去 ${card.costHP} 點生命，下次攻擊傷害 +${card.buffVal} 點。【可疊加】`;
         case "skip": return `跳過魔王 1 次行動；接下來 2 回合內魔王的專屬特質失效。【複製兔無法複製】`;
-        case "reflect": return `獲得 ${Sh(10)} 點護盾，下回合反彈魔王穿透傷害的 50%。【不可疊加】`;
+        case "reflect": return `獲得 ${Sh(10)} 點護盾，下回合反彈魔王穿透傷害的 50%。`;
         case "roulette": return `隨機三選一：回復 ${H(18)} 點生命且生命上限 +10 / 獲得 18 點護盾 / 造成 22 點穿透傷害${markTag}。`;
         case "shield_bash": return `消耗全部護盾，每 1 點護盾造成 1.5 點傷害${markTag}。【複製兔無法複製】`;
-        case "steal_shield": return `偷取魔王 50% 護盾；若魔王無護盾則獲得 5 點護盾。不觸發鋼鐵反震。`;
-        case "mark": return `標記魔王 3 回合，期間魔王受到的玩家攻擊傷害 +25%。【不可疊加】`;
+        case "steal_shield": return `偷取魔王 50% 護盾；若魔王無護盾則獲得 5 點護盾（不觸發鋼鐵反震）。`;
+        case "mark": return `標記魔王 3 回合，期間受到的玩家攻擊傷害 +25%。`;
         case "dark_contract": return `失去 12 點生命，永久 +6 點攻擊（上限 +12 點）。`;
-        case "time_hourglass": return `下回合起始行動數 +1。【不可疊加】`;
+        case "time_hourglass": return `下回合起始行動數 +1。`;
         case "shield_break": {
             if (!S) return "打碎魔王全部護盾；若無護盾則造成 8 點傷害。";
             return S.monster.shield > 0 ? `打碎魔王 ${S.monster.shield} 點護盾。【複製兔無法複製】` : `魔王無護盾，造成 ${D(8)} 點傷害${markTag}。【複製兔無法複製】`;
@@ -1547,10 +1648,10 @@ function getCardDesc(card) {
         case "ignis_last": return `失去 10 點生命，造成 ${D(25)} 點穿透傷害${markTag}。`;
         case "turtlo_counter": return `獲得 ${Sh(15)} 點護盾，本回合被攻擊時反彈 50% 傷害給魔王。`;
         case "turtlo_wall": return `獲得 ${Sh(20)} 點護盾。`;
-        case "turtlo_stand": return `獲得 ${Sh(15)} 點護盾，本回合受到的所有傷害 -5 點。`;
+        case "turtlo_stand": return `獲得 ${Sh(15)} 點護盾，本回合受到的所有傷害減少 5 點。`;
         case "shadow_poison": {
             const turns = hero === "shadow" ? 4 : 3;
-            return `造成 ${D(6)} 點傷害${markTag}，使魔王中毒 ${turns} 回合（每回合無視護盾扣除 6 點生命）。【不可疊加】`;
+            return `造成 ${D(6)} 點傷害${markTag}，使魔王中毒 ${turns} 回合（每回合無視護盾扣除 6 點生命）。`;
         }
         case "shadow_burst": {
             if (!S) return "每層中毒造成 8 點傷害並清除。";
@@ -1558,17 +1659,17 @@ function getCardDesc(card) {
         }
         case "shadow_dead": {
             const turns = hero === "shadow" ? 6 : 5;
-            return `造成 ${D(4)} 點穿透傷害${markTag}，使魔王中毒 ${turns} 回合（每回合無視護盾扣除 6 點生命）。【不可疊加】`;
+            return `造成 ${D(4)} 點穿透傷害${markTag}，使魔王中毒 ${turns} 回合（每回合無視護盾扣除 6 點生命）。`;
         }
         case "thunder_strike": return `造成 ${D(12)} 點傷害${markTag}，35% 機率使魔王跳過 1 次行動。`;
-        case "thunder_double": return `【不扣行動】本回合下次攻擊傷害 ×2。【不可疊加】`;
+        case "thunder_double": return `【不扣行動】本回合下次攻擊傷害倍率 ×2。`;
         case "thunder_thunder": {
             if (!S) return "造成 15 點傷害；魔王麻痺時 35 點。";
             const p = S.monster.skipTurns > 0;
             return p ? `造成 ${D(35)} 點傷害${markTag}（麻痺觸發 +20！）。` : `造成 ${D(15)} 點傷害${markTag}（麻痺時 +20 點）。`;
         }
         case "copycat_draw": return `【不扣行動】抽 1 張牌。`;
-        case "copycat_boost": return `【不扣行動】本回合接下來 2 次攻擊傷害 +10 點。【不可疊加】`;
+        case "copycat_boost": return `【不扣行動】本回合接下來 2 次攻擊傷害 +10 點。`;
         case "copycat_echo": return `【不扣行動】隨機獲得 1 張通用卡加入手牌。`;
         default: return card.desc;
     }
@@ -1665,7 +1766,7 @@ function updateCurrentBossUI() {
             <p style="margin-top:8px;"><b style="color:#94a3b8;">當前生命：</b>${S.monster.hp} / ${S.monster.maxHp} 點</p>
         </div>
         <div class="effect-item boss-item"><b>⚔️ 招式 1：普通猛擊</b><p>造成 12 ~ 22 點傷害。</p></div>
-        <div class="effect-item boss-item"><b>🔥 招式 2：暗影狂暴</b><p>接下來 2 次攻擊傷害 +8 點，且攻擊時 30% 機率毀壞玩家 50% 護盾。【不可疊加】</p></div>
+        <div class="effect-item boss-item"><b>🔥 招式 2：暗影狂暴</b><p>接下來 2 次攻擊傷害 +8 點，且攻擊時 30% 機率毀壞玩家 50% 護盾。</p></div>
         <div class="effect-item boss-item"><b>🛡️ 招式 3：暗黑護盾</b><p>獲得 15 點護盾。</p></div>
         <div class="effect-item boss-item"><b>🪄 招式 4：自我修復</b><p>回復 20 點生命。</p></div>
     `;
@@ -1900,6 +2001,13 @@ function openSetupModal() {
     document.getElementById("boss-select").value = cfg.boss.value || "random";
     document.getElementById("modifier-select").value = cfg.mod.value || "random";
     document.getElementById("difficulty-select").value = cfg.difficulty || "normal";
+    
+    // 載入遊戲體驗設定
+    const st = loadSettings();
+    document.getElementById("sfx-toggle").checked = !!st.sfx;
+    document.getElementById("vib-toggle").checked = !!st.vibration;
+    document.getElementById("vfx-toggle").checked = !!st.vfx;
+
     updateLockUI();
     onSetupHeroChange();
     document.getElementById("setup-modal").style.display = "flex";
@@ -1923,6 +2031,14 @@ function startConfiguredGame() {
     const bv = document.getElementById("boss-select").value;
     const mv = document.getElementById("modifier-select").value;
     const dv = document.getElementById("difficulty-select").value;
+
+    // 儲存遊戲體驗設定
+    const st = {
+        sfx: document.getElementById("sfx-toggle").checked,
+        vibration: document.getElementById("vib-toggle").checked,
+        vfx: document.getElementById("vfx-toggle").checked
+    };
+    saveSettings(st);
 
     const cfg = loadLockedConfig();
     cfg.hero.value = hv;
