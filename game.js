@@ -210,7 +210,8 @@ async function refillHandIfEmpty() {
     if (S.hand.length > 0) return true;
     
     let drawCount = 3;
-    if (S.mod.effect === "fog_choice") drawCount = 2;
+    if (S.hero.trait === "raccoon") drawCount += 1;
+    if (S.mod.effect === "fog_choice") drawCount = Math.max(1, drawCount - 1);
     
     let initialLength = S.hand.length;
     drawCards(drawCount);
@@ -248,11 +249,11 @@ function showPileInfo(type) {
     toggleModal('pile-modal');
 }
 
-// 統一的玩家攻擊傷害計算核心（完美支援倍率、暫時/永久攻擊、魔法增幅、狂暴磁場）
+// 統一的玩家攻擊傷害計算核心
 function applyPlayerAttackModifiers(baseValue) {
     let mult = S.player.nextAttackMultiplier;
     if (mult > 1) {
-        S.player.nextAttackMultiplier = 1; // 消費倍率
+        S.player.nextAttackMultiplier = 1;
     } else {
         mult = 1;
     }
@@ -265,19 +266,57 @@ function applyPlayerAttackModifiers(baseValue) {
     }
 
     let extraAtk = (S.player.atkBuff || 0) + (S.player.permanentAtkBuff || 0);
-    S.player.atkBuff = 0; // 消費暫時攻擊加成
+    S.player.atkBuff = 0;
 
     let dmg = (baseValue + extraAtk) * mult + attackBonus;
     const dmgMult = S.mod.effect === "berserk" ? 1.2 : 1.0;
     return Math.round(Math.round(dmg * dmgMult));
 }
 
+async function addShieldToPlayer(amount) {
+    let add = S.hero.trait === "turtlo" ? Math.round(amount * 1.1) : amount;
+    
+    if (S.hero.trait === "hedgehog") {
+        const currentShield = S.player.shield;
+        const totalAfter = currentShield + add;
+        if (totalAfter >= 15) {
+            const overflow = totalAfter - 15;
+            S.player.shield = 15;
+            if (overflow > 0 && S.player.hedgehogBuff < 12) {
+                const atkGain = Math.min(Math.floor(overflow / 2), 12 - S.player.hedgehogBuff);
+                if (atkGain > 0) {
+                    S.player.permanentAtkBuff += atkGain;
+                    S.player.hedgehogBuff += atkGain;
+                    await log(`🦔 <b>【超頻核心】</b>護盾達到 15 點溢出！轉化為永久攻擊力 +${atkGain}（累積 +${S.player.hedgehogBuff}/12）！`, "crit");
+                }
+            }
+        } else {
+            S.player.shield += add;
+        }
+    } else {
+        S.player.shield += add;
+    }
+    playSfx('shield');
+    return S.player.shield;
+}
+
 async function applyDamageToMonster(dmg, opts = {}) {
     const { ignoreShield = false, cardName = null, canEvade = true, fromPlayer = true } = opts;
 
-    if (canEvade && S.boss.trait === "evasion" && S.monster.sealedTurns <= 0 && Math.random() < 0.27) {
-        await log(`💨 <b>【閃避成功】</b>影魔身形一閃，完全躲開${cardName ? ` <b>${cardName}</b>` : "攻擊"}！`, "info");
+    // 元素巫師 迅雷形態 或 影魔 閃避判定
+    const isElemThunder = S.boss.trait === "elementalist" && S.monster.elemStance === "thunder";
+    const evasionChance = isElemThunder ? 0.20 : (S.boss.trait === "evasion" ? 0.27 : 0);
+
+    if (canEvade && evasionChance > 0 && S.monster.sealedTurns <= 0 && Math.random() < evasionChance) {
+        const evaderName = isElemThunder ? "元素巫師（迅雷形態）" : "影魔";
+        await log(`💨 <b>【閃避成功】</b>${evaderName}身形一閃，完全躲開${cardName ? ` <b>${cardName}</b>` : "攻擊"}！`, "info");
         return { hit: false, actualDmg: 0, finalDmg: 0, markApplied: false };
+    }
+
+    // 元素巫師 寒冰形態 減傷判定
+    if (S.boss.trait === "elementalist" && S.monster.elemStance === "ice" && S.monster.sealedTurns <= 0) {
+        dmg = Math.round(dmg * 0.7);
+        await log(`🧊 <b>元素巫師【寒冰形態】</b>受到傷害減少 30%！`, "status");
     }
 
     const baseDmg = dmg;
@@ -325,6 +364,29 @@ async function applyDamageToMonster(dmg, opts = {}) {
         await log(`🌵 荊棘之地反刺：玩家受到 3 點反傷（無視護盾）`, "warn");
         await dealDamageToPlayer(3, "thorns", { ignoreShield: true });
     }
+
+    // 時空幻影：低於 30% 觸發【熵增回溯】（回升至 50%，清空雙方護盾與 Buff）
+    if (S.boss.trait === "time_phantom" && !S.monster.timeRewound && S.monster.hp > 0 && S.monster.hp <= S.monster.maxHp * 0.3) {
+        if (S.monster.sealedTurns > 0) {
+            await log(`🔒🔒 <b>【禁錮封印】封鎖了時空幻影的熵增回溯！</b>`, "seal");
+        } else {
+            S.monster.timeRewound = true;
+            S.monster.hp = Math.round(S.monster.maxHp * 0.5);
+            S.player.shield = 0;
+            S.monster.shield = 0;
+            S.player.atkBuff = 0;
+            S.player.permanentAtkBuff = 0;
+            S.player.nextAttackMultiplier = 1;
+            S.player.nextAttacksCount = 0;
+            S.player.regenTurns = 0;
+            S.monster.poison = 0;
+            S.monster.markedTurns = 0;
+            S.monster.weakTurns = 0;
+            S.monster.atkBuffTurns = 0;
+            await log(`⏳💥 <b>【熵增回溯發動！】</b>時空幻影生命回升至 50%（${S.monster.hp} 點），並強制<b>清空雙方所有的護盾與 Buff/Debuff！</b>`, "crit");
+        }
+    }
+
     return { hit: true, actualDmg, finalDmg: dmg, markApplied };
 }
 
@@ -355,8 +417,7 @@ async function dealDamageToPlayer(rawDmg, source, opts = {}) {
     triggerShake();
 
     if (S.hero.trait === "turtlo" && (source === "attack" || source === "roar") && dmg > 0) {
-        S.player.shield += 3;
-        playSfx('shield');
+        await addShieldToPlayer(3);
         await log(`🛡️ 堅甲龜【堅甲防禦】：受傷後獲得 3 點護盾！`, "shield");
     }
 
@@ -432,21 +493,23 @@ function initGameWithConfig(hero, boss, mod, isTutorial, difficulty, deck) {
     S = {
         hero, boss, mod, isTutorial, difficulty: difficulty || "normal",
         turn: 1, actionsLeft: 1, gameOver: false, isMonsterActing: false,
-        bossRevived: false, copycatUsedThisTurn: false,
+        bossRevived: false, copycatUsedThisTurn: false, specialPlayedThisTurn: false,
+        specialPlayedTotal: 0,
         tutorialStep: 1,
         player: {
             hp: isTutorial ? 150 : hero.hp, maxHp: isTutorial ? 150 : hero.hp, shield: 0,
             atkBuff: 0, reflectActive: false, regenTurns: 0, suppressNext: false,
             permanentAtkBuff: 0, darkContractsUsed: 0, nextTurnBonus: 0,
             nextAttackMultiplier: 1, nextAttacksBonus: 0, nextAttacksCount: 0,
-            turtloCounter: false, damageReduction: 0
+            turtloCounter: false, damageReduction: 0, hedgehogBuff: 0
         },
         monster: {
             hp: isTutorial ? 160 : boss.hp, maxHp: isTutorial ? 160 : boss.hp, shield: 0,
             poison: 0, skipTurns: 0, weakTurns: 0, atkBuffTurns: 0,
-            guardianCd: 0, markedTurns: 0, sealedTurns: 0
+            guardianCd: 0, markedTurns: 0, sealedTurns: 0,
+            elemStance: "fire", timeRewound: false
         },
-        deck: [], drawPile: [], discardPile: [], hand: []
+        deck: [], drawPile: [], discardPile: [], hand: [], delayedBombs: []
     };
 
     if (!isTutorial) {
@@ -512,6 +575,16 @@ async function startNewTurn() {
     }
 
     S.copycatUsedThisTurn = false;
+    S.specialPlayedThisTurn = false;
+
+    // 元素巫師切換形態 (每 2 回合)
+    if (S.boss.trait === "elementalist") {
+        const stances = ["fire", "ice", "thunder"];
+        const stanceNames = { fire: "🔥 烈焰（攻擊+30%）", ice: "🧊 寒冰（受傷-30%）", thunder: "⚡ 迅雷（閃避率20%）" };
+        S.monster.elemStance = stances[Math.floor((S.turn - 1) / 2) % 3];
+        await log(`🧙‍♂️ <b>元素巫師切換形態：</b>${stanceNames[S.monster.elemStance]}！`, "status");
+    }
+
     if (S.monster.guardianCd > 0) S.monster.guardianCd--;
     if (S.monster.sealedTurns > 0) {
         S.monster.sealedTurns--;
@@ -534,7 +607,24 @@ async function startNewTurn() {
         }
     }
 
-    // 中毒效果：固定於玩家回合開始時觸發一次（一回合一次，平衡且合理）
+    // 定時炸彈結算
+    if (S.delayedBombs && S.delayedBombs.length > 0) {
+        const remaining = [];
+        for (let b of S.delayedBombs) {
+            b.turns--;
+            if (b.turns <= 0) {
+                const finalDmg = applyPlayerAttackModifiers(28);
+                const res = await applyDamageToMonster(finalDmg, { ignoreShield: true, cardName: "定時炸彈" });
+                if (res.hit) await log(`💣💥 <b>【定時炸彈引爆！】</b>造成 ${res.finalDmg} 點穿透傷害！`, "crit");
+            } else {
+                remaining.push(b);
+                await log(`💣 <b>定時炸彈倒數：</b>剩餘 ${b.turns} 回合爆發！`, "info");
+            }
+        }
+        S.delayedBombs = remaining;
+    }
+
+    // 中毒效果
     if (S.monster.poison > 0) {
         S.monster.hp -= 6;
         S.monster.poison--;
@@ -561,7 +651,9 @@ async function startNewTurn() {
 
     if (!S.isTutorial) {
         let drawCount = 3;
-        if (S.mod.effect === "fog_choice") drawCount = 2;
+        if (S.hero.trait === "raccoon") drawCount += 1; // 預言浣熊手牌 +1
+        if (S.mod.effect === "fog_choice") drawCount = Math.max(1, drawCount - 1);
+        
         if (S.player.suppressNext) {
             drawCount = Math.max(1, drawCount - 2);
             S.player.suppressNext = false;
@@ -625,6 +717,11 @@ async function playCard(card) {
     isBatching = true;
     await log(`▶ 你打出了【${card.name}】`, "player-turn");
     
+    if (card.type === "special") {
+        S.specialPlayedThisTurn = true;
+        S.specialPlayedTotal = (S.specialPlayedTotal || 0) + 1;
+    }
+
     await executeCardEffect(card, false);
 
     if (S.hero.trait === "copycat"
@@ -701,8 +798,7 @@ async function handleAttackCard(card, prefix) {
     if (card.subType === "ignis_rage") {
         S.player.hp -= 8;
         const isLow = S.player.hp < S.player.maxHp * 0.5;
-        const base = isLow ? 30 : 20;
-        finalDmg = applyPlayerAttackModifiers(base);
+        finalDmg = applyPlayerAttackModifiers(isLow ? 30 : 20);
         const result = await applyDamageToMonster(finalDmg, { cardName: card.name });
         if (result.hit) await log(`${prefix}🔥 <b>燃血狂怒</b>：失去 8 點生命，造成 ${result.finalDmg} 點傷害${isLow ? "（低血觸發 +10！）" : ""}！`, "crit");
         maybeThunderParalysis(prefix);
@@ -768,6 +864,46 @@ async function handleAttackCard(card, prefix) {
         finalDmg = applyPlayerAttackModifiers(wasParalyzed ? 35 : 15);
         const result = await applyDamageToMonster(finalDmg, { cardName: card.name });
         if (result.hit) await log(`${prefix}🌪️ <b>雷霆萬鈞</b>：造成 ${result.finalDmg} 點傷害${wasParalyzed ? "（麻痺觸發 +20！）" : ""}！`, "crit");
+        return;
+    }
+    if (card.subType === "raccoon_flash") {
+        const base = S.specialPlayedThisTurn ? 24 : 14;
+        finalDmg = applyPlayerAttackModifiers(base);
+        const result = await applyDamageToMonster(finalDmg, { cardName: card.name });
+        if (result.hit) await log(`${prefix}✨ <b>閃光彈</b>：造成 ${result.finalDmg} 點傷害${S.specialPlayedThisTurn ? "（特殊卡觸發 +10！）" : ""}！`, "crit");
+        maybeThunderParalysis(prefix);
+        return;
+    }
+    if (card.subType === "hedgehog_needle") {
+        let base = 16;
+        if (S.player.shield > 0) {
+            const usedShield = S.player.shield;
+            base += usedShield;
+            S.player.shield = 0;
+            await log(`${prefix}🦔 消耗全部 ${usedShield} 點護盾，刺針威力大增！`, "crit");
+        }
+        finalDmg = applyPlayerAttackModifiers(base);
+        const result = await applyDamageToMonster(finalDmg, { cardName: card.name });
+        if (result.hit) await log(`${prefix}🎯 <b>刺針射擊</b>：造成 ${result.finalDmg} 點傷害！`, "dmg");
+        maybeThunderParalysis(prefix);
+        return;
+    }
+    if (card.subType === "delayed_bomb") {
+        finalDmg = applyPlayerAttackModifiers(10);
+        const result = await applyDamageToMonster(finalDmg, { cardName: card.name });
+        if (result.hit) {
+            S.delayedBombs.push({ turns: 2 });
+            await log(`${prefix}💣 <b>定時引爆</b>：造成 ${result.finalDmg} 點傷害，並植入【定時炸彈】（2 回合後爆發 28 點穿透傷害）！`, "crit");
+        }
+        maybeThunderParalysis(prefix);
+        return;
+    }
+    if (card.subType === "universal_pull") {
+        const count = Math.min(5, S.specialPlayedTotal || 0);
+        finalDmg = applyPlayerAttackModifiers(16 + count * 4);
+        const result = await applyDamageToMonster(finalDmg, { cardName: card.name });
+        if (result.hit) await log(`${prefix}🌌 <b>萬象天引</b>：本局使用了 ${S.specialPlayedTotal || 0} 張特殊卡，造成 ${result.finalDmg} 點傷害！`, "crit");
+        maybeThunderParalysis(prefix);
         return;
     }
 
@@ -892,8 +1028,6 @@ function maybeThunderParalysis(prefix) {
 }
 
 async function handleHealCard(card, prefix) {
-    const shieldBonus = (n) => S.hero.trait === "turtlo" ? Math.round(n * 1.1) : n;
-
     if (card.subType === "regen") {
         S.player.regenTurns = 3;
         playSfx('heal');
@@ -907,11 +1041,8 @@ async function handleHealCard(card, prefix) {
     }
     else if (card.subType === "low_hp_shield") {
         const isLow = S.player.hp < S.player.maxHp / 2;
-        const baseShield = isLow ? 20 : 12;
-        const add = shieldBonus(baseShield);
-        S.player.shield += add;
-        playSfx('shield');
-        await log(`${prefix}🏰 <b>堅壁清野</b>：獲得 ${add} 點護盾${isLow ? "（低血觸發 20 點）" : ""}！`, "shield");
+        const add = await addShieldToPlayer(isLow ? 20 : 12);
+        await log(`${prefix}🏰 <b>堅壁清野</b>：獲得護盾（當前護盾 ${add} 點）！`, "shield");
     }
     else if (card.subType === "ignis_phoenix") {
         const isLow = S.player.hp < S.player.maxHp * 0.3;
@@ -919,54 +1050,66 @@ async function handleHealCard(card, prefix) {
         await log(`${prefix}🐦‍🔥 <b>鳳凰之心</b>：${isLow ? "低血觸發！" : ""}回復 ${healed} 點生命！`, "heal");
     }
     else if (card.subType === "turtlo_counter") {
-        const add = shieldBonus(15);
-        S.player.shield += add;
+        await addShieldToPlayer(15);
         S.player.turtloCounter = true;
-        playSfx('shield');
-        await log(`${prefix}🦔 <b>反震裝甲</b>：獲得 ${add} 點護盾，本回合被攻擊時反彈 50% 傷害！`, "shield");
+        await log(`${prefix}🦔 <b>反震裝甲</b>：獲得護盾，本回合被攻擊時反彈 50% 傷害！`, "shield");
     }
     else if (card.subType === "turtlo_wall") {
-        const add = shieldBonus(20);
-        S.player.shield += add;
-        playSfx('shield');
-        await log(`${prefix}🧱 <b>銅牆鐵壁</b>：獲得 ${add} 點護盾！`, "shield");
+        await addShieldToPlayer(20);
+        await log(`${prefix}🧱 <b>銅牆鐵壁</b>：獲得護盾！`, "shield");
+    }
+    else if (card.subType === "hedgehog_steam") {
+        await addShieldToPlayer(15);
+        if (S.player.shield >= 15) {
+            S.actionsLeft += 1;
+            await log(`${prefix}💨 <b>蒸氣噴射</b>：獲得護盾，並觸發超頻獲得 +1 次行動！`, "crit");
+        } else {
+            await log(`${prefix}💨 <b>蒸氣噴射</b>：獲得護盾。`, "shield");
+        }
+    }
+    else if (card.subType === "raccoon_treasure") {
+        const healed = healPlayer(12);
+        let retName = "";
+        if (S.discardPile.length > 0) {
+            const randIdx = Math.floor(Math.random() * S.discardPile.length);
+            const picked = S.discardPile.splice(randIdx, 1)[0];
+            const c = cardById[picked];
+            if (c) { S.hand.push(c); retName = c.name; }
+        }
+        await log(`${prefix}💎 <b>寶藏翻找</b>：回復 ${healed} 點生命${retName ? `，並從棄牌堆抓回【${retName}】` : ""}！`, "crit");
     }
     else {
         const healed = healPlayer(card.value);
         await log(`${prefix}💚 <b>${card.name}</b>：回復 ${healed} 點生命！`, "heal");
         if (card.subType === "shield") {
-            const add = shieldBonus(card.shieldVal);
-            S.player.shield += add;
-            playSfx('shield');
-            await log(`${prefix}🛡️ 額外獲得 ${add} 點護盾！`, "shield");
+            await addShieldToPlayer(card.shieldVal);
+            await log(`${prefix}🛡️ 額外獲得護盾！`, "shield");
         }
     }
 }
 
 async function handleSpecialCard(card, prefix) {
     const st = S;
-    const shieldBonus = (n) => st.hero.trait === "turtlo" ? Math.round(n * 1.1) : n;
 
     if (card.subType === "sacrifice") {
         st.player.hp -= card.costHP;
         st.player.atkBuff += card.buffVal;
-        await log(`${prefix}⚗️ <b>血之狂熱</b>：失去 ${card.costHP} 點生命，下次攻擊傷害 +${card.buffVal} 點（累積 +${st.player.atkBuff} 點）！`, "crit");
+        await log(`${prefix}⚗️ <b>血之狂熱</b>：失去 ${card.costHP} 點生命，下次攻擊傷害 +${card.buffVal} 點！`, "crit");
     }
     else if (card.subType === "skip") {
         st.monster.skipTurns += 1;
         st.monster.sealedTurns = 2;
         const sealDesc = {
             standard: "【深淵咆哮】", undying: "【不滅死魂】",
-            evasion: "【鬼魅閃避】", vampire: "【嗜血吸取】", guardian: "【鋼鐵反震】"
+            evasion: "【鬼魅閃避】", vampire: "【嗜血吸取】", guardian: "【鋼鐵反震】",
+            elementalist: "【元素輪轉】", time_phantom: "【熵增回溯】"
         };
-        await log(`${prefix}🔒🔒 <b>【禁錮咒語】</b>魔王跳過 1 次行動！接下來 2 回合專屬特質 ${sealDesc[st.boss.trait]} 失效！`, "seal");
+        await log(`${prefix}🔒🔒 <b>【禁錮咒語】</b>魔王跳過 1 次行動！接下來 2 回合專屬特質 ${sealDesc[st.boss.trait] || '專屬特質'} 失效！`, "seal");
     }
     else if (card.subType === "reflect") {
-        const add = shieldBonus(10);
-        st.player.shield += add;
+        await addShieldToPlayer(10);
         st.player.reflectActive = true;
-        playSfx('shield');
-        await log(`${prefix}🪞 <b>反彈護鏡</b>：獲得 ${add} 點護盾，下回合反彈魔王穿透傷害的 50%！`, "shield");
+        await log(`${prefix}🪞 <b>反彈護鏡</b>：獲得護盾，下回合反彈魔王穿透傷害的 50%！`, "shield");
     }
     else if (card.subType === "shield_bash") {
         if (st.player.shield > 0) {
@@ -991,12 +1134,9 @@ async function handleSpecialCard(card, prefix) {
             const healed = healPlayer(18);
             await log(`${prefix}🎰 <b>命運之輪：生機庇護！</b>回復 ${healed} 點生命，生命上限 +${capGain} 點（現為 ${st.player.maxHp} 點）！`, "heal");
         } else if (roll < 0.66) {
-            const add = shieldBonus(18); // 修正：完美吃到堅甲龜被動加成
-            st.player.shield += add;
-            playSfx('shield');
-            await log(`${prefix}🎰 <b>命運之輪：絕對防禦！</b>獲得 ${add} 點護盾！`, "shield");
+            await addShieldToPlayer(18);
+            await log(`${prefix}🎰 <b>命運之輪：絕對防禦！</b>獲得護盾！`, "shield");
         } else {
-            // 修正：烈風風刃現在完美吃到電光石火、魔法增幅、狂暴磁場、弱點標記與攻擊加成
             const finalDmg = applyPlayerAttackModifiers(22);
             const result = await applyDamageToMonster(finalDmg, { ignoreShield: true, cardName: "烈風風刃" });
             if (result.hit) await log(`${prefix}🎰 <b>命運之輪：烈風風刃！</b>造成 ${result.finalDmg} 點穿透傷害！`, "dmg");
@@ -1006,12 +1146,10 @@ async function handleSpecialCard(card, prefix) {
         const stolen = Math.floor(st.monster.shield * 0.5);
         if (stolen > 0) {
             st.monster.shield -= stolen;
-            st.player.shield += stolen;
-            playSfx('shield');
-            await log(`${prefix}🎭 <b>偷天換日</b>：偷取魔王 ${stolen} 點護盾（魔王剩 ${st.monster.shield} 點，玩家現有 ${st.player.shield} 點）！`, "crit");
+            await addShieldToPlayer(stolen);
+            await log(`${prefix}🎭 <b>偷天換日</b>：偷取魔王 ${stolen} 點護盾（魔王剩 ${st.monster.shield} 點）！`, "crit");
         } else {
-            st.player.shield += 5;
-            playSfx('shield');
+            await addShieldToPlayer(5);
             await log(`${prefix}🎭 <b>偷天換日</b>：魔王無護盾，改為獲得 5 點護盾！`, "shield");
         }
     }
@@ -1026,7 +1164,7 @@ async function handleSpecialCard(card, prefix) {
             st.player.hp -= 12;
             st.player.permanentAtkBuff += 6;
             st.player.darkContractsUsed++;
-            await log(`${prefix}📜 <b>黑暗契約</b>：失去 12 點生命，永久 +6 點攻擊（累積 +${st.player.permanentAtkBuff} 點，使用 ${st.player.darkContractsUsed}/2 次）！`, "crit");
+            await log(`${prefix}📜 <b>黑暗契約</b>：失去 12 點生命，永久 +6 點攻擊（累積 +${st.player.permanentAtkBuff} 點）！`, "crit");
         }
     }
     else if (card.subType === "time_hourglass") {
@@ -1034,11 +1172,9 @@ async function handleSpecialCard(card, prefix) {
         await log(`${prefix}⏳ <b>時光沙漏</b>：下回合起始行動數 +1！`, "crit");
     }
     else if (card.subType === "turtlo_stand") {
-        const add = shieldBonus(15);
-        st.player.shield += add;
+        await addShieldToPlayer(15);
         st.player.damageReduction = 5;
-        playSfx('shield');
-        await log(`${prefix}⛰️ <b>不動如山</b>：獲得 ${add} 點護盾，本回合受到傷害減少 5 點！`, "shield");
+        await log(`${prefix}⛰️ <b>不動如山</b>：獲得護盾，本回合受到傷害減少 5 點！`, "shield");
     }
     else if (card.subType === "thunder_double") {
         st.player.nextAttackMultiplier = 2;
@@ -1057,6 +1193,42 @@ async function handleSpecialCard(card, prefix) {
         const randomCommon = commonCards[Math.floor(Math.random() * commonCards.length)];
         st.hand.push(randomCommon);
         await log(`${prefix}🔮 <b>無限迴響</b>：隨機獲得 <b>${randomCommon.name}</b> 加入手牌！`, "crit");
+    }
+    else if (card.subType === "deep_meditation") {
+        drawCards(2);
+        st.player.atkBuff += 6;
+        await log(`${prefix}🧘 <b>深層沉思</b>：抽 2 張牌，下次攻擊傷害 +6 點！`, "crit");
+    }
+    else if (card.subType === "resurrection") {
+        let retNames = [];
+        for (let i = 0; i < 2; i++) {
+            if (st.discardPile.length > 0) {
+                const randIdx = Math.floor(Math.random() * st.discardPile.length);
+                const picked = st.discardPile.splice(randIdx, 1)[0];
+                const c = cardById[picked];
+                if (c) { st.hand.push(c); retNames.push(c.name); }
+            }
+        }
+        const healed = healPlayer(8);
+        await log(`${prefix}🕊️ <b>死者甦生</b>：回復 ${healed} 點生命${retNames.length > 0 ? `，並從棄牌堆抓回【${retNames.join("、")}】` : ""}！`, "heal");
+    }
+    else if (card.subType === "raccoon_search") {
+        let foundName = "";
+        let foundIdx = st.drawPile.findIndex(id => {
+            const c = cardById[id];
+            return c && c.type === "attack";
+        });
+        if (foundIdx >= 0) {
+            const picked = st.drawPile.splice(foundIdx, 1)[0];
+            const c = cardById[picked];
+            if (c) { st.hand.push(c); foundName = c.name; }
+        }
+        await log(`${prefix}🌌 <b>預言星圖</b>：${foundName ? `精準將【${foundName}】從抽牌堆抓回手牌` : "抽牌堆中沒有攻擊卡"}！`, "crit");
+    }
+    else if (card.subType === "hedgehog_armor") {
+        await addShieldToPlayer(22);
+        st.player.reflectActive = false;
+        await log(`${prefix}⚙️ <b>鋼鐵刺裝</b>：獲得護盾並清除個人負面狀態！`, "shield");
     }
 }
 
@@ -1077,7 +1249,6 @@ async function monsterTurn() {
 
     await log(`◀ 【${S.boss.name}】反擊回合`, "monster-turn");
     
-    // 修正：魔王回合不再扣除中毒血量，中毒改為每回合（玩家回合開始）觸發一次
     isBatching = false;
     flushLogBatch();
     updateStatus();
@@ -1178,6 +1349,11 @@ async function actionAttack() {
     let rawDmg = Math.floor(Math.random() * 11) + 12;
     let isBreakArmor = false;
     
+    // 元素巫師 烈焰形態 增傷 30%
+    if (S.boss.trait === "elementalist" && S.monster.elemStance === "fire" && S.monster.sealedTurns <= 0) {
+        rawDmg = Math.round(rawDmg * 1.3);
+    }
+
     if (S.monster.atkBuffTurns > 0) {
         rawDmg += 8;
         S.monster.atkBuffTurns--;
@@ -1344,7 +1520,9 @@ function updateStatus() {
         S.monster.weakTurns > 0 && `<span class="status-icon frost">❄️ ${S.monster.weakTurns}T</span>`,
         S.monster.atkBuffTurns > 0 && `<span class="status-icon rage">🔥 ${S.monster.atkBuffTurns}次</span>`,
         S.monster.markedTurns > 0 && `<span class="status-icon mark">🎯 ${S.monster.markedTurns}T +25%</span>`,
-        S.monster.guardianCd > 0 && `<span class="status-icon warn">🏰 冷卻 ${S.monster.guardianCd}</span>`
+        S.monster.guardianCd > 0 && `<span class="status-icon warn">🏰 冷卻 ${S.monster.guardianCd}</span>`,
+        S.boss.trait === "elementalist" && `<span class="status-icon rage">🧙‍♂️ ${S.monster.elemStance}</span>`,
+        S.boss.trait === "time_phantom" && S.monster.timeRewound && `<span class="status-icon warn">⏳ 已回溯</span>`
     ];
     document.getElementById("monster-buff").innerHTML = mTags.filter(Boolean).join(" ") || "正常";
 
@@ -1424,7 +1602,7 @@ function showInfoModal(type) {
     let html = "";
 
     if (type === 'hero') {
-        titleEl.innerText = `🐱 當前英雄：${S.hero.name}`;
+        titleEl.innerText = `${S.hero.icon} 當前英雄：${S.hero.name}`;
         html = `<div class="effect-item hero-item">
             <div class="hero-name-big" style="color:#38bdf8;">${S.hero.icon} ${S.hero.name}</div>
             <div class="talent-tag">英雄天賦</div>
@@ -1473,7 +1651,6 @@ function cardValueText(card) {
         return Math.round(Math.round(base * dmgMult) * markMult);
     };
     const H = (n) => Math.round(n * healMult);
-    const Sh = (n) => hero === "turtlo" ? Math.round(n * 1.1) : n;
 
     if (card.type === "attack") {
         if (card.subType === "crit") return `${D(12)} / ${D(25)} 點`;
@@ -1509,6 +1686,10 @@ function cardValueText(card) {
             const p = S.monster.skipTurns > 0;
             return p ? `${D(35)} 點(麻痺)` : `${D(15)} 點`;
         }
+        if (card.subType === "raccoon_flash") return S.specialPlayedThisTurn ? `${D(24)} 點` : `${D(14)} 點`;
+        if (card.subType === "hedgehog_needle") return `${D(16 + S.player.shield)} 點`;
+        if (card.subType === "delayed_bomb") return `${D(10)} 點+炸彈`;
+        if (card.subType === "universal_pull") return `${D(16 + Math.min(5, S.specialPlayedTotal || 0) * 4)} 點`;
         if (card.subType === "shield_break") return `碎盾 / ${D(8)} 點`;
         if (card.subType === "recoil") return `${D(28)} 點`;
         if (card.subType === "lifesteal") return `${D(14)} 點`;
@@ -1519,26 +1700,25 @@ function cardValueText(card) {
     }
     if (card.type === "heal") {
         if (card.subType === "regen") return `每回合 ${H(7)} 點`;
-        if (card.subType === "shield") return `回${H(card.value)} / 護${Sh(card.shieldVal)}`;
+        if (card.subType === "shield") return `回${H(card.value)} / 護盾`;
         if (card.subType === "reverse_heal") {
             const lost = Math.max(0, S.player.maxHp - S.player.hp);
             return `回 ${Math.min(25, Math.round(lost * 0.4 * healMult))} 點`;
         }
-        if (card.subType === "low_hp_shield") {
-            const isLow = S.player.hp < S.player.maxHp / 2;
-            return `${Sh(isLow ? 20 : 12)} 點護盾`;
-        }
+        if (card.subType === "low_hp_shield") return `獲得護盾`;
         if (card.subType === "ignis_phoenix") {
             const isLow = S.player.hp < S.player.maxHp * 0.3;
             return isLow ? `回 ${H(30)} 點` : `回 ${H(15)} 點`;
         }
-        if (card.subType === "turtlo_counter") return `${Sh(15)} 點護盾`;
-        if (card.subType === "turtlo_wall") return `${Sh(20)} 點護盾`;
+        if (card.subType === "turtlo_counter") return `15 點護盾`;
+        if (card.subType === "turtlo_wall") return `20 點護盾`;
+        if (card.subType === "hedgehog_steam") return `15 護盾+行動`;
+        if (card.subType === "raccoon_treasure") return `回${H(12)} / 抓牌`;
         return `回 ${H(card.value || 0)} 點`;
     }
     if (card.subType === "sacrifice") return `+${card.buffVal} 點攻擊`;
     if (card.subType === "shield_bash") return `×1.5 點傷害`;
-    if (card.subType === "reflect") return `${Sh(10)} 點護盾`;
+    if (card.subType === "reflect") return `獲得護盾`;
     if (card.subType === "skip") return `跳過行動+封印`;
     if (card.subType === "steal_shield") {
         return S.monster.shield > 0 ? `偷 ${Math.floor(S.monster.shield * 0.5)} 點護盾` : `+5 點護盾`;
@@ -1546,11 +1726,15 @@ function cardValueText(card) {
     if (card.subType === "mark") return `易傷 +25%`;
     if (card.subType === "dark_contract") return `+6 點攻擊`;
     if (card.subType === "time_hourglass") return `+1 次行動`;
-    if (card.subType === "turtlo_stand") return `${Sh(15)} 護盾+減傷`;
+    if (card.subType === "turtlo_stand") return `護盾+減傷`;
     if (card.subType === "thunder_double") return `攻擊 ×2`;
     if (card.subType === "copycat_draw") return `抽 1 張牌`;
     if (card.subType === "copycat_boost") return `2次 +10 點`;
     if (card.subType === "copycat_echo") return `獲得通用卡`;
+    if (card.subType === "deep_meditation") return `抽2張/+6攻擊`;
+    if (card.subType === "resurrection") return `抓2張/回${H(8)}`;
+    if (card.subType === "raccoon_search") return `抓攻擊卡`;
+    if (card.subType === "hedgehog_armor") return `22護盾+清負面`;
     return "戰術";
 }
 
@@ -1565,7 +1749,6 @@ function getCardDesc(card) {
     const healMult = mod === "weak_heal" ? 0.6 : 1.0;
     const H = (n) => Math.round(n * healMult);
     const healTag = mod === "weak_heal" ? "（💧 -40%）" : "";
-    const Sh = (n) => hero === "turtlo" ? Math.round(n * 1.1) : n;
 
     switch (card.subType) {
         case "normal": return `造成 ${D(card.value)} 點傷害${dmgTag}${markTag}。`;
@@ -1605,7 +1788,7 @@ function getCardDesc(card) {
             return `造成 ${D(10)} 點傷害${markTag}（魔王生命 < 30% 時變 30 點穿透）。`;
         }
         case "burst": return `回復 ${H(card.value)} 點生命${healTag}。`;
-        case "shield": return `回復 ${H(card.value)} 點生命${healTag}，並獲得 ${Sh(card.shieldVal)} 點護盾。`;
+        case "shield": return `回復 ${H(card.value)} 點生命${healTag}，並獲得 12 點護盾。`;
         case "regen": return `獲得 3 回合【泉源祝福】，每回合回復 ${H(7)} 點生命${healTag}。[不可疊加]`;
         case "reverse_heal": {
             const lost = S ? Math.max(0, S.player.maxHp - S.player.hp) : 0;
@@ -1614,12 +1797,12 @@ function getCardDesc(card) {
         case "low_hp_shield": {
             if (!S) return `獲得 12 點護盾；生命 < 50% 時改為 20 點。`;
             const isLow = S.player.hp < S.player.maxHp / 2;
-            return `獲得 ${Sh(isLow ? 20 : 12)} 點護盾${isLow ? "（低血觸發 20 點）" : "（生命 < 50% 時 20 點）"}。`;
+            return `獲得 ${isLow ? 20 : 12} 點護盾${isLow ? "（低血觸發 20 點）" : "（生命 < 50% 時 20 點）"}。`;
         }
         case "sacrifice": return `失去 ${card.costHP} 點生命，下次攻擊傷害 +${card.buffVal} 點。`;
         case "skip": return `跳過魔王 1 次行動，並【封印特質】2 回合。[不可複製]`;
-        case "reflect": return `獲得 ${Sh(10)} 點護盾，下回合反彈魔王穿透傷害的 50%。[不可疊加]`;
-        case "roulette": return `隨機三選一：回復 ${H(18)} 點生命且生命上限 +10 / 獲得 ${Sh(18)} 點護盾 / 造成 ${D(22)} 點穿透傷害${markTag}。`;
+        case "reflect": return `獲得 10 點護盾，下回合反彈魔王穿透傷害的 50%。[不可疊加]`;
+        case "roulette": return `隨機三選一：回復 ${H(18)} 點生命且生命上限 +10 / 獲得 18 點護盾 / 造成 ${D(22)} 點穿透傷害${markTag}。`;
         case "shield_bash": return `消耗全部護盾，每 1 點護盾造成 1.5 點傷害${markTag}。[不可複製]`;
         case "steal_shield": return `偷取魔王 50% 護盾；若魔王無護盾則獲得 5 點護盾。`;
         case "mark": return `標記魔王 3 回合，期間受到的玩家攻擊傷害 +25%。[不可疊加]`;
@@ -1640,9 +1823,9 @@ function getCardDesc(card) {
             return `回復 ${H(isLow ? 30 : 15)} 點生命${healTag}${isLow ? "（低血觸發）" : ""}。`;
         }
         case "ignis_last": return `失去 10 點生命，造成 ${D(25)} 點穿透傷害${markTag}。`;
-        case "turtlo_counter": return `獲得 ${Sh(15)} 點護盾，本回合被攻擊時反彈 50% 傷害給魔王。`;
-        case "turtlo_wall": return `獲得 ${Sh(20)} 點護盾。`;
-        case "turtlo_stand": return `獲得 ${Sh(15)} 點護盾，本回合受到的所有傷害減少 5 點。`;
+        case "turtlo_counter": return `獲得 15 點護盾，本回合被攻擊時反彈 50% 傷害給魔王。`;
+        case "turtlo_wall": return `獲得 20 點護盾。`;
+        case "turtlo_stand": return `獲得 15 點護盾，本回合受到的所有傷害減少 5 點。`;
         case "shadow_poison": {
             const turns = hero === "shadow" ? 4 : 3;
             return `造成 ${D(6)} 點傷害${markTag}，使魔王中毒 ${turns} 回合（每回合無視護盾扣除 6 點生命）。[不可疊加]`;
@@ -1665,6 +1848,25 @@ function getCardDesc(card) {
         case "copycat_draw": return `【不扣行動】抽 1 張牌。`;
         case "copycat_boost": return `【不扣行動】接下來 2 次攻擊傷害 +10 點。[不可疊加]`;
         case "copycat_echo": return `【不扣行動】隨機獲得 1 張通用卡加入手牌。`;
+        case "deep_meditation": return `【不扣行動】抽 2 張牌，下次攻擊傷害 +6 點。[不可疊加]`;
+        case "resurrection": return `【不扣行動】隨機將棄牌堆 2 張卡牌抓回手牌，並回復 ${H(8)} 點生命。[不可複製]`;
+        case "delayed_bomb": return `造成 ${D(10)} 點傷害，並施加【定時炸彈】（2 回合後爆發 28 點穿透傷害）。`;
+        case "universal_pull": {
+            const count = Math.min(5, S ? (S.specialPlayedTotal || 0) : 0);
+            return `造成 ${D(16 + count * 4)} 點傷害（本局已使用 ${S ? (S.specialPlayedTotal || 0) : 0} 張特殊卡，最高 +20）。`;
+        }
+        case "raccoon_search": return `【不扣行動】隨機將抽牌堆中的 1 張「攻擊卡」直接抓回手牌。`;
+        case "raccoon_flash": {
+            const isSpec = S ? S.specialPlayedThisTurn : false;
+            return `造成 ${D(isSpec ? 24 : 14)} 點傷害${isSpec ? "（本回合已打出特殊卡，觸發 +10！）" : "（若本回合打出過特殊卡，額外 +10 點）"}。`;
+        }
+        case "raccoon_treasure": return `【不扣行動】回復 ${H(12)} 點生命，並隨機將棄牌堆中 1 張卡牌抓回手牌。`;
+        case "hedgehog_steam": return `獲得 15 點護盾；若當前護盾值 ≥ 15 點，額外獲得 1 次行動。`;
+        case "hedgehog_needle": {
+            const shieldVal = S ? S.player.shield : 0;
+            return `造成 ${D(16 + shieldVal)} 點傷害（消耗全部 ${shieldVal} 點護盾，每點護盾 +1 點傷害）。`;
+        }
+        case "hedgehog_armor": return `獲得 22 點護盾，並清除自身所有的負面狀態。`;
         default: return card.desc;
     }
 }
