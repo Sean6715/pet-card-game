@@ -1,10 +1,10 @@
 const heroes = [
-    { id: "ignis",  name: "火狂小狐", icon: "🦊", hp: 96, trait: "ignis", desc: "【烈焰血脈】打出攻擊型卡牌時，35% 機率額外造成 5 點傷害。" },
+    { id: "ignis",  name: "火狂小狐", icon: "🦊", hp: 100, trait: "ignis", desc: "【烈焰血脈】打出攻擊型卡牌時，40% 機率額外造成 5 點傷害。" },
     { id: "turtlo", name: "堅甲龜",   icon: "🐢", hp: 100, trait: "turtlo", desc: "【堅甲防禦】受擊獲得 3 點護盾，所有護盾提升 10%；護盾 > 20 點時攻擊額外造成 [當前護盾 × 25%] 反震傷害。" },
     { id: "shadow", name: "影爪貓",   icon: "🐱", hp: 100, trait: "shadow", desc: "【劇毒爪痕】對魔王造成的中毒持續回合數額外增加 1 回合。" },
-    { id: "thunder",name: "閃電鳥",   icon: "⚡", hp: 96, trait: "thunder", desc: "【雷霆麻痺】攻擊命中時，25% 機率使魔王跳過 1 次行動。" },
+    { id: "thunder",name: "閃電鳥",   icon: "⚡", hp: 100, trait: "thunder", desc: "【雷霆麻痺】攻擊命中時，30% 機率使魔王跳過 1 次行動。" },
     { id: "copycat",name: "複製兔",   icon: "🐰", hp: 98, trait: "copycat", desc: "【鏡像戰術】每回合首次打出「需消耗行動」的特殊卡時，額外觸發一次效果（禁錮、盾擊除外）。" },
-    { id: "raccoon",name: "預言浣熊", icon: "🦝", hp: 95, trait: "raccoon", desc: "【星象預兆】每回合額外抽 1 張牌（抽牌數 +1），提供充沛戰術調度。" },
+    { id: "raccoon",name: "預言浣熊", icon: "🦝", hp: 95, trait: "raccoon", desc: "【星象預兆】每回合額外抽 1 張牌（抽牌數 +1）。" },
     { id: "hedgehog",name: "機械刺蝟",icon: "🦔", hp: 102, trait: "hedgehog", desc: "【超頻核心】護盾達 15 點時溢出部分轉為永久攻擊力（每 2 點轉 +1 點，上限 +12 點）；達上限後護盾可繼續突破 15 點累積。" }
 ];
 
@@ -15,17 +15,17 @@ const bossTypes = [
     { id: "vampire", name: "德古拉", icon: "🧛", hp: 110, trait: "vampire", traitName: "嗜血吸取（穿透 30%）", desc: "造成穿透傷害時，吸取該傷害 30% 的生命值。" },
     { id: "guardian", name: "鋼鐵要塞", icon: "🏰", hp: 120, trait: "guardian", traitName: "鋼鐵反震（破盾 12 真傷）", desc: "護盾被擊破時對玩家造成 12 點真實傷害（無視護盾，冷卻 2 回合）。" },
     { id: "elementalist", name: "元素巫師", icon: "🧙‍♂️", hp: 115, trait: "elementalist", traitName: "元素輪轉（每 2 回合）", desc: "每 2 回合切換形態：🔥烈焰（攻擊+30%）/ 🧊寒冰（受傷-30%）/ ⚡迅雷（閃避率 20%）。" },
-    { id: "time_phantom", name: "時空幻影", icon: "⏳", hp: 120, trait: "time_phantom", traitName: "熵增回溯（殘血觸發）", desc: "生命首次低於 30% 時（若未被擊殺）強制回升至 50%，並清空雙方所有的護盾、臨時 Buff、Debuff 與定時炸彈（保留永久成長）！" }
+    { id: "time_phantom", name: "時空幻影", icon: "⏳", hp: 120, trait: "time_phantom", traitName: "熵增回溯（殘血觸發）", desc: "生命首次低於 30% 時（若未被一擊擊殺），強制回升至 40%，並清空雙方所有的護盾、臨時 Buff、Debuff 與定時炸彈。" }
 ];
 
 const battlefieldModifiers = [
     { name: "✨ 雙倍協奏", desc: "雙方每回合 2 次行動", effect: "double_action" },
-    { name: "🔥 狂暴磁場", desc: "傷害 +20%，每回合雙方 -4 點生命（無視護盾）", effect: "berserk" },
-    { name: "💧 治療枯竭", desc: "所有回復效果 -40%", effect: "weak_heal" },
+    { name: "🔥 狂暴磁場", desc: "傷害 +20%，每回合雙方扣除 4 點生命（無視護盾）", effect: "berserk" },
+    { name: "💧 治療枯竭", desc: "所有回復效果減少 40%", effect: "weak_heal" },
     { name: "🛡️ 鐵壁防線", desc: "雙方開局獲得 20 點護盾", effect: "iron_wall" },
     { name: "🌫️ 迷霧選擇", desc: "每回合僅抽 2 張牌", effect: "fog_choice" },
     { name: "🌵 荊棘之地", desc: "每次受攻擊，攻擊方反傷 3 點（無視護盾）", effect: "thorns" },
-    { name: "🪦 獻祭祭壇", desc: "玩家生命上限 -10 點、魔王生命上限 -15 點", effect: "sacrifice_altar" }
+    { name: "🪦 獻祭祭壇", desc: "玩家生命上限減少 10 點、魔王生命上限減少 15 點", effect: "sacrifice_altar" }
 ];
 
 const commonCards = [
@@ -40,7 +40,7 @@ const commonCards = [
     
     { id: 5, name: "瞬間回復", type: "heal", subType: "burst", category: "回復", rarity: "common", value: 20, desc: "回復 20 點生命。" },
     { id: 6, name: "聖光護盾", type: "heal", subType: "shield", category: "回復", rarity: "common", value: 10, shieldVal: 12, desc: "回復 10 點生命，並獲得 12 點護盾。" },
-    { id: 10, name: "自然泉源", type: "heal", subType: "regen", category: "回復", rarity: "common", value: 0, desc: "獲得 3 回合【泉源祝福】：每回合回復 6 點生命，且期間受到的傷害 -3 點。[不可疊加]" },
+    { id: 10, name: "自然泉源", type: "heal", subType: "regen", category: "回復", rarity: "common", value: 0, desc: "獲得 3 回合【泉源祝福】：每回合回復 6 點生命，且期間受到的傷害減少 3 點。[不可疊加]" },
 
     { id: 7, name: "血之狂熱", type: "special", subType: "sacrifice", category: "特殊", rarity: "rare", costHP: 10, buffVal: 15, desc: "扣除 10 點生命，下次攻擊傷害 +15 點。" },
     { id: 21, name: "堅壁清野", type: "heal", subType: "low_hp_shield", category: "回復", rarity: "rare", value: 12, desc: "獲得 12 點護盾；若自身生命低於 50%，改為獲得 20 點護盾。" },
@@ -90,7 +90,7 @@ const heroCards = [
     { id: "raccoon_3", heroId: "raccoon", name: "星象護符", type: "heal", subType: "raccoon_amulet", category: "回復", rarity: "legendary", desc: "回復 14 點生命，並獲得 10 點護盾。" },
 
     { id: "hedgehog_1", heroId: "hedgehog", name: "蒸氣噴射", type: "heal", subType: "hedgehog_steam", category: "回復", rarity: "rare", freeAction: true, desc: "【不扣行動】獲得 15 點護盾；若當前護盾值 ≥ 15 點，額外獲得 1 次行動。[每回合限一次]" },
-    { id: "hedgehog_2", heroId: "hedgehog", name: "刺針射擊", type: "attack", subType: "hedgehog_needle", category: "攻擊", rarity: "rare", value: 16, desc: "造成 16 點傷害；消耗全部護盾，每 1 點護盾額外 +1 點傷害。" },
+    { id: "hedgehog_2", heroId: "hedgehog", name: "刺針射擊", type: "attack", subType: "hedgehog_needle", category: "攻擊", rarity: "rare", value: 16, desc: "造成 16 點傷害；消耗全部護盾，每 1 點護盾額外 +1 點傷害（額外傷害上限 +30 點）。" },
     { id: "hedgehog_3", heroId: "hedgehog", name: "鋼鐵刺裝", type: "special", subType: "hedgehog_armor", category: "特殊", rarity: "legendary", freeAction: true, desc: "【不扣行動】獲得 22 點護盾，且本回合下次攻擊傷害 +10 點。[不可疊加]" }
 ];
 
