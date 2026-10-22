@@ -3,7 +3,9 @@ const heroes = [
     { id: "turtlo", name: "堅甲龜",   icon: "🐢", hp: 100, trait: "turtlo", desc: "【堅甲防禦】受到敵方傷害時獲得 3 點護盾；所有護盾效果提升 10%。" },
     { id: "shadow", name: "影爪貓",   icon: "🐱", hp: 100, trait: "shadow", desc: "【劇毒爪痕】對魔王造成的中毒持續回合數額外增加 1 回合。" },
     { id: "thunder",name: "閃電鳥",   icon: "⚡", hp: 96, trait: "thunder", desc: "【雷霆麻痺】攻擊命中時，25% 機率使魔王跳過 1 次行動。" },
-    { id: "copycat",name: "複製兔",   icon: "🐰", hp: 98, trait: "copycat", desc: "【鏡像戰術】每回合首次打出「需消耗行動」的特殊卡時，額外觸發一次效果（禁錮、盾擊除外）。" }
+    { id: "copycat",name: "複製兔",   icon: "🐰", hp: 98, trait: "copycat", desc: "【鏡像戰術】每回合首次打出「需消耗行動」的特殊卡時，額外觸發一次效果（禁錮、盾擊除外）。" },
+    { id: "raccoon",name: "預言浣熊", icon: "🦝", hp: 95, trait: "raccoon", desc: "【預知眼】每回合抽牌數 +1 張（手牌上限與資源循環提升）。" },
+    { id: "hedgehog",name: "機械刺蝟",icon: "🦔", hp: 102, trait: "hedgehog", desc: "【超頻核心】獲得護盾時若護盾達 15 點以上，溢出部分轉為永久攻擊力（每 2 點轉 +1 點，上限 +12 點）。" }
 ];
 
 const bossTypes = [
@@ -11,7 +13,9 @@ const bossTypes = [
     { id: "undying", name: "巴洛克", icon: "☠️", hp: 100, trait: "undying", traitName: "不滅死魂（死亡復活）", desc: "首次被擊殺時原地復活，恢復 35 點生命並進入永久狂暴（攻擊 +8 點，不可疊加）。" },
     { id: "evasion", name: "影魔", icon: "🥷", hp: 112, trait: "evasion", traitName: "鬼魅閃避（27% 機率）", desc: "被動擁有 27% 閃避率，完全躲開玩家的攻擊。" },
     { id: "vampire", name: "德古拉", icon: "🧛", hp: 110, trait: "vampire", traitName: "嗜血吸取（穿透 30%）", desc: "造成穿透傷害時，吸取該傷害 30% 的生命值。" },
-    { id: "guardian", name: "鋼鐵要塞", icon: "🏰", hp: 120, trait: "guardian", traitName: "鋼鐵反震（破盾 12 真傷）", desc: "護盾被擊破時對玩家造成 12 點真實傷害（無視護盾，冷卻 2 回合）。" }
+    { id: "guardian", name: "鋼鐵要塞", icon: "🏰", hp: 120, trait: "guardian", traitName: "鋼鐵反震（破盾 12 真傷）", desc: "護盾被擊破時對玩家造成 12 點真實傷害（無視護盾，冷卻 2 回合）。" },
+    { id: "elementalist", name: "元素巫師", icon: "🧙‍♂️", hp: 115, trait: "elementalist", traitName: "元素輪轉（每 2 回合）", desc: "每 2 回合切換形態：🔥烈焰（攻擊+30%）/ 🧊寒冰（受傷-30%）/ ⚡迅雷（閃避率 20%）。" },
+    { id: "time_phantom", name: "時空幻影", icon: "⏳", hp: 120, trait: "time_phantom", traitName: "熵增回溯（殘血觸發）", desc: "生命首次低於 30% 時強制回升至 50%，並清空雙方所有的護盾與 Buff/Debuff！" }
 ];
 
 const battlefieldModifiers = [
@@ -32,6 +36,8 @@ const commonCards = [
     { id: 12, name: "冰霜連擊", type: "attack", subType: "frost", category: "攻擊", rarity: "common", value: 12, desc: "造成 12 點傷害，使魔王攻擊傷害減少 40%（持續 1 回合）。[不可疊加]" },
     { id: 13, name: "破甲重擊", type: "attack", subType: "pierce", category: "攻擊", rarity: "common", value: 15, desc: "造成 15 點穿透傷害（無視魔王護盾）。" },
     { id: 26, name: "碎盾擊", type: "attack", subType: "shield_break", category: "攻擊", rarity: "common", value: 8, desc: "打碎魔王全部護盾；若魔王無護盾則造成 8 點傷害。[不可複製]" },
+    { id: 27, name: "定時引爆", type: "attack", subType: "delayed_bomb", category: "攻擊", rarity: "rare", value: 10, desc: "造成 10 點傷害，並施加【定時炸彈】（2 回合後爆發造成 28 點穿透傷害）。" },
+    
     { id: 5, name: "瞬間回復", type: "heal", subType: "burst", category: "回復", rarity: "common", value: 20, desc: "回復 20 點生命。" },
     { id: 6, name: "聖光護盾", type: "heal", subType: "shield", category: "回復", rarity: "common", value: 10, shieldVal: 12, desc: "回復 10 點生命，並獲得 12 點護盾。" },
     { id: 10, name: "自然泉源", type: "heal", subType: "regen", category: "回復", rarity: "common", value: 0, desc: "獲得 3 回合【泉源祝福】，每回合回復 7 點生命。[不可疊加]" },
@@ -41,18 +47,21 @@ const commonCards = [
     { id: 20, name: "逆轉治癒", type: "heal", subType: "reverse_heal", category: "回復", rarity: "rare", desc: "回復「已損失生命值 × 0.4」點生命（上限 25 點）。" },
     { id: 17, name: "破釜沉舟", type: "attack", subType: "desperate", category: "攻擊", rarity: "rare", desc: "造成「已損失生命值 × 0.4」點傷害（上限 40 點）。" },
     { id: 18, name: "魔能侵蝕", type: "attack", subType: "erosion", category: "攻擊", rarity: "rare", value: 12, desc: "造成 12 點傷害；魔王每有 1 個異常狀態，額外 +6 點傷害（上限 +18 點）。" },
-    { id: 14, name: "命運之輪", type: "special", subType: "roulette", category: "特殊", rarity: "rare", desc: "隨機三選一：① 回復 18 點生命且生命上限 +10（上限 +50）；② 獲得 18 點護盾；③ 造成 22 點穿透傷害。" },
+    { id: 14, name: "命運之輪", type: "special", subType: "roulette", category: "特殊", rarity: "rare", desc: "隨機三選一：① 回復 18 點生命且生命上限 +10；② 獲得 18 點護盾；③ 造成 22 點穿透傷害。" },
     { id: 9, name: "反彈護鏡", type: "special", subType: "reflect", category: "特殊", rarity: "rare", desc: "獲得 10 點護盾，下回合反彈魔王穿透傷害的 50%。[不可疊加]" },
     { id: 16, name: "盾擊破敵", type: "special", subType: "shield_bash", category: "特殊", rarity: "rare", desc: "消耗全部護盾，每 1 點護盾造成 1.5 點傷害。[不可複製]" },
     { id: 22, name: "偷天換日", type: "special", subType: "steal_shield", category: "特殊", rarity: "rare", desc: "偷取魔王 50% 護盾；若魔王無護盾則獲得 5 點護盾。" },
     { id: 23, name: "弱點標記", type: "special", subType: "mark", category: "特殊", rarity: "rare", desc: "標記魔王 3 回合，期間魔王受到的玩家攻擊傷害 +25%。[不可疊加]" },
     { id: 25, name: "時光沙漏", type: "special", subType: "time_hourglass", category: "特殊", rarity: "rare", desc: "下回合起始行動數 +1。[不可疊加]" },
     { id: 8, name: "禁錮咒語", type: "special", subType: "skip", category: "特殊", rarity: "rare", desc: "跳過魔王 1 次行動，並【封印特質】2 回合。[不可複製]" },
+    { id: 28, name: "深層沉思", type: "special", subType: "deep_meditation", category: "特殊", rarity: "rare", freeAction: true, desc: "【不扣行動】抽 2 張牌，下次攻擊傷害 +6 點。[不可疊加]" },
+    { id: 29, name: "死者甦生", type: "special", subType: "resurrection", category: "特殊", rarity: "rare", freeAction: true, desc: "【不扣行動】隨機將棄牌堆 2 張卡牌抓回手牌，並回復 8 點生命。[不可複製]" },
 
     { id: 11, name: "捨身一擊", type: "attack", subType: "recoil", category: "攻擊", rarity: "legendary", value: 28, selfCost: 7, desc: "失去 7 點生命，造成 28 點傷害。" },
     { id: 15, name: "元素引爆", type: "attack", subType: "detonate", category: "攻擊", rarity: "legendary", value: 10, desc: "造成 10 點傷害；若魔王有中毒或冰霜虛弱，額外 +22 點傷害並清除該狀態。" },
     { id: 24, name: "黑暗契約", type: "special", subType: "dark_contract", category: "特殊", rarity: "legendary", desc: "失去 12 點生命，永久 +6 點攻擊（上限 +12 點）。" },
-    { id: 19, name: "致命一擊", type: "attack", subType: "finisher", category: "legendary", rarity: "legendary", value: 10, desc: "造成 10 點傷害；若魔王生命低於 30%，改為造成 30 點穿透傷害。" }
+    { id: 19, name: "致命一擊", type: "attack", subType: "finisher", category: "legendary", rarity: "legendary", value: 10, desc: "造成 10 點傷害；若魔王生命低於 30%，改為造成 30 點穿透傷害。" },
+    { id: 30, name: "萬象天引", type: "attack", subType: "universal_pull", category: "攻擊", rarity: "legendary", value: 16, desc: "造成 16 點傷害；本局戰鬥中每使用過 1 張特殊卡，傷害額外 +4 點（上限 +20 點）。" }
 ];
 
 const heroCards = [
@@ -70,7 +79,15 @@ const heroCards = [
     { id: "thunder_3", heroId: "thunder", name: "雷霆萬鈞", type: "attack", subType: "thunder_thunder", category: "攻擊", rarity: "legendary", value: 15, desc: "造成 15 點傷害；若魔王處於麻痺狀態額外 +20 點傷害。" },
     { id: "copycat_1", heroId: "copycat", name: "快速施法", type: "special", subType: "copycat_draw", category: "特殊", rarity: "rare", freeAction: true, desc: "【不扣行動】抽 1 張牌。" },
     { id: "copycat_2", heroId: "copycat", name: "魔法增幅", type: "special", subType: "copycat_boost", category: "特殊", rarity: "rare", freeAction: true, desc: "【不扣行動】接下來 2 次攻擊傷害 +10 點。[不可疊加]" },
-    { id: "copycat_3", heroId: "copycat", name: "無限迴響", type: "special", subType: "copycat_echo", category: "特殊", rarity: "legendary", freeAction: true, desc: "【不扣行動】隨機獲得 1 張通用卡加入手牌。" }
+    { id: "copycat_3", heroId: "copycat", name: "無限迴響", type: "special", subType: "copycat_echo", category: "特殊", rarity: "legendary", freeAction: true, desc: "【不扣行動】隨機獲得 1 張通用卡加入手牌。" },
+
+    { id: "raccoon_1", heroId: "raccoon", name: "預言星圖", type: "special", subType: "raccoon_search", category: "特殊", rarity: "rare", freeAction: true, desc: "【不扣行動】隨機將抽牌堆中的 1 張「攻擊卡」直接抓回手牌。" },
+    { id: "raccoon_2", heroId: "raccoon", name: "閃光彈", type: "attack", subType: "raccoon_flash", category: "攻擊", rarity: "rare", value: 14, desc: "造成 14 點傷害；若本回合打出過「特殊卡」，額外造成 10 點傷害。" },
+    { id: "raccoon_3", heroId: "raccoon", name: "寶藏翻找", type: "heal", subType: "raccoon_treasure", category: "回復", rarity: "legendary", freeAction: true, desc: "【不扣行動】回復 12 點生命，並隨機將棄牌堆中 1 張卡牌抓回手牌。" },
+
+    { id: "hedgehog_1", heroId: "hedgehog", name: "蒸氣噴射", type: "heal", subType: "hedgehog_steam", category: "回復", rarity: "rare", desc: "獲得 15 點護盾；若當前護盾值 ≥ 15 點，額外獲得 1 次行動。" },
+    { id: "hedgehog_2", heroId: "hedgehog", name: "刺針射擊", type: "attack", subType: "hedgehog_needle", category: "攻擊", rarity: "rare", value: 16, desc: "造成 16 點傷害；若自身擁有護盾，消耗全部護盾，每消耗 1 點護盾使本次傷害 +1 點。" },
+    { id: "hedgehog_3", heroId: "hedgehog", name: "鋼鐵刺裝", type: "special", subType: "hedgehog_armor", category: "特殊", rarity: "legendary", desc: "獲得 22 點護盾，並清除自身所有的負面狀態。" }
 ];
 
 const cardPool = [...commonCards, ...heroCards];
@@ -82,7 +99,9 @@ const defaultDecks = {
     turtlo: ["turtlo_1","turtlo_2","turtlo_3", 6,21,9,16,22,5,10,1,13,23,14,25],
     shadow: ["shadow_1","shadow_2","shadow_3", 4,15,23,18,1,12,5,10,14,16,9,13],
     thunder:["thunder_1","thunder_2","thunder_3", 12,8,23,3,13,1,5,6,16,25,22,14],
-    copycat:["copycat_1","copycat_2","copycat_3", 7,24,23,14,9,22,15,1,5,6,25,16]
+    copycat:["copycat_1","copycat_2","copycat_3", 7,24,23,14,9,22,15,1,5,6,25,16],
+    raccoon:["raccoon_1","raccoon_2","raccoon_3", 28,29,30,1,3,13,5,6,23,14,25,27],
+    hedgehog:["hedgehog_1","hedgehog_2","hedgehog_3", 6,21,16,22,9,5,10,1,13,23,14,25]
 };
 
 const rarityLimit = { common: 2, rare: 1, legendary: 1 };
