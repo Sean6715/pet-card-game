@@ -729,8 +729,7 @@ async function playCard(card) {
         && !card.freeAction
         && card.type === "special"
         && card.subType !== "skip"
-        && card.subType !== "shield_bash"
-        && card.subType !== "shield_break") {
+        && card.subType !== "shield_bash") {
         S.copycatUsedThisTurn = true;
         await log(`🐰 <b>【鏡像戰術】</b>複製了卡牌效果！`, "crit");
         await executeCardEffect(card, true);
@@ -1148,8 +1147,13 @@ async function handleSpecialCard(card, prefix) {
         }
     }
     else if (card.subType === "mark") {
-        st.monster.markedTurns = 3;
-        await log(`${prefix}🎯🎯 <b>【弱點標記】</b>魔王被標記 3 回合，期間受到的玩家攻擊傷害 +25%！`, "mark");
+        if (st.monster.markedTurns > 0) {
+            st.monster.markedTurns = 3;
+            await log(`${prefix}🎯 <b>【弱點標記】</b>魔王弱點標記已存在，刷新持續回合數為 3 回合！`, "mark");
+        } else {
+            st.monster.markedTurns = 3;
+            await log(`${prefix}🎯🎯 <b>【弱點標記】</b>魔王被標記 3 回合，期間受到的玩家攻擊傷害 +25%！`, "mark");
+        }
     }
     else if (card.subType === "dark_contract") {
         if (st.player.darkContractsUsed >= 2) {
@@ -1189,22 +1193,20 @@ async function handleSpecialCard(card, prefix) {
         await log(`${prefix}🔮 <b>無限迴響</b>：隨機獲得 <b>${randomCommon.name}</b> 加入手牌！`, "crit");
     }
     else if (card.subType === "deep_meditation") {
-        drawCards(2);
-        st.player.atkBuff += 6;
-        await log(`${prefix}🧘 <b>深層沉思</b>：抽 2 張牌，下次攻擊傷害 +6 點！`, "crit");
+        drawCards(1);
+        st.player.atkBuff += 8;
+        await log(`${prefix}🧘 <b>深層沉思</b>：抽 1 張牌，下次攻擊傷害 +8 點！`, "crit");
     }
     else if (card.subType === "resurrection") {
-        let retNames = [];
-        for (let i = 0; i < 2; i++) {
-            if (st.discardPile.length > 0) {
-                const randIdx = Math.floor(Math.random() * st.discardPile.length);
-                const picked = st.discardPile.splice(randIdx, 1)[0];
-                const c = cardById[picked];
-                if (c) { st.hand.push(c); retNames.push(c.name); }
-            }
+        let retName = "";
+        if (st.discardPile.length > 0) {
+            const randIdx = Math.floor(Math.random() * st.discardPile.length);
+            const picked = st.discardPile.splice(randIdx, 1)[0];
+            const c = cardById[picked];
+            if (c) { st.hand.push(c); retName = c.name; }
         }
-        const healed = healPlayer(8);
-        await log(`${prefix}🕊️ <b>死者甦生</b>：回復 ${healed} 點生命${retNames.length > 0 ? `，並從棄牌堆抓回【${retNames.join("、")}】` : ""}！`, "heal");
+        const healed = healPlayer(10);
+        await log(`${prefix}🕊️ <b>死者甦生</b>：回復 ${healed} 點生命${retName ? `，並從棄牌堆抓回【${retName}】` : ""}！`, "heal");
     }
     else if (card.subType === "raccoon_search") {
         let foundName = "";
@@ -1215,9 +1217,13 @@ async function handleSpecialCard(card, prefix) {
         if (foundIdx >= 0) {
             const picked = st.drawPile.splice(foundIdx, 1)[0];
             const c = cardById[picked];
-            if (c) { st.hand.push(c); foundName = c.name; }
+            if (c) {
+                st.hand.push(c);
+                foundName = c.name;
+                st.player.atkBuff += 5;
+            }
         }
-        await log(`${prefix}🌌 <b>預言星圖</b>：${foundName ? `精準將【${foundName}】從抽牌堆抓回手牌` : "抽牌堆中沒有攻擊卡"}！`, "crit");
+        await log(`${prefix}🌌 <b>預言星圖</b>：${foundName ? `將【${foundName}】抓回手牌，且下次攻擊傷害 +5 點` : "抽牌堆中沒有攻擊卡"}！`, "crit");
     }
     else if (card.subType === "hedgehog_armor") {
         await addShieldToPlayer(22);
@@ -1733,9 +1739,9 @@ function cardValueText(card) {
     if (card.subType === "copycat_draw") return `抽 1 張牌`;
     if (card.subType === "copycat_boost") return `2次 +10 點攻擊`;
     if (card.subType === "copycat_echo") return `獲得通用卡`;
-    if (card.subType === "deep_meditation") return `抽2張/+6攻擊`;
-    if (card.subType === "resurrection") return `抓2張/回${H(8)}血`;
-    if (card.subType === "raccoon_search") return `抓攻擊卡`;
+    if (card.subType === "deep_meditation") return `抽1張/+8攻擊`;
+    if (card.subType === "resurrection") return `抓1張/回${H(10)}血`;
+    if (card.subType === "raccoon_search") return `抓攻擊卡/+5攻擊`;
     if (card.subType === "hedgehog_armor") return `22點護盾+清負面`;
     return "戰術";
 }
@@ -1812,7 +1818,7 @@ function getCardDesc(card) {
         case "time_hourglass": return `下回合起始行動數 +1。[不可疊加]`;
         case "shield_break": {
             if (!S) return "打碎魔王全部護盾；若無護盾則造成 8 點傷害。";
-            return S.monster.shield > 0 ? `打碎魔王 ${S.monster.shield} 點護盾。[不可複製]` : `魔王無護盾，造成 ${D(8)} 點傷害${markTag}。[不可複製]`;
+            return S.monster.shield > 0 ? `打碎魔王 ${S.monster.shield} 點護盾。` : `魔王無護盾，造成 ${D(8)} 點傷害${markTag}。`;
         }
         case "ignis_rage": {
             if (!S) return "扣除 8 點生命，造成 20 點傷害；生命 < 50% 時 30 點傷害。";
@@ -1825,9 +1831,9 @@ function getCardDesc(card) {
             return `回復 ${H(isLow ? 30 : 15)} 點生命${healTag}${isLow ? "（低血觸發）" : ""}。`;
         }
         case "ignis_last": return `扣除 10 點生命，造成 ${D(25)} 點穿透傷害${markTag}。`;
-        case "turtlo_counter": return `獲得 15 點護盾，本回合被攻擊時反彈 50% 傷害給魔王。`;
+        case "turtlo_counter": return `獲得 15 點護盾，本回合被攻擊時反彈 50% 傷害給魔王。[不可疊加]`;
         case "turtlo_wall": return `獲得 20 點護盾。`;
-        case "turtlo_stand": return `獲得 15 點護盾，本回合受到的所有傷害減少 5 點。`;
+        case "turtlo_stand": return `獲得 15 點護盾，本回合受到的所有傷害減少 5 點。[不可疊加]`;
         case "shadow_poison": {
             const turns = hero === "shadow" ? 4 : 3;
             return `造成 ${D(6)} 點傷害${markTag}，使魔王中毒 ${turns} 回合（每回合無視護盾扣除 6 點生命）。[不可疊加]`;
@@ -1850,20 +1856,20 @@ function getCardDesc(card) {
         case "copycat_draw": return `【不扣行動】抽 1 張牌。`;
         case "copycat_boost": return `【不扣行動】接下來 2 次攻擊傷害 +10 點。[不可疊加]`;
         case "copycat_echo": return `【不扣行動】隨機獲得 1 張通用卡加入手牌。`;
-        case "deep_meditation": return `【不扣行動】抽 2 張牌，下次攻擊傷害 +6 點。[不可疊加]`;
-        case "resurrection": return `【不扣行動】隨機將棄牌堆 2 張卡牌抓回手牌，並回復 ${H(8)} 點生命。[不可複製]`;
+        case "deep_meditation": return `【不扣行動】抽 1 張牌，下次攻擊傷害 +8 點。[不可疊加]`;
+        case "resurrection": return `【不扣行動】隨機將棄牌堆 1 張卡牌抓回手牌，並回復 ${H(10)} 點生命。[不可複製]`;
         case "delayed_bomb": return `造成 ${D(10)} 點傷害，並施加【定時炸彈】（2 回合後爆發 28 點穿透傷害）。`;
         case "universal_pull": {
             const count = Math.min(5, S ? (S.specialPlayedTotal || 0) : 0);
             return `造成 ${D(16 + count * 4)} 點傷害（本局已使用 ${S ? (S.specialPlayedTotal || 0) : 0} 張特殊卡，每張 +4，最高 +20）。`;
         }
-        case "raccoon_search": return `【不扣行動】從抽牌堆中精準檢索 1 張「攻擊卡」加入手牌。`;
+        case "raccoon_search": return `【不扣行動】檢索 1 張攻擊卡，且該卡本次傷害 +5 點。`;
         case "raccoon_flash": {
             const isSpec = S ? S.specialPlayedThisTurn : false;
             return `造成 ${D(isSpec ? 24 : 14)} 點傷害${isSpec ? "（本回合已打出特殊卡，觸發 +10！）" : "（若本回合打出過特殊卡，額外 +10 點）"}。`;
         }
         case "raccoon_amulet": return `回復 ${H(14)} 點生命，並獲得 10 點護盾。`;
-        case "hedgehog_steam": return `【不扣行動】獲得 15 點護盾；若當前護盾值 ≥ 15 點，額外獲得 1 次行動。`;
+        case "hedgehog_steam": return `【不扣行動】獲得 15 點護盾；若當前護盾值 ≥ 15 點，額外獲得 1 次行動。[不可疊加]`;
         case "hedgehog_needle": {
             const shieldVal = S ? S.player.shield : 0;
             return `造成 ${D(16 + shieldVal)} 點傷害（消耗全部 ${shieldVal} 點護盾，每點護盾 +1 點傷害）。`;
