@@ -35,7 +35,7 @@ const commonCards = [
     { id: 4, name: "劇毒飛刀", type: "attack", subType: "poison", category: "攻擊", rarity: "common", value: 10, desc: "造成 10 點傷害，使魔王中毒 3 回合（每回合無視護盾扣除 6 點生命）。[不可疊加]" },
     { id: 12, name: "冰霜連擊", type: "attack", subType: "frost", category: "攻擊", rarity: "common", value: 12, desc: "造成 12 點傷害，使魔王攻擊傷害減少 40%（持續 1 回合）。[不可疊加]" },
     { id: 13, name: "破甲重擊", type: "attack", subType: "pierce", category: "攻擊", rarity: "common", value: 15, desc: "造成 15 點穿透傷害（無視魔王護盾）。" },
-    { id: 26, name: "碎盾擊", type: "attack", subType: "shield_break", category: "攻擊", rarity: "common", value: 8, desc: "打碎魔王全部護盾；若魔王無護盾則造成 8 點傷害。[不可複製]" },
+    { id: 26, name: "碎盾擊", type: "attack", subType: "shield_break", category: "攻擊", rarity: "common", value: 8, desc: "打碎魔王全部護盾；若魔王無護盾則造成 8 點傷害。" },
     { id: 27, name: "定時引爆", type: "attack", subType: "delayed_bomb", category: "攻擊", rarity: "rare", value: 10, desc: "造成 10 點傷害，並施加【定時炸彈】（2 回合後爆發造成 28 點穿透傷害）。" },
     
     { id: 5, name: "瞬間回復", type: "heal", subType: "burst", category: "回復", rarity: "common", value: 20, desc: "回復 20 點生命。" },
@@ -54,8 +54,8 @@ const commonCards = [
     { id: 23, name: "弱點標記", type: "special", subType: "mark", category: "特殊", rarity: "rare", desc: "標記魔王 3 回合，期間魔王受到的玩家攻擊傷害 +25%。[不可疊加]" },
     { id: 25, name: "時光沙漏", type: "special", subType: "time_hourglass", category: "特殊", rarity: "rare", desc: "下回合起始行動數 +1。[不可疊加]" },
     { id: 8, name: "禁錮咒語", type: "special", subType: "skip", category: "特殊", rarity: "rare", desc: "跳過魔王 1 次行動，並【封印特質】2 回合。[不可複製]" },
-    { id: 28, name: "深層沉思", type: "special", subType: "deep_meditation", category: "特殊", rarity: "rare", freeAction: true, desc: "【不扣行動】抽 2 張牌，下次攻擊傷害 +6 點。[不可疊加]" },
-    { id: 29, name: "死者甦生", type: "special", subType: "resurrection", category: "特殊", rarity: "rare", freeAction: true, desc: "【不扣行動】隨機將棄牌堆 2 張卡牌抓回手牌，並回復 8 點生命。[不可複製]" },
+    { id: 28, name: "深層沉思", type: "special", subType: "deep_meditation", category: "特殊", rarity: "rare", freeAction: true, desc: "【不扣行動】抽 1 張牌，下次攻擊傷害 +8 點。[不可疊加]" },
+    { id: 29, name: "死者甦生", type: "special", subType: "resurrection", category: "特殊", rarity: "rare", freeAction: true, desc: "【不扣行動】隨機將棄牌堆 1 張卡牌抓回手牌，並回復 10 點生命。[不可複製]" },
 
     { id: 11, name: "捨身一擊", type: "attack", subType: "recoil", category: "攻擊", rarity: "legendary", value: 28, selfCost: 7, desc: "扣除 7 點生命，造成 28 點傷害。" },
     { id: 15, name: "元素引爆", type: "attack", subType: "detonate", category: "攻擊", rarity: "legendary", value: 10, desc: "造成 10 點傷害；若魔王有中毒或冰霜虛弱，額外 +22 點傷害並清除該狀態。" },
@@ -69,9 +69,9 @@ const heroCards = [
     { id: "ignis_2", heroId: "ignis", name: "鳳凰之心", type: "heal", subType: "ignis_phoenix", category: "回復", rarity: "rare", desc: "回復 15 點生命；自身生命低於 30% 時改為回復 30 點生命。" },
     { id: "ignis_3", heroId: "ignis", name: "絕境焚身", type: "attack", subType: "ignis_last", category: "攻擊", rarity: "legendary", desc: "扣除 10 點生命，造成 25 點穿透傷害。" },
 
-    { id: "turtlo_1", heroId: "turtlo", name: "反震裝甲", type: "heal", subType: "turtlo_counter", category: "回復", rarity: "rare", desc: "獲得 15 點護盾，本回合被攻擊時反彈 50% 傷害給魔王。" },
+    { id: "turtlo_1", heroId: "turtlo", name: "反震裝甲", type: "heal", subType: "turtlo_counter", category: "回復", rarity: "rare", desc: "獲得 15 點護盾，本回合被攻擊時反彈 50% 傷害給魔王。[不可疊加]" },
     { id: "turtlo_2", heroId: "turtlo", name: "銅牆鐵壁", type: "heal", subType: "turtlo_wall", category: "回復", rarity: "rare", desc: "獲得 20 點護盾。" },
-    { id: "turtlo_3", heroId: "turtlo", name: "不動如山", type: "special", subType: "turtlo_stand", category: "特殊", rarity: "legendary", desc: "獲得 15 點護盾，本回合受到的所有傷害減少 5 點。" },
+    { id: "turtlo_3", heroId: "turtlo", name: "不動如山", type: "special", subType: "turtlo_stand", category: "特殊", rarity: "legendary", desc: "獲得 15 點護盾，本回合受到的所有傷害減少 5 點。[不可疊加]" },
 
     { id: "shadow_1", heroId: "shadow", name: "猛毒蔓延", type: "attack", subType: "shadow_poison", category: "攻擊", rarity: "rare", value: 6, desc: "造成 6 點傷害，使魔王中毒 3 回合（每回合無視護盾扣除 6 點生命）。[不可疊加]" },
     { id: "shadow_2", heroId: "shadow", name: "毒爆", type: "attack", subType: "shadow_burst", category: "攻擊", rarity: "rare", desc: "引爆魔王的中毒：每層中毒造成 8 點傷害並清除該中毒狀態。" },
@@ -85,11 +85,11 @@ const heroCards = [
     { id: "copycat_2", heroId: "copycat", name: "魔法增幅", type: "special", subType: "copycat_boost", category: "特殊", rarity: "rare", freeAction: true, desc: "【不扣行動】接下來 2 次攻擊傷害 +10 點。[不可疊加]" },
     { id: "copycat_3", heroId: "copycat", name: "無限迴響", type: "special", subType: "copycat_echo", category: "特殊", rarity: "legendary", freeAction: true, desc: "【不扣行動】隨機獲得 1 張通用卡加入手牌。" },
 
-    { id: "raccoon_1", heroId: "raccoon", name: "預言星圖", type: "special", subType: "raccoon_search", category: "特殊", rarity: "rare", freeAction: true, desc: "【不扣行動】從抽牌堆中精準檢索 1 張「攻擊卡」加入手牌。" },
+    { id: "raccoon_1", heroId: "raccoon", name: "預言星圖", type: "special", subType: "raccoon_search", category: "特殊", rarity: "rare", freeAction: true, desc: "【不扣行動】檢索 1 張攻擊卡，且該卡本次傷害 +5 點。" },
     { id: "raccoon_2", heroId: "raccoon", name: "閃光彈", type: "attack", subType: "raccoon_flash", category: "攻擊", rarity: "rare", value: 14, desc: "造成 14 點傷害；若本回合打出過「特殊卡」，改為造成 24 點傷害。" },
     { id: "raccoon_3", heroId: "raccoon", name: "星象護符", type: "heal", subType: "raccoon_amulet", category: "回復", rarity: "legendary", desc: "回復 14 點生命，並獲得 10 點護盾。" },
 
-    { id: "hedgehog_1", heroId: "hedgehog", name: "蒸氣噴射", type: "heal", subType: "hedgehog_steam", category: "回復", rarity: "rare", freeAction: true, desc: "【不扣行動】獲得 15 點護盾；若當前護盾值 ≥ 15 點，額外獲得 1 次行動。" },
+    { id: "hedgehog_1", heroId: "hedgehog", name: "蒸氣噴射", type: "heal", subType: "hedgehog_steam", category: "回復", rarity: "rare", freeAction: true, desc: "【不扣行動】獲得 15 點護盾；若當前護盾值 ≥ 15 點，額外獲得 1 次行動。[不可疊加]" },
     { id: "hedgehog_2", heroId: "hedgehog", name: "刺針射擊", type: "attack", subType: "hedgehog_needle", category: "攻擊", rarity: "rare", value: 16, desc: "造成 16 點傷害；若自身擁有護盾，消耗全部護盾，每消耗 1 點護盾使本次傷害 +1 點。" },
     { id: "hedgehog_3", heroId: "hedgehog", name: "鋼鐵刺裝", type: "special", subType: "hedgehog_armor", category: "特殊", rarity: "legendary", desc: "獲得 22 點護盾，並清除自身所有的負面狀態。" }
 ];
@@ -98,7 +98,6 @@ const cardPool = [...commonCards, ...heroCards];
 const cardById = {};
 cardPool.forEach(c => cardById[String(c.id)] = c);
 
-// 精準重構的各英雄最適預設牌庫（Default Decks）
 const defaultDecks = {
     ignis:  ["ignis_1","ignis_2","ignis_3", 1,7,11,17,24,30,2,5,13,23,14,25],
     turtlo: ["turtlo_1","turtlo_2","turtlo_3", 6,21,9,16,22,26,5,10,13,23,14,25],
