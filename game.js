@@ -132,6 +132,26 @@ function drawCards(n) {
     }
 }
 
+// 封裝的自動補牌邏輯，防止遊戲卡死
+async function refillHandIfEmpty() {
+    if (S.isTutorial) return true;
+    if (S.hand.length > 0) return true;
+    
+    let drawCount = 3;
+    if (S.mod.effect === "fog_choice") drawCount = 2;
+    
+    let initialLength = S.hand.length;
+    drawCards(drawCount);
+    
+    if (S.hand.length > initialLength) {
+        await log(`📚 手牌耗盡，自動補充 ${S.hand.length - initialLength} 張牌。`, "info");
+        return true;
+    } else {
+        await log(`⚠️ 牌庫已耗盡，無法繼續行動。`, "warn");
+        return false;
+    }
+}
+
 function showPileInfo(type) {
     if (!S || S.isTutorial) return;
     const pile = type === 'draw' ? S.drawPile : S.discardPile;
@@ -164,7 +184,7 @@ async function applyDamageToMonster(dmg, opts = {}) {
         return { hit: false, actualDmg: 0, finalDmg: 0, markApplied: false };
     }
 
-    // 在這裡統一處理血之狂熱的消耗與加成！
+    // 在這裡統一處理血之狂熱的消耗與加成
     if (fromPlayer && S.player.atkBuff > 0) {
         const bonus = S.player.atkBuff;
         S.player.atkBuff = 0;
@@ -467,20 +487,28 @@ async function finishPlayerAction() {
     updateStatus();
 
     if (S.actionsLeft > 0) {
-        renderCards();
-    } else {
-        isBatching = true;
-        if (!S.isTutorial && S.hand.length > 0) {
-            await log(`🗑️ 回合結束，${S.hand.length} 張手牌已丟棄。`, "info");
-            S.hand.forEach(c => S.discardPile.push(c.id));
-            S.hand = [];
+        // 檢查手牌是否為空，如果為空則自動補牌
+        const canContinue = await refillHandIfEmpty();
+        if (!canContinue) {
+            S.actionsLeft = 0; // 強制結束行動
+        } else {
+            renderCards();
+            return;
         }
-        isBatching = false;
-        flushLogBatch();
-        updateStatus();
-        await sleep(600);
-        monsterTurn();
     }
+    
+    // 回合結束處理
+    isBatching = true;
+    if (!S.isTutorial && S.hand.length > 0) {
+        await log(`🗑️ 回合結束，${S.hand.length} 張手牌已丟棄。`, "info");
+        S.hand.forEach(c => S.discardPile.push(c.id));
+        S.hand = [];
+    }
+    isBatching = false;
+    flushLogBatch();
+    updateStatus();
+    await sleep(600);
+    monsterTurn();
 }
 
 async function playCard(card) {
@@ -519,7 +547,19 @@ async function playCard(card) {
     flushLogBatch();
     updateStatus();
 
-    if (checkWinLoss()) { await finishPlayerAction(); return; }
+    if (checkWinLoss()) { 
+        if (!card.freeAction) await finishPlayerAction();
+        else {
+            if (S.actionsLeft > 0) {
+                const canContinue = await refillHandIfEmpty();
+                if (!canContinue) { S.actionsLeft = 0; await finishPlayerAction(); }
+                else renderCards();
+            } else {
+                await finishPlayerAction();
+            }
+        }
+        return; 
+    }
     
     await sleep(600);
 
@@ -527,7 +567,13 @@ async function playCard(card) {
         await finishPlayerAction();
     } else {
         if (S.actionsLeft > 0) {
-            renderCards();
+            const canContinue = await refillHandIfEmpty();
+            if (!canContinue) {
+                S.actionsLeft = 0;
+                await finishPlayerAction();
+            } else {
+                renderCards();
+            }
         } else {
             await finishPlayerAction();
         }
