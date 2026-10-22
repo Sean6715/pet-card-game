@@ -1,21 +1,21 @@
 const heroes = [
-    { id: "ignis",  name: "火狂小狐", icon: "🦊", hp: 100, trait: "ignis", desc: "【烈焰血脈】打出攻擊型卡牌時，40% 機率額外造成 5 點傷害。" },
+    { id: "ignis",  name: "火狂小狐", icon: "🦊", hp: 100, trait: "ignis", desc: "【烈焰血脈】打出攻擊型卡牌時，40% 機率額外造成 5 點傷害；攻擊命中時回復 2 點生命。" },
     { id: "turtlo", name: "堅甲龜",   icon: "🐢", hp: 100, trait: "turtlo", desc: "【堅甲防禦】受擊獲得 3 點護盾，所有護盾提升 10%；護盾 > 20 點時攻擊額外造成 [當前護盾 × 25%] 反震傷害。" },
     { id: "shadow", name: "影爪貓",   icon: "🐱", hp: 100, trait: "shadow", desc: "【劇毒爪痕】對魔王造成的中毒持續回合數額外增加 1 回合。" },
     { id: "thunder",name: "閃電鳥",   icon: "⚡", hp: 100, trait: "thunder", desc: "【雷霆麻痺】攻擊命中時，30% 機率使魔王跳過 1 次行動。" },
     { id: "copycat",name: "複製兔",   icon: "🐰", hp: 98, trait: "copycat", desc: "【鏡像戰術】每回合首次打出「需消耗行動」的特殊卡時，額外觸發一次效果（禁錮、盾擊除外）。" },
     { id: "raccoon",name: "預言浣熊", icon: "🦝", hp: 95, trait: "raccoon", desc: "【星象預兆】每回合額外抽 1 張牌（抽牌數 +1）。" },
-    { id: "hedgehog",name: "機械刺蝟",icon: "🦔", hp: 102, trait: "hedgehog", desc: "【超頻核心】護盾達 15 點時溢出部分轉為永久攻擊力（每 2 點轉 +1 點，上限 +12 點）；達上限後護盾可繼續突破 15 點累積。" }
+    { id: "hedgehog",name: "機械刺蝟",icon: "🦔", hp: 102, trait: "hedgehog", desc: "【超頻核心】護盾達 15 點時溢出部分轉為永久攻擊力（每 3 點轉 +1 點，上限 +8 點）；達上限後護盾可繼續突破 15 點累積。" }
 ];
 
 const bossTypes = [
-    { id: "standard", name: "深淵霸主", icon: "👹", hp: 120, trait: "standard", traitName: "深淵咆哮（每 3 回合）", desc: "每 3 回合釋放【深淵咆哮】，造成 20 點傷害並施加壓制（下回合抽牌減少 2 張）。" },
+    { id: "standard", name: "深淵霸主", icon: "👹", hp: 120, trait: "standard", traitName: "深淵咆哮（每 3 回合）", desc: "每 3 回合釋放【深淵咆哮】，造成 20 點傷害並施加壓制（下回合抽牌數減少 1 張）。" },
     { id: "undying", name: "巴洛克", icon: "☠️", hp: 100, trait: "undying", traitName: "不滅死魂（死亡復活）", desc: "首次被擊殺時原地復活，恢復 35 點生命並進入永久狂暴（攻擊 +8 點，不可疊加）。" },
     { id: "evasion", name: "影魔", icon: "🥷", hp: 112, trait: "evasion", traitName: "鬼魅閃避（27% 機率）", desc: "被動擁有 27% 閃避率，完全躲開玩家的攻擊。" },
     { id: "vampire", name: "德古拉", icon: "🧛", hp: 110, trait: "vampire", traitName: "嗜血吸取（穿透 30%）", desc: "造成穿透傷害時，吸取該傷害 30% 的生命值。" },
-    { id: "guardian", name: "鋼鐵要塞", icon: "🏰", hp: 120, trait: "guardian", traitName: "鋼鐵反震（破盾 12 真傷）", desc: "護盾被擊破時對玩家造成 12 點真實傷害（無視護盾，冷卻 2 回合）。" },
+    { id: "guardian", name: "鋼鐵要塞", icon: "🏰", hp: 120, trait: "guardian", traitName: "鋼鐵反震（破盾 8 真傷）", desc: "護盾被擊破時對玩家造成 8 點真實傷害（無視護盾，冷卻 2 回合）。" },
     { id: "elementalist", name: "元素巫師", icon: "🧙‍♂️", hp: 115, trait: "elementalist", traitName: "元素輪轉（每 2 回合）", desc: "每 2 回合切換形態：🔥烈焰（攻擊+30%）/ 🧊寒冰（受傷-30%）/ ⚡迅雷（閃避率 20%）。" },
-    { id: "time_phantom", name: "時空幻影", icon: "⏳", hp: 120, trait: "time_phantom", traitName: "熵增回溯（殘血觸發）", desc: "生命首次低於 30% 時（若未被一擊擊殺），強制回升至 40%，並清空雙方所有的護盾、臨時 Buff、Debuff 與定時炸彈。" }
+    { id: "time_phantom", name: "時空幻影", icon: "⏳", hp: 120, trait: "time_phantom", traitName: "熵增回溯（殘血觸發）", desc: "生命首次低於 30% 時，強制回升至 45%，並清空雙方所有護盾與臨時 Buff/Debuff（定時炸彈不受影響）。" }
 ];
 
 const battlefieldModifiers = [
@@ -36,7 +36,7 @@ const commonCards = [
     { id: 12, name: "冰霜連擊", type: "attack", subType: "frost", category: "攻擊", rarity: "common", value: 12, desc: "造成 12 點傷害，使魔王攻擊傷害減少 40%（持續 1 回合）。[不可疊加]" },
     { id: 13, name: "破甲重擊", type: "attack", subType: "pierce", category: "攻擊", rarity: "common", value: 15, desc: "造成 15 點穿透傷害（無視魔王護盾）。" },
     { id: 26, name: "碎盾擊", type: "attack", subType: "shield_break", category: "攻擊", rarity: "common", value: 8, desc: "打碎魔王全部護盾；若魔王無護盾則造成 8 點傷害。" },
-    { id: 27, name: "定時引爆", type: "attack", subType: "delayed_bomb", category: "攻擊", rarity: "rare", value: 10, desc: "造成 10 點傷害，並施加【定時炸彈】（2 回合後爆發造成 28 點穿透傷害）。" },
+    { id: 27, name: "定時引爆", type: "attack", subType: "delayed_bomb", category: "攻擊", rarity: "rare", value: 10, desc: "造成 10 點傷害，並施加【定時炸彈】（1 回合後爆發造成 28 點穿透傷害）。" },
     
     { id: 5, name: "瞬間回復", type: "heal", subType: "burst", category: "回復", rarity: "common", value: 20, desc: "回復 20 點生命。" },
     { id: 6, name: "聖光護盾", type: "heal", subType: "shield", category: "回復", rarity: "common", value: 10, shieldVal: 12, desc: "回復 10 點生命，並獲得 12 點護盾。" },
@@ -50,7 +50,7 @@ const commonCards = [
     { id: 14, name: "命運之輪", type: "special", subType: "roulette", category: "特殊", rarity: "rare", desc: "隨機三選一：① 回復 18 點生命且生命上限 +10 點（上限 +50）；② 獲得 18 點護盾；③ 造成 22 點穿透傷害。" },
     { id: 9, name: "反彈護鏡", type: "special", subType: "reflect", category: "特殊", rarity: "rare", desc: "獲得 10 點護盾，下回合被魔王攻擊時反彈 50% 傷害給魔王。[不可疊加]" },
     { id: 16, name: "盾擊破敵", type: "special", subType: "shield_bash", category: "特殊", rarity: "rare", desc: "消耗全部護盾，每 1 點護盾造成 1.5 點傷害。[不可複製]" },
-    { id: 22, name: "偷天換日", type: "special", subType: "steal_shield", category: "特殊", rarity: "rare", desc: "偷取魔王 50% 護盾；若魔王無護盾，改為造成 12 點穿透傷害。" },
+    { id: 22, name: "偷天換日", type: "special", subType: "steal_shield", category: "特殊", rarity: "rare", desc: "偷取魔王 50% 護盾；若魔王無護盾，改為造成 15 點穿透傷害。" },
     { id: 23, name: "弱點標記", type: "special", subType: "mark", category: "特殊", rarity: "rare", desc: "標記魔王 3 回合，期間魔王受到的玩家攻擊傷害 +25%。[不可疊加]" },
     { id: 25, name: "時光沙漏", type: "special", subType: "time_hourglass", category: "特殊", rarity: "rare", desc: "下回合起始行動數 +1。[不可疊加]" },
     { id: 28, name: "深層沉思", type: "special", subType: "deep_meditation", category: "特殊", rarity: "rare", freeAction: true, desc: "【不扣行動】抽 1 張牌，下次攻擊傷害 +8 點。" },
@@ -115,7 +115,7 @@ const TUTORIAL_STEPS = [
       cards: ["poison", "normal", "crit"], acceptable: ["poison"], highlight: ["poison"] },
     { intro: `中毒每回合會無視護盾扣除 6 點生命！<br>接下來試試高風險高回報的卡：請打出 <b>【捨身一擊】</b>（扣除 7 點生命，造成 28 × 狂暴磁場 1.2 = 34 點傷害）！`,
       cards: ["recoil", "pierce", "frost"], acceptable: ["recoil"], highlight: ["recoil"] },
-    { intro: `⚠️ 第 3 回合！深淵霸主將釋放 <b>【深淵咆哮】</b>（造成 20 點傷害並使你下回合抽牌數 -2）。<br>請打出 <b>【禁錮咒語】</b>，跳過魔王 1 次行動，並封印他的咆哮特質 2 回合！`,
+    { intro: `⚠️ 第 3 回合！深淵霸主將釋放 <b>【深淵咆哮】</b>（造成 20 點傷害並使你下回合抽牌數 -1）。<br>請打出 <b>【禁錮咒語】</b>，跳過魔王 1 次行動，並封印他的咆哮特質 2 回合！`,
       cards: ["skip", "burst", "shield"], acceptable: ["skip"], highlight: ["skip"] },
     { intro: `禁錮封印成功！接下來，你可以點擊上方「魔王」區塊的 <b>ⓘ</b> 隨時查看他的詳細資訊。<br>請打出 <b>【弱點標記】</b>，讓魔王受到的傷害增加 25%（持續 3 回合）！`,
       cards: ["mark", "normal", "crit"], acceptable: ["mark"], highlight: ["mark"] },
