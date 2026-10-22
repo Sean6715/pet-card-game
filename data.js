@@ -9,7 +9,7 @@ const heroes = [
 ];
 
 const bossTypes = [
-    { id: "standard", name: "深淵霸主", icon: "👹", hp: 120, trait: "standard", traitName: "深淵咆哮（每 3 回合）", desc: "每 3 回合釋放【深淵咆哮】，造成 20 點傷害並施加壓制（下回合抽牌減少）。" },
+    { id: "standard", name: "深淵霸主", icon: "👹", hp: 120, trait: "standard", traitName: "深淵咆哮（每 3 回合）", desc: "每 3 回合釋放【深淵咆哮】，造成 20 點傷害並施加壓制（下回合抽牌減少 2 張）。" },
     { id: "undying", name: "巴洛克", icon: "☠️", hp: 100, trait: "undying", traitName: "不滅死魂（死亡復活）", desc: "首次被擊殺時原地復活，恢復 35 點生命並進入永久狂暴（攻擊 +8 點，不可疊加）。" },
     { id: "evasion", name: "影魔", icon: "🥷", hp: 112, trait: "evasion", traitName: "鬼魅閃避（27% 機率）", desc: "被動擁有 27% 閃避率，完全躲開玩家的攻擊。" },
     { id: "vampire", name: "德古拉", icon: "🧛", hp: 110, trait: "vampire", traitName: "嗜血吸取（穿透 30%）", desc: "造成穿透傷害時，吸取該傷害 30% 的生命值。" },
@@ -50,18 +50,18 @@ const commonCards = [
     { id: 14, name: "命運之輪", type: "special", subType: "roulette", category: "特殊", rarity: "rare", desc: "隨機三選一：① 回復 18 點生命且生命上限 +10 點（上限 +50）；② 獲得 18 點護盾；③ 造成 22 點穿透傷害。" },
     { id: 9, name: "反彈護鏡", type: "special", subType: "reflect", category: "特殊", rarity: "rare", desc: "獲得 10 點護盾，下回合被魔王攻擊時反彈 50% 傷害給魔王。[不可疊加]" },
     { id: 16, name: "盾擊破敵", type: "special", subType: "shield_bash", category: "特殊", rarity: "rare", desc: "消耗全部護盾，每 1 點護盾造成 1.5 點傷害。[不可複製]" },
-    { id: 22, name: "偷天換日", type: "special", subType: "steal_shield", category: "特殊", rarity: "rare", desc: "偷取魔王 50% 護盾；若魔王無護盾則獲得 5 點護盾。" },
+    { id: 22, name: "偷天換日", type: "special", subType: "steal_shield", category: "特殊", rarity: "rare", desc: "偷取魔王 50% 護盾；若魔王無護盾，改為造成 12 點穿透傷害。" },
     { id: 23, name: "弱點標記", type: "special", subType: "mark", category: "特殊", rarity: "rare", desc: "標記魔王 3 回合，期間魔王受到的玩家攻擊傷害 +25%。[不可疊加]" },
     { id: 25, name: "時光沙漏", type: "special", subType: "time_hourglass", category: "特殊", rarity: "rare", desc: "下回合起始行動數 +1。[不可疊加]" },
-    { id: 8, name: "禁錮咒語", type: "special", subType: "skip", category: "特殊", rarity: "rare", desc: "跳過魔王 1 次行動，並【封印特質】2 回合。[不可複製]" },
     { id: 28, name: "深層沉思", type: "special", subType: "deep_meditation", category: "特殊", rarity: "rare", freeAction: true, desc: "【不扣行動】抽 1 張牌，下次攻擊傷害 +8 點。" },
     { id: 29, name: "死者甦生", type: "special", subType: "resurrection", category: "特殊", rarity: "rare", freeAction: true, desc: "【不扣行動】隨機將棄牌堆 1 張卡牌抓回手牌，並回復 10 點生命。[不可複製]" },
 
     { id: 11, name: "捨身一擊", type: "attack", subType: "recoil", category: "攻擊", rarity: "legendary", value: 28, selfCost: 7, desc: "扣除 7 點生命，造成 28 點傷害。" },
     { id: 15, name: "元素引爆", type: "attack", subType: "detonate", category: "攻擊", rarity: "legendary", value: 10, desc: "造成 10 點傷害；若魔王有中毒或冰霜虛弱，額外 +22 點傷害並清除該狀態。" },
-    { id: 24, name: "黑暗契約", type: "special", subType: "dark_contract", category: "特殊", rarity: "legendary", desc: "扣除 12 點生命，永久 +6 點攻擊（上限 +12 點）。" },
+    { id: 24, name: "黑暗契約", type: "special", subType: "dark_contract", category: "特殊", rarity: "legendary", desc: "扣除 10 點生命，本局永久 +8 點攻擊（上限 +16 點）。" },
     { id: 19, name: "致命一擊", type: "attack", subType: "finisher", category: "攻擊", rarity: "legendary", value: 10, desc: "造成 10 點傷害；若魔王生命低於 30%，改為造成 30 點穿透傷害。" },
-    { id: 30, name: "萬象天引", type: "attack", subType: "universal_pull", category: "攻擊", rarity: "legendary", value: 16, desc: "造成 16 點傷害；本局戰鬥中每使用過 1 張特殊卡，傷害額外 +4 點（上限 +20 點）。" }
+    { id: 30, name: "萬象天引", type: "attack", subType: "universal_pull", category: "攻擊", rarity: "legendary", value: 16, desc: "造成 16 點傷害；本局戰鬥中每使用過 1 張特殊卡，傷害額外 +4 點（上限 +20 點）。" },
+    { id: 8, name: "禁錮咒語", type: "special", subType: "skip", category: "特殊", rarity: "legendary", desc: "跳過魔王 1 次行動，並【封印特質】2 回合。[不可複製]" }
 ];
 
 const heroCards = [
@@ -74,7 +74,7 @@ const heroCards = [
     { id: "turtlo_3", heroId: "turtlo", name: "不動如山", type: "special", subType: "turtlo_stand", category: "特殊", rarity: "legendary", desc: "獲得 15 點護盾，本回合受到的所有傷害減少 5 點。[不可疊加]" },
 
     { id: "shadow_1", heroId: "shadow", name: "猛毒蔓延", type: "attack", subType: "shadow_poison", category: "攻擊", rarity: "rare", value: 6, desc: "造成 6 點傷害，使魔王中毒 3 回合（每回合無視護盾扣除 6 點生命）。[不可疊加]" },
-    { id: "shadow_2", heroId: "shadow", name: "毒爆", type: "attack", subType: "shadow_burst", category: "攻擊", rarity: "rare", desc: "引爆魔王的中毒：每層中毒造成 8 點傷害並清除該中毒狀態。" },
+    { id: "shadow_2", heroId: "shadow", name: "毒爆", type: "attack", subType: "shadow_burst", category: "攻擊", rarity: "rare", desc: "引爆魔王的中毒：每層中毒造成 6 點傷害並清除該中毒狀態。" },
     { id: "shadow_3", heroId: "shadow", name: "致命毒霧", type: "attack", subType: "shadow_dead", category: "攻擊", rarity: "legendary", value: 4, desc: "造成 4 點穿透傷害，使魔王中毒 5 回合（每回合無視護盾扣除 6 點生命）。[不可疊加]" },
 
     { id: "thunder_1", heroId: "thunder", name: "迅雷麻痺", type: "attack", subType: "thunder_strike", category: "攻擊", rarity: "rare", value: 12, desc: "造成 12 點傷害，35% 機率使魔王跳過 1 次行動。" },
