@@ -888,7 +888,7 @@ async function handleAttackCard(card, prefix) {
         let extraVal = 0;
         if (S.player.shield > 0) {
             const usedShield = S.player.shield;
-            extraVal = Math.round(usedShield * 1.5);
+            extraVal = Math.round(usedShield * 1.0); // 將倍率下調至 1.0
             S.player.shield = 0;
             await log(`${prefix}🦔 消耗全部 ${usedShield} 點護盾，刺針威力大增 (+${extraVal} 傷害)！`, "crit");
         }
@@ -1262,7 +1262,6 @@ async function monsterTurn() {
 
     await log(`◀ 【${S.boss.name}】反擊回合`, "monster-turn");
     
-    // 中毒結算移至魔王回合開始，更能直觀感受到毒傷阻止魔王行動
     if (S.monster.poison > 0) {
         S.monster.hp -= 6;
         S.monster.poison--;
@@ -1702,7 +1701,7 @@ function cardValueText(card) {
             return p ? `${D(35)} 點傷害(麻痺)` : `${D(15)} 點傷害`;
         }
         if (card.subType === "raccoon_flash") return S.specialPlayedThisTurn ? `${D(24)} 點傷害` : `${D(14)} 點傷害`;
-        if (card.subType === "hedgehog_needle") return `${D(16 + Math.round(S.player.shield * 1.5))} 點傷害`;
+        if (card.subType === "hedgehog_needle") return `${D(16 + Math.round(S.player.shield * 1.0))} 點傷害`;
         if (card.subType === "delayed_bomb") return `${D(10)} 點傷害+炸彈`;
         if (card.subType === "universal_pull") {
             const count = Math.min(5, S.specialPlayedTotal || 0);
@@ -1882,8 +1881,8 @@ function getCardDesc(card) {
         case "hedgehog_steam": return `【不扣行動】獲得 15 點護盾；若當前護盾值 ≥ 15 點，額外獲得 1 次行動。[每回合限一次]`;
         case "hedgehog_needle": {
             const shieldVal = S ? S.player.shield : 0;
-            const extraDmg = Math.round(shieldVal * 1.5);
-            return `造成 ${D(16 + extraDmg)} 點傷害（消耗全部 ${shieldVal} 點護盾，每 1 點護盾 +1.5 點傷害）。`;
+            const extraDmg = Math.round(shieldVal * 1.0);
+            return `造成 ${D(16 + extraDmg)} 點傷害（消耗全部 ${shieldVal} 點護盾，每 1 點護盾 +1 點傷害）。`;
         }
         case "hedgehog_armor": return `【不扣行動】獲得 22 點護盾，且本回合下次攻擊傷害 +10 點。[不可疊加]`;
         default: return card.desc;
