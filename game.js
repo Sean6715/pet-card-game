@@ -82,7 +82,7 @@ function formatLogHTML(html, type) {
     return `<div class="log-line log-${type}">${html}</div>`;
 }
 
-async function log(html, type = "info", delay = 0) {
+async function log(html, type = "info") {
     if (isBatching) {
         batchedLogHTML += formatLogHTML(html, type);
         return;
@@ -90,7 +90,6 @@ async function log(html, type = "info", delay = 0) {
     const box = document.getElementById("log-box");
     box.innerHTML += formatLogHTML(html, type);
     box.scrollTop = box.scrollHeight;
-    if (delay > 0) await sleep(delay);
 }
 
 function flushLogBatch() {
@@ -249,11 +248,8 @@ function showPileInfo(type) {
 
 function applyPlayerAttackModifiers(baseValue) {
     let mult = S.player.nextAttackMultiplier;
-    if (mult > 1) {
-        S.player.nextAttackMultiplier = 1;
-    } else {
-        mult = 1;
-    }
+    if (mult > 1) S.player.nextAttackMultiplier = 1;
+    else mult = 1;
 
     let attackBonus = 0;
     if (S.player.nextAttacksCount > 0) {
@@ -280,21 +276,18 @@ async function addShieldToPlayer(amount) {
     let add = S.hero.trait === "turtlo" ? Math.round(amount * 1.1) : amount;
     S.player.shield += add;
 
-    if (S.hero.trait === "hedgehog") {
-        if (S.player.hedgehogBuff < 12 && S.player.shield >= 15) {
-            const overflow = S.player.shield - 15;
-            if (overflow > 0) {
-                const atkGain = Math.min(Math.floor(overflow / 2), 12 - S.player.hedgehogBuff);
-                if (atkGain > 0) {
-                    S.player.permanentAtkBuff += atkGain;
-                    S.player.hedgehogBuff += atkGain;
-                    S.player.shield = 15;
-                    await log(`🦔 <b>【超頻核心】</b>護盾溢出 15 點！轉化為永久攻擊力 +${atkGain}（累積 +${S.player.hedgehogBuff}/12）！`, "crit");
-                }
+    if (S.hero.trait === "hedgehog" && S.player.hedgehogBuff < 12 && S.player.shield >= 15) {
+        const overflow = S.player.shield - 15;
+        if (overflow > 0) {
+            const atkGain = Math.min(Math.floor(overflow / 2), 12 - S.player.hedgehogBuff);
+            if (atkGain > 0) {
+                S.player.permanentAtkBuff += atkGain;
+                S.player.hedgehogBuff += atkGain;
+                S.player.shield = 15;
+                await log(`🦔 <b>【超頻核心】</b>護盾溢出 15 點！轉化為永久攻擊力 +${atkGain}（累積 +${S.player.hedgehogBuff}/12）！`, "crit");
             }
         }
     }
-
     playSfx('shield');
     return S.player.shield;
 }
@@ -318,6 +311,20 @@ function clearMonsterAllBuffsAndShields() {
     S.monster.markedTurns = 0;
     S.monster.atkBuffTurns = 0;
     S.delayedBombs = [];
+}
+
+async function checkTimePhantom() {
+    if (S.boss.trait === "time_phantom" && !S.monster.timeRewound && S.monster.hp > 0 && S.monster.hp <= S.monster.maxHp * 0.3) {
+        if (S.monster.sealedTurns > 0) {
+            await log(`🔒🔒 <b>【禁錮封印】封鎖了時空幻影的熵增回溯！</b>`, "seal");
+        } else {
+            S.monster.timeRewound = true;
+            S.monster.hp = Math.round(S.monster.maxHp * 0.4);
+            clearPlayerAllBuffsAndShields();
+            clearMonsterAllBuffsAndShields();
+            await log(`⏳💥 <b>【熵增回溯發動！】</b>時空幻影生命回升至 40%（${S.monster.hp} 點），並強制<b>清空雙方護盾與臨時狀態（保留永久攻擊成長）！</b>`, "crit");
+        }
+    }
 }
 
 async function applyDamageToMonster(dmg, opts = {}) {
@@ -383,18 +390,7 @@ async function applyDamageToMonster(dmg, opts = {}) {
         await dealDamageToPlayer(3, "thorns", { ignoreShield: true });
     }
 
-    if (S.boss.trait === "time_phantom" && !S.monster.timeRewound && S.monster.hp > 0 && S.monster.hp <= S.monster.maxHp * 0.3) {
-        if (S.monster.sealedTurns > 0) {
-            await log(`🔒🔒 <b>【禁錮封印】封鎖了時空幻影的熵增回溯！</b>`, "seal");
-        } else {
-            S.monster.timeRewound = true;
-            S.monster.hp = Math.round(S.monster.maxHp * 0.5);
-            clearPlayerAllBuffsAndShields();
-            clearMonsterAllBuffsAndShields();
-            await log(`⏳💥 <b>【熵增回溯發動！】</b>時空幻影生命回升至 50%（${S.monster.hp} 點），並強制<b>清空雙方護盾與臨時狀態（保留永久攻擊成長）！</b>`, "crit");
-        }
-    }
-
+    await checkTimePhantom();
     return { hit: true, actualDmg, finalDmg: dmg, markApplied };
 }
 
@@ -690,12 +686,8 @@ async function finishPlayerAction() {
 
     if (S.actionsLeft > 0) {
         const canContinue = await refillHandIfEmpty();
-        if (!canContinue) {
-            S.actionsLeft = 0;
-        } else {
-            renderCards();
-            return;
-        }
+        if (!canContinue) S.actionsLeft = 0;
+        else { renderCards(); return; }
     }
     
     isBatching = true;
@@ -759,29 +751,20 @@ async function playCard(card) {
                 const canContinue = await refillHandIfEmpty();
                 if (!canContinue) { S.actionsLeft = 0; await finishPlayerAction(); }
                 else renderCards();
-            } else {
-                await finishPlayerAction();
-            }
+            } else await finishPlayerAction();
         }
         return; 
     }
     
     await sleep(600);
 
-    if (!card.freeAction) {
-        await finishPlayerAction();
-    } else {
+    if (!card.freeAction) await finishPlayerAction();
+    else {
         if (S.actionsLeft > 0) {
             const canContinue = await refillHandIfEmpty();
-            if (!canContinue) {
-                S.actionsLeft = 0;
-                await finishPlayerAction();
-            } else {
-                renderCards();
-            }
-        } else {
-            await finishPlayerAction();
-        }
+            if (!canContinue) { S.actionsLeft = 0; await finishPlayerAction(); }
+            else renderCards();
+        } else await finishPlayerAction();
     }
 }
 
@@ -888,7 +871,7 @@ async function handleAttackCard(card, prefix) {
         let extraVal = 0;
         if (S.player.shield > 0) {
             const usedShield = S.player.shield;
-            extraVal = Math.round(usedShield * 1.0); // 將倍率下調至 1.0
+            extraVal = Math.min(30, Math.round(usedShield * 1.0)); // 上限 30
             S.player.shield = 0;
             await log(`${prefix}🦔 消耗全部 ${usedShield} 點護盾，刺針威力大增 (+${extraVal} 傷害)！`, "crit");
         }
@@ -958,7 +941,7 @@ async function handleAttackCard(card, prefix) {
         baseVal = isCrit ? 25 : 12;
     }
 
-    if (S.hero.trait === "ignis" && Math.random() < 0.35) {
+    if (S.hero.trait === "ignis" && Math.random() < 0.40) { // 40%
         baseVal += 5;
         await log(`${prefix}🔥 <b>【烈焰血脈】</b>追加 5 點傷害！`, "crit");
     }
@@ -1031,7 +1014,7 @@ async function handleAttackCard(card, prefix) {
 }
 
 function maybeThunderParalysis(prefix) {
-    if (S.hero.trait === "thunder" && Math.random() < 0.25) {
+    if (S.hero.trait === "thunder" && Math.random() < 0.30) { // 30%
         S.monster.skipTurns += 1;
         log(`${prefix}⚡ <b>【雷霆麻痺】</b>閃電鳥電擊麻痺魔王，跳過 1 次行動！`, "crit");
     }
@@ -1266,6 +1249,7 @@ async function monsterTurn() {
         S.monster.hp -= 6;
         S.monster.poison--;
         await log(`☠️ 魔王受到劇毒侵蝕，扣除 6 點生命！（剩餘 ${S.monster.poison} 回合）`, "status");
+        await checkTimePhantom(); // 中毒後檢查時空幻影
     }
     
     isBatching = false;
@@ -1701,7 +1685,9 @@ function cardValueText(card) {
             return p ? `${D(35)} 點傷害(麻痺)` : `${D(15)} 點傷害`;
         }
         if (card.subType === "raccoon_flash") return S.specialPlayedThisTurn ? `${D(24)} 點傷害` : `${D(14)} 點傷害`;
-        if (card.subType === "hedgehog_needle") return `${D(16 + Math.round(S.player.shield * 1.0))} 點傷害`;
+        if (card.subType === "hedgehog_needle") {
+            return `${D(16 + Math.min(30, Math.round(S.player.shield * 1.0)))} 點傷害`;
+        }
         if (card.subType === "delayed_bomb") return `${D(10)} 點傷害+炸彈`;
         if (card.subType === "universal_pull") {
             const count = Math.min(5, S.specialPlayedTotal || 0);
@@ -1806,7 +1792,7 @@ function getCardDesc(card) {
         }
         case "burst": return `回復 ${H(card.value)} 點生命${healTag}。`;
         case "shield": return `回復 ${H(card.value)} 點生命${healTag}，並獲得 12 點護盾。`;
-        case "regen": return `獲得 3 回合【泉源祝福】：每回合回復 ${H(6)} 點生命${healTag}，且期間受到的傷害 -3 點。[不可疊加]`;
+        case "regen": return `獲得 3 回合【泉源祝福】：每回合回復 ${H(6)} 點生命${healTag}，且期間受到的傷害減少 3 點。[不可疊加]`;
         case "reverse_heal": {
             const lost = S ? Math.max(0, S.player.maxHp - S.player.hp) : 0;
             return `回復 ${Math.min(25, Math.round(lost * 0.4 * healMult))} 點生命${healTag}（已損失 ${lost} 點生命 × 0.4，上限 25 點）。`;
@@ -1881,8 +1867,8 @@ function getCardDesc(card) {
         case "hedgehog_steam": return `【不扣行動】獲得 15 點護盾；若當前護盾值 ≥ 15 點，額外獲得 1 次行動。[每回合限一次]`;
         case "hedgehog_needle": {
             const shieldVal = S ? S.player.shield : 0;
-            const extraDmg = Math.round(shieldVal * 1.0);
-            return `造成 ${D(16 + extraDmg)} 點傷害（消耗全部 ${shieldVal} 點護盾，每 1 點護盾 +1 點傷害）。`;
+            const extraDmg = Math.min(30, Math.round(shieldVal * 1.0));
+            return `造成 ${D(16 + extraDmg)} 點傷害（消耗全部 ${shieldVal} 點護盾，每 1 點護盾 +1 點傷害，上限 +30）。`;
         }
         case "hedgehog_armor": return `【不扣行動】獲得 22 點護盾，且本回合下次攻擊傷害 +10 點。[不可疊加]`;
         default: return card.desc;
@@ -1980,7 +1966,7 @@ function updateCurrentBossUI() {
     else if (b.trait === "vampire") traitDetail = "<p>造成穿透傷害時，吸取該傷害 30% 的生命值。</p>";
     else if (b.trait === "guardian") traitDetail = "<p>護盾被擊破時對玩家造成 12 點真實傷害（冷卻 2 回合）。</p>";
     else if (b.trait === "elementalist") traitDetail = `<p>每 2 回合切換形態：🔥烈焰（攻擊+30%）/ 🧊寒冰（受傷-30%）/ ⚡迅雷（閃避率20%）。<br><b>當前形態：${S.monster.elemStance}</b></p>`;
-    else if (b.trait === "time_phantom") traitDetail = "<p>生命首次低於 30% 時觸發【熵增回溯】：生命回升至 50%，並清空雙方所有的護盾、臨時 Buff、Debuff 與定時炸彈！</p>";
+    else if (b.trait === "time_phantom") traitDetail = "<p>生命首次低於 30% 時觸發【熵增回溯】：生命回升至 40%，並清空雙方所有的護盾、臨時 Buff、Debuff 與定時炸彈！</p>";
 
     body.innerHTML = `
         <div class="effect-item current-item">
