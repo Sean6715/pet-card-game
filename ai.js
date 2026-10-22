@@ -1,7 +1,3 @@
-// ============================================================
-// ai.js — 魔王 AI 與回合
-// ============================================================
-
 function estimateAttackDamage(base) {
     let dmg = base;
     if (S.monster.atkBuffTurns > 0) dmg += 8;
@@ -20,38 +16,29 @@ async function executeMonsterAiDecision() {
     const minDmg = estimateAttackDamage(12);
     const playerEffHp = S.player.hp + S.player.shield;
 
-    // 1. 斬殺
     if (playerEffHp <= maxDmg) { await actionAttack(); return; }
-    // 2. 保底斬殺
     if (S.player.shield === 0 && S.player.hp <= minDmg) { await actionAttack(); return; }
-    // 3. 魔王低血治療
     if (S.monster.hp < S.monster.maxHp * 0.25) {
         if ((S.boss.trait !== TRAIT.UNDYING || S.bossRevived) && S.monster.sealedTurns <= 0) {
             await actionHeal(); return;
         }
     }
-    // 4. 守衛補盾
     if (S.boss.trait === TRAIT.GUARDIAN && S.monster.shield === 0 && S.monster.sealedTurns <= 0) {
         await actionGuard(); return;
     }
-    // 5. 吸血鬼
     if (S.boss.trait === TRAIT.VAMPIRE && S.monster.hp < S.monster.maxHp * 0.7 && S.monster.sealedTurns <= 0) {
         if (S.player.shield === 0 || S.player.shield < S.monster.hp * 0.2) {
             await actionAttack(); return;
         }
     }
-    // 6. 深淵霸主咆哮前準備
     if (S.boss.trait === TRAIT.STANDARD && (S.turn + 1) % 3 === 0 && S.monster.sealedTurns <= 0) {
         if (S.monster.shield === 0) { await actionGuard(); return; }
         if (S.monster.atkBuffTurns <= 0 && !S.monster.permanentRage) { await actionBuff(); return; }
     }
-    // 7. 已有 buff 直接打
     if (S.monster.atkBuffTurns > 0 || S.monster.permanentRage) { await actionAttack(); return; }
-    // 8. 中期加攻
     if (S.monster.hp > S.monster.maxHp * 0.5 && S.player.hp > S.player.maxHp * 0.5) {
         if (Math.random() < 0.5) { await actionBuff(); return; }
     }
-    // 9. 默認攻擊
     await actionAttack();
 }
 
@@ -73,7 +60,6 @@ async function actionAttack() {
 
     if (S.boss.trait === TRAIT.ELEMENTALIST && S.monster.elemStance === "fire" && S.monster.sealedTurns <= 0)
         rawDmg = Math.round(rawDmg * 1.3);
-
     if (S.monster.atkBuffTurns > 0) {
         rawDmg += 8;
         S.monster.atkBuffTurns--;
@@ -96,9 +82,7 @@ async function actionAttack() {
     }
 
     const r = await dealDamageToPlayer(rawDmg, "attack");
-    const detail = r.shieldAbsorbed > 0
-        ? `（護盾吸收 ${r.shieldAbsorbed} 點，實際扣血 ${r.hpLost} 點）`
-        : `（實際扣血 ${r.hpLost} 點）`;
+    const detail = r.shieldAbsorbed > 0 ? `（護盾吸收 ${r.shieldAbsorbed} 點，實際扣血 ${r.hpLost} 點）` : `（實際扣血 ${r.hpLost} 點）`;
     await log(`⚠️ 魔王發動猛擊，造成 ${rawDmg} 點傷害${detail}。`, "dmg");
 
     if (S.boss.trait === TRAIT.VAMPIRE && r.hpLost > 0) {
@@ -124,9 +108,7 @@ async function executeRoar() {
     }
     const r = await dealDamageToPlayer(dmg, "roar");
     if (!S.isTutorial) S.player.suppressNext = true;
-    const detail = r.shieldAbsorbed > 0
-        ? `（護盾吸收 ${r.shieldAbsorbed} 點，實際扣血 ${r.hpLost} 點）`
-        : `（實際扣血 ${r.hpLost} 點）`;
+    const detail = r.shieldAbsorbed > 0 ? `（護盾吸收 ${r.shieldAbsorbed} 點，實際扣血 ${r.hpLost} 點）` : `（實際扣血 ${r.hpLost} 點）`;
     await log(`📢💥 <b>【深淵咆哮】</b>造成 ${dmg} 點傷害${detail}${S.isTutorial ? "" : "，並施加【壓制】"}！`, "crit");
 }
 
