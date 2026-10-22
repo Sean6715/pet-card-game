@@ -4,8 +4,8 @@ const heroes = [
     { id: "shadow", name: "影爪貓",   icon: "🐱", hp: 100, trait: "shadow", desc: "【劇毒爪痕】對魔王造成的中毒持續回合數額外增加 1 回合。" },
     { id: "thunder",name: "閃電鳥",   icon: "⚡", hp: 96, trait: "thunder", desc: "【雷霆麻痺】攻擊命中時，25% 機率使魔王跳過 1 次行動。" },
     { id: "copycat",name: "複製兔",   icon: "🐰", hp: 98, trait: "copycat", desc: "【鏡像戰術】每回合首次打出「需消耗行動」的特殊卡時，額外觸發一次效果（禁錮、盾擊除外）。" },
-    { id: "raccoon",name: "預言浣熊", icon: "🦝", hp: 95, trait: "raccoon", desc: "【星象預兆】每 2 回合（偶數回合）額外抽 1 張牌，提供穩定的戰術調度。" },
-    { id: "hedgehog",name: "機械刺蝟",icon: "🦔", hp: 102, trait: "hedgehog", desc: "【超頻核心】獲得護盾時若護盾達 15 點以上，溢出部分轉為永久攻擊力（每 2 點轉 +1 點，上限 +12 點）。" }
+    { id: "raccoon",name: "預言浣熊", icon: "🦝", hp: 95, trait: "raccoon", desc: "【星象預兆】每回合額外抽 1 張牌（基礎手牌上限與抽牌 +1），提供充沛戰術調度。" },
+    { id: "hedgehog",name: "機械刺蝟",icon: "🦔", hp: 102, trait: "hedgehog", desc: "【超頻核心】護盾達 15 點時溢出部分轉為永久攻擊力（每 2 點轉 +1，上限 +12）；達上限後護盾可繼續突破 15 點累積。" }
 ];
 
 const bossTypes = [
@@ -81,11 +81,11 @@ const heroCards = [
     { id: "copycat_2", heroId: "copycat", name: "魔法增幅", type: "special", subType: "copycat_boost", category: "特殊", rarity: "rare", freeAction: true, desc: "【不扣行動】接下來 2 次攻擊傷害 +10 點。[不可疊加]" },
     { id: "copycat_3", heroId: "copycat", name: "無限迴響", type: "special", subType: "copycat_echo", category: "特殊", rarity: "legendary", freeAction: true, desc: "【不扣行動】隨機獲得 1 張通用卡加入手牌。" },
 
-    { id: "raccoon_1", heroId: "raccoon", name: "預言星圖", type: "special", subType: "raccoon_search", category: "特殊", rarity: "rare", freeAction: true, desc: "【不扣行動】隨機將抽牌堆中的 1 張「攻擊卡」直接抓回手牌。" },
+    { id: "raccoon_1", heroId: "raccoon", name: "預言星圖", type: "special", subType: "raccoon_search", category: "特殊", rarity: "rare", freeAction: true, desc: "【不扣行動】從抽牌堆中精準檢索 1 張「攻擊卡」加入手牌。" },
     { id: "raccoon_2", heroId: "raccoon", name: "閃光彈", type: "attack", subType: "raccoon_flash", category: "攻擊", rarity: "rare", value: 14, desc: "造成 14 點傷害；若本回合打出過「特殊卡」，額外造成 10 點傷害。" },
-    { id: "raccoon_3", heroId: "raccoon", name: "寶藏翻找", type: "heal", subType: "raccoon_treasure", category: "回復", rarity: "legendary", freeAction: true, desc: "【不扣行動】回復 12 點生命，並隨機將棄牌堆中 1 張卡牌抓回手牌。" },
+    { id: "raccoon_3", heroId: "raccoon", name: "星象護符", type: "heal", subType: "raccoon_amulet", category: "回復", rarity: "legendary", desc: "回復 14 點生命，並獲得 10 點護盾。" },
 
-    { id: "hedgehog_1", heroId: "hedgehog", name: "蒸氣噴射", type: "heal", subType: "hedgehog_steam", category: "回復", rarity: "rare", desc: "獲得 15 點護盾；若當前護盾值 ≥ 15 點，額外獲得 1 次行動。" },
+    { id: "hedgehog_1", heroId: "hedgehog", name: "蒸氣噴射", type: "heal", subType: "hedgehog_steam", category: "回復", rarity: "rare", freeAction: true, desc: "【不扣行動】獲得 15 點護盾；若當前護盾值 ≥ 15 點，額外獲得 1 次行動。" },
     { id: "hedgehog_2", heroId: "hedgehog", name: "刺針射擊", type: "attack", subType: "hedgehog_needle", category: "攻擊", rarity: "rare", value: 16, desc: "造成 16 點傷害；若自身擁有護盾，消耗全部護盾，每消耗 1 點護盾使本次傷害 +1 點。" },
     { id: "hedgehog_3", heroId: "hedgehog", name: "鋼鐵刺裝", type: "special", subType: "hedgehog_armor", category: "特殊", rarity: "legendary", desc: "獲得 22 點護盾，並清除自身所有的負面狀態。" }
 ];
@@ -100,7 +100,7 @@ const defaultDecks = {
     shadow: ["shadow_1","shadow_2","shadow_3", 4,15,23,18,1,12,5,10,14,16,9,13],
     thunder:["thunder_1","thunder_2","thunder_3", 12,8,23,3,13,1,5,6,16,25,22,14],
     copycat:["copycat_1","copycat_2","copycat_3", 7,24,23,14,9,22,15,1,5,6,25,16],
-    raccoon:["raccoon_1","raccoon_2","raccoon_3", 28,29,30,1,3,13,5,6,23,14,25,27],
+    raccoon:["raccoon_1","raccoon_2","raccoon_3", 1,3,13,5,6,23,14,25,27,4,12,16],
     hedgehog:["hedgehog_1","hedgehog_2","hedgehog_3", 6,21,16,22,9,5,10,1,13,23,14,25]
 };
 
