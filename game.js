@@ -205,14 +205,14 @@ function drawCards(n) {
 async function refillHandIfEmpty() {
     if (S.isTutorial) return true;
     if (S.hand.length > 0) return true;
-    
+
     let drawCount = 3;
     if (S.hero.trait === "raccoon") drawCount += 1;
     if (S.mod.effect === "fog_choice") drawCount = Math.max(1, drawCount - 1);
-    
+
     let initialLength = S.hand.length;
     drawCards(drawCount);
-    
+
     if (S.hand.length > initialLength) {
         await log(`📚 手牌耗盡，自動補充 ${S.hand.length - initialLength} 張牌。`, "info");
         return true;
@@ -227,7 +227,7 @@ function showPileInfo(type) {
     const pile = type === 'draw' ? S.drawPile : S.discardPile;
     const title = type === 'draw' ? '📚 抽牌堆內容' : '🗑️ 棄牌堆內容';
     document.getElementById("pile-modal-title").innerText = title;
-    
+
     const counts = {};
     pile.forEach(id => { counts[id] = (counts[id] || 0) + 1; });
 
@@ -487,7 +487,7 @@ function showTutorialEndModal(success) {
             <div class="effect-item hero-item"><b>下一步：正式對局</b>
             <p>・直接開始 <b>標準對局</b>：隨機英雄 × 隨機魔王 × 該英雄當前牌庫。<br>
             ・打開 <b>牌庫管理</b>：切換英雄使用「預設」或「自選」牌庫。<br>
-            ・打開 <b>自選配置</b>：鎖定英雄/魔王/戰場、選擇難度。</p></div>`;
+            ・打開 <b>自選配置</b>：鎖定英雄／魔王／戰場、選擇難度。</p></div>`;
         btn1.innerText = "🚀 開始標準對局";
         btn1.onclick = () => { closeModal("tutorial-end-modal"); startRandomGame(); };
         btn2.innerText = "📚 打開牌庫管理";
@@ -522,7 +522,7 @@ function initGameWithConfig(hero, boss, mod, isTutorial, difficulty, deck) {
             hp: isTutorial ? 160 : boss.hp, maxHp: isTutorial ? 160 : boss.hp, shield: 0,
             poison: 0, skipTurns: 0, weakTurns: 0, atkBuffTurns: 0,
             guardianCd: 0, markedTurns: 0, sealedTurns: 0,
-            elemStance: "fire", timeRewound: false
+            elemStance: "fire", timeRewound: false, permanentRage: false
         },
         deck: [], drawPile: [], discardPile: [], hand: [], delayedBombs: []
     };
@@ -562,7 +562,7 @@ function initGameWithConfig(hero, boss, mod, isTutorial, difficulty, deck) {
     document.getElementById("reset-btn").style.display = "none";
     document.getElementById("log-box").innerHTML = "";
     document.getElementById("pile-info").style.display = isTutorial ? "none" : "flex";
-    
+
     batchedLogHTML = "";
     isBatching = false;
 
@@ -627,8 +627,9 @@ async function startNewTurn() {
         for (let b of S.delayedBombs) {
             b.turns--;
             if (b.turns <= 0) {
-                const finalDmg = applyPlayerAttackModifiers(28);
-                const res = await applyDamageToMonster(finalDmg, { ignoreShield: true, cardName: "定時炸彈" });
+                let bombDmg = 28;
+                if (S.mod.effect === "berserk") bombDmg = Math.round(bombDmg * 1.2);
+                const res = await applyDamageToMonster(bombDmg, { ignoreShield: true, cardName: "定時炸彈", canEvade: false });
                 if (res.hit) await log(`💣💥 <b>【定時炸彈引爆！】</b>造成 ${res.finalDmg} 點穿透傷害！`, "crit");
             } else {
                 remaining.push(b);
@@ -651,7 +652,7 @@ async function startNewTurn() {
 
     if (S.turn >= 15) {
         const fatigueDmg = (S.turn - 14) * 3;
-        await log(`⏳ <b>【死鬥階段】</b>戰鬥進入膠着！雙方受到 <b>${fatigueDmg}</b> 點疲勞傷害（無視護盾）。`, "fatigue");
+        await log(`⏳ <b>【死鬥階段】</b>戰鬥進入膠著！雙方受到 <b>${fatigueDmg}</b> 點疲勞傷害（無視護盾）。`, "fatigue");
         S.player.hp -= fatigueDmg;
         S.monster.hp -= fatigueDmg;
     }
@@ -660,7 +661,7 @@ async function startNewTurn() {
         let drawCount = 3;
         if (S.hero.trait === "raccoon") drawCount += 1;
         if (S.mod.effect === "fog_choice") drawCount = Math.max(1, drawCount - 1);
-        
+
         if (S.player.suppressNext) {
             drawCount = Math.max(1, drawCount - 2);
             S.player.suppressNext = false;
@@ -689,7 +690,7 @@ async function finishPlayerAction() {
         if (!canContinue) S.actionsLeft = 0;
         else { renderCards(); return; }
     }
-    
+
     isBatching = true;
     if (!S.isTutorial && S.hand.length > 0) {
         await log(`🗑️ 回合結束，${S.hand.length} 張手牌已丟棄。`, "info");
@@ -719,7 +720,7 @@ async function playCard(card) {
 
     isBatching = true;
     await log(`▶ 你打出了【${card.name}】`, "player-turn");
-    
+
     if (card.type === "special") {
         S.specialPlayedThisTurn = true;
         S.specialPlayedTotal = (S.specialPlayedTotal || 0) + 1;
@@ -739,12 +740,12 @@ async function playCard(card) {
     }
 
     if (!S.isTutorial) S.discardPile.push(card.id);
-    
+
     isBatching = false;
     flushLogBatch();
     updateStatus();
 
-    if (checkWinLoss()) { 
+    if (checkWinLoss()) {
         if (!card.freeAction) await finishPlayerAction();
         else {
             if (S.actionsLeft > 0) {
@@ -753,9 +754,9 @@ async function playCard(card) {
                 else renderCards();
             } else await finishPlayerAction();
         }
-        return; 
+        return;
     }
-    
+
     await sleep(600);
 
     if (!card.freeAction) await finishPlayerAction();
@@ -788,10 +789,17 @@ async function executeCardEffect(card, isCopy = false) {
 async function handleAttackCard(card, prefix) {
     let finalDmg = 0;
 
+    let ignisBonus = 0;
+    if (S.hero.trait === "ignis" && Math.random() < 0.40) {
+        ignisBonus = 5;
+        await log(`${prefix}🔥 <b>【烈焰血脈】</b>追加 5 點傷害！`, "crit");
+    }
+    const atk = (base) => applyPlayerAttackModifiers(base + ignisBonus);
+
     if (card.subType === "ignis_rage") {
         S.player.hp -= 8;
         const isLow = S.player.hp < S.player.maxHp * 0.5;
-        finalDmg = applyPlayerAttackModifiers(isLow ? 30 : 20);
+        finalDmg = atk(isLow ? 30 : 20);
         const result = await applyDamageToMonster(finalDmg, { cardName: card.name });
         if (result.hit) await log(`${prefix}🔥 <b>燃血狂怒</b>：扣除 8 點生命，造成 ${result.finalDmg} 點傷害${isLow ? "（低血觸發 +10！）" : ""}！`, "crit");
         maybeThunderParalysis(prefix);
@@ -799,14 +807,14 @@ async function handleAttackCard(card, prefix) {
     }
     if (card.subType === "ignis_last") {
         S.player.hp -= 10;
-        finalDmg = applyPlayerAttackModifiers(25);
+        finalDmg = atk(25);
         const result = await applyDamageToMonster(finalDmg, { ignoreShield: true, cardName: card.name });
         if (result.hit) await log(`${prefix}🌋 <b>絕境焚身</b>：扣除 10 點生命，造成 ${result.finalDmg} 點穿透傷害！`, "crit");
         maybeThunderParalysis(prefix);
         return;
     }
     if (card.subType === "shadow_poison") {
-        finalDmg = applyPlayerAttackModifiers(6);
+        finalDmg = atk(6);
         const result = await applyDamageToMonster(finalDmg, { cardName: card.name });
         if (result.hit) {
             const extra = S.hero.trait === "shadow" ? 1 : 0;
@@ -820,7 +828,7 @@ async function handleAttackCard(card, prefix) {
         const stacks = S.monster.poison;
         if (stacks > 0) {
             S.monster.poison = 0;
-            finalDmg = applyPlayerAttackModifiers(stacks * 6); // 每層改為 6 點
+            finalDmg = atk(stacks * 6);
             const result = await applyDamageToMonster(finalDmg, { cardName: card.name });
             if (result.hit) await log(`${prefix}☠️ <b>毒爆</b>：引爆 ${stacks} 層中毒，造成 ${result.finalDmg} 點傷害！`, "crit");
         } else {
@@ -830,7 +838,7 @@ async function handleAttackCard(card, prefix) {
         return;
     }
     if (card.subType === "shadow_dead") {
-        finalDmg = applyPlayerAttackModifiers(4);
+        finalDmg = atk(4);
         const result = await applyDamageToMonster(finalDmg, { ignoreShield: true, cardName: card.name });
         if (result.hit) {
             const extra = S.hero.trait === "shadow" ? 1 : 0;
@@ -841,7 +849,7 @@ async function handleAttackCard(card, prefix) {
         return;
     }
     if (card.subType === "thunder_strike") {
-        finalDmg = applyPlayerAttackModifiers(12);
+        finalDmg = atk(12);
         const result = await applyDamageToMonster(finalDmg, { cardName: card.name });
         if (result.hit) {
             await log(`${prefix}⚡ <b>迅雷麻痺</b>：造成 ${result.finalDmg} 點傷害！`, "dmg");
@@ -854,14 +862,14 @@ async function handleAttackCard(card, prefix) {
     }
     if (card.subType === "thunder_thunder") {
         const wasParalyzed = S.monster.skipTurns > 0;
-        finalDmg = applyPlayerAttackModifiers(wasParalyzed ? 35 : 15);
+        finalDmg = atk(wasParalyzed ? 35 : 15);
         const result = await applyDamageToMonster(finalDmg, { cardName: card.name });
         if (result.hit) await log(`${prefix}🌪️ <b>雷霆萬鈞</b>：造成 ${result.finalDmg} 點傷害${wasParalyzed ? "（麻痺觸發 +20！）" : ""}！`, "crit");
         return;
     }
     if (card.subType === "raccoon_flash") {
         const base = S.specialPlayedThisTurn ? 24 : 14;
-        finalDmg = applyPlayerAttackModifiers(base);
+        finalDmg = atk(base);
         const result = await applyDamageToMonster(finalDmg, { cardName: card.name });
         if (result.hit) await log(`${prefix}✨ <b>閃光彈</b>：造成 ${result.finalDmg} 點傷害${S.specialPlayedThisTurn ? "（特殊卡觸發 +10！）" : ""}！`, "crit");
         maybeThunderParalysis(prefix);
@@ -871,18 +879,18 @@ async function handleAttackCard(card, prefix) {
         let extraVal = 0;
         if (S.player.shield > 0) {
             const usedShield = S.player.shield;
-            extraVal = Math.min(30, Math.round(usedShield * 1.0)); 
+            extraVal = Math.min(30, Math.round(usedShield * 1.0));
             S.player.shield = 0;
             await log(`${prefix}🦔 消耗全部 ${usedShield} 點護盾，刺針威力大增 (+${extraVal} 傷害)！`, "crit");
         }
-        finalDmg = applyPlayerAttackModifiers(16 + extraVal);
+        finalDmg = atk(16 + extraVal);
         const result = await applyDamageToMonster(finalDmg, { cardName: card.name });
         if (result.hit) await log(`${prefix}🎯 <b>刺針射擊</b>：造成 ${result.finalDmg} 點傷害！`, "dmg");
         maybeThunderParalysis(prefix);
         return;
     }
     if (card.subType === "delayed_bomb") {
-        finalDmg = applyPlayerAttackModifiers(10);
+        finalDmg = atk(10);
         const result = await applyDamageToMonster(finalDmg, { cardName: card.name });
         if (result.hit) {
             S.delayedBombs.push({ turns: 2 });
@@ -893,7 +901,7 @@ async function handleAttackCard(card, prefix) {
     }
     if (card.subType === "universal_pull") {
         const count = Math.min(5, S.specialPlayedTotal || 0);
-        finalDmg = applyPlayerAttackModifiers(16 + count * 4);
+        finalDmg = atk(16 + count * 4);
         const result = await applyDamageToMonster(finalDmg, { cardName: card.name });
         if (result.hit) await log(`${prefix}🌌 <b>萬象天引</b>：本局使用了 ${S.specialPlayedTotal || 0} 張特殊卡，造成 ${result.finalDmg} 點傷害！`, "crit");
         maybeThunderParalysis(prefix);
@@ -902,7 +910,7 @@ async function handleAttackCard(card, prefix) {
 
     if (card.subType === "desperate") {
         const lost = Math.max(0, S.player.maxHp - S.player.hp);
-        finalDmg = applyPlayerAttackModifiers(Math.min(40, Math.round(lost * 0.4)));
+        finalDmg = atk(Math.min(40, Math.round(lost * 0.4)));
         const result = await applyDamageToMonster(finalDmg, { cardName: card.name });
         if (result.hit) await log(`${prefix}🩹 <b>破釜沉舟</b>：已損失 ${lost} 點生命，造成 ${result.finalDmg} 點傷害！`, "dmg");
         maybeThunderParalysis(prefix);
@@ -913,7 +921,7 @@ async function handleAttackCard(card, prefix) {
         if (S.monster.poison > 0) count++;
         if (S.monster.weakTurns > 0) count++;
         if (S.monster.markedTurns > 0) count++;
-        finalDmg = applyPlayerAttackModifiers(12 + count * 6);
+        finalDmg = atk(12 + count * 6);
         const result = await applyDamageToMonster(finalDmg, { cardName: card.name });
         if (result.hit) await log(`${prefix}🌀 <b>魔能侵蝕</b>：魔王有 ${count} 個異常狀態，造成 ${result.finalDmg} 點傷害！`, "dmg");
         maybeThunderParalysis(prefix);
@@ -922,11 +930,11 @@ async function handleAttackCard(card, prefix) {
     if (card.subType === "finisher") {
         const isLow = S.monster.hp < S.monster.maxHp * 0.3;
         if (isLow) {
-            finalDmg = applyPlayerAttackModifiers(30);
+            finalDmg = atk(30);
             const result = await applyDamageToMonster(finalDmg, { ignoreShield: true, cardName: card.name });
             if (result.hit) await log(`${prefix}💀 <b>致命一擊！</b>魔王生命低於 30%，造成 ${result.finalDmg} 點穿透傷害！`, "crit");
         } else {
-            finalDmg = applyPlayerAttackModifiers(10);
+            finalDmg = atk(10);
             const result = await applyDamageToMonster(finalDmg, { cardName: card.name });
             if (result.hit) await log(`${prefix}💀 <b>致命一擊</b>：魔王生命尚高，僅造成 ${result.finalDmg} 點傷害。`, "dmg");
         }
@@ -941,12 +949,7 @@ async function handleAttackCard(card, prefix) {
         baseVal = isCrit ? 25 : 12;
     }
 
-    if (S.hero.trait === "ignis" && Math.random() < 0.40) {
-        baseVal += 5;
-        await log(`${prefix}🔥 <b>【烈焰血脈】</b>追加 5 點傷害！`, "crit");
-    }
-
-    finalDmg = applyPlayerAttackModifiers(baseVal);
+    finalDmg = atk(baseVal);
 
     if (card.subType === "detonate") {
         const hasDebuff = S.monster.poison > 0 || S.monster.weakTurns > 0;
@@ -1219,8 +1222,16 @@ async function handleSpecialCard(card, prefix) {
                 foundName = c.name;
                 st.player.atkBuff += 5;
             }
+            await log(`${prefix}🌌 <b>預言星圖</b>：將【${foundName}】抓回手牌，且下次攻擊傷害 +5 點！`, "crit");
+        } else {
+            const before = st.hand.length;
+            drawCards(1);
+            if (st.hand.length > before) {
+                await log(`${prefix}🌌 <b>預言星圖</b>：抽牌堆無攻擊卡，改為抽 1 張牌（【${st.hand[st.hand.length - 1].name}】）！`, "info");
+            } else {
+                await log(`${prefix}🌌 <b>預言星圖</b>：抽牌堆無攻擊卡且無法抽牌，效果落空。`, "warn");
+            }
         }
-        await log(`${prefix}🌌 <b>預言星圖</b>：${foundName ? `將【${foundName}】抓回手牌，且下次攻擊傷害 +5 點` : "抽牌堆中沒有攻擊卡"}！`, "crit");
     }
     else if (card.subType === "hedgehog_armor") {
         await addShieldToPlayer(22);
@@ -1245,14 +1256,14 @@ async function monsterTurn() {
     }
 
     await log(`◀ 【${S.boss.name}】反擊回合`, "monster-turn");
-    
+
     if (S.monster.poison > 0) {
         S.monster.hp -= 6;
         S.monster.poison--;
         await log(`☠️ 魔王受到劇毒侵蝕，扣除 6 點生命！（剩餘 ${S.monster.poison} 回合）`, "status");
         await checkTimePhantom();
     }
-    
+
     isBatching = false;
     flushLogBatch();
     updateStatus();
@@ -1288,7 +1299,7 @@ async function monsterTurn() {
     updateStatus();
 
     if (checkWinLoss()) return;
-    
+
     S.player.reflectActive = false;
     await sleep(600);
     S.turn++;
@@ -1326,7 +1337,7 @@ async function executeMonsterAiDecision() {
         return;
     }
 
-    if (S.monster.atkBuffTurns <= 0 && S.monster.sealedTurns <= 0 && Math.random() < 0.4) {
+    if (S.monster.atkBuffTurns <= 0 && !S.monster.permanentRage && S.monster.sealedTurns <= 0 && Math.random() < 0.4) {
         await actionBuff();
         return;
     }
@@ -1352,7 +1363,7 @@ async function actionBuff() {
 async function actionAttack() {
     let rawDmg = Math.floor(Math.random() * 11) + 12;
     let isBreakArmor = false;
-    
+
     if (S.boss.trait === "elementalist" && S.monster.elemStance === "fire" && S.monster.sealedTurns <= 0) {
         rawDmg = Math.round(rawDmg * 1.3);
     }
@@ -1362,6 +1373,9 @@ async function actionAttack() {
         S.monster.atkBuffTurns--;
         if (Math.random() < 0.3) isBreakArmor = true;
         await log(`💥 魔王帶有【暗影狂暴】加成，本次攻擊傷害 +8 點！`, "warn");
+    }
+    if (S.monster.permanentRage) {
+        rawDmg += 8;
     }
     if (S.mod.effect === "berserk") rawDmg = Math.round(rawDmg * 1.2);
     if (S.difficulty === "easy") rawDmg = Math.round(rawDmg * 0.8);
@@ -1428,7 +1442,7 @@ function checkWinLoss() {
         }
         S.bossRevived = true;
         S.monster.hp = Math.min(35, S.monster.maxHp);
-        S.monster.atkBuffTurns = 99;
+        S.monster.permanentRage = true;
         log(`☠️⚡ <b>【不滅死魂】</b>巴洛克生命歸零，但原地復活！恢復至 ${S.monster.hp} 點生命並進入永久狂暴！`, "crit");
         updateStatus();
         return false;
@@ -1511,6 +1525,7 @@ function updateStatus() {
         S.monster.sealedTurns > 0 && `<span class="status-icon sealed">🔒🔒 封印 ${S.monster.sealedTurns}T</span>`,
         S.monster.weakTurns > 0 && `<span class="status-icon frost">❄️ ${S.monster.weakTurns}T</span>`,
         S.monster.atkBuffTurns > 0 && `<span class="status-icon rage">🔥 ${S.monster.atkBuffTurns}次</span>`,
+        S.monster.permanentRage && `<span class="status-icon rage">🔥 永久狂暴</span>`,
         S.monster.markedTurns > 0 && `<span class="status-icon mark">🎯 ${S.monster.markedTurns}T +25%</span>`,
         S.monster.guardianCd > 0 && `<span class="status-icon warn">🏰 冷卻 ${S.monster.guardianCd}</span>`,
         S.boss.trait === "elementalist" && `<span class="status-icon rage">🧙‍♂️ ${S.monster.elemStance}</span>`,
@@ -1564,14 +1579,14 @@ function renderCards() {
         const div = document.createElement("div");
         div.className = `card ${card.type}`;
         const isTutorialHighlight = S.isTutorial && highlightSubTypes.includes(card.subType);
-        
+
         if (isTutorialHighlight) div.classList.add("highlight");
         if (S.isTutorial && !isTutorialHighlight) div.classList.add("disabled");
 
         const isAttack = card.type === "attack";
         const showMark = markActive && isAttack;
         const markIcon = showMark ? `<div class="card-mark">🎯 +25%</div>` : "";
-        
+
         const freeIcon = card.freeAction ? `<div class="card-free-badge">不扣行動</div>` : "";
 
         const valueText = cardValueText(card);
@@ -1644,7 +1659,7 @@ function cardValueText(card) {
     const extraAtk = (S.player.atkBuff || 0) + (S.player.permanentAtkBuff || 0);
     const turtloBonus = (S.hero.trait === "turtlo" && S.player.shield > 20) ? Math.floor(S.player.shield * 0.25) : 0;
     const mult = S.player.nextAttackMultiplier || 1;
-    
+
     const D = (n) => {
         let base = (n + extraAtk + turtloBonus) * mult;
         return Math.round(Math.round(base * dmgMult) * markMult);
@@ -1659,7 +1674,9 @@ function cardValueText(card) {
         }
         if (card.subType === "desperate") {
             const lost = Math.max(0, S.player.maxHp - S.player.hp);
-            return `${Math.round(Math.min(40, Math.round(lost * 0.4) + extraAtk + turtloBonus) * dmgMult * markMult)} 點傷害`;
+            const base = Math.min(40, Math.round(lost * 0.4));
+            const total = (base + extraAtk + turtloBonus) * mult;
+            return `${Math.round(Math.round(total * dmgMult) * markMult)} 點傷害`;
         }
         if (card.subType === "erosion") {
             let c = 0;
@@ -1694,7 +1711,9 @@ function cardValueText(card) {
             const count = Math.min(5, S.specialPlayedTotal || 0);
             return `${D(16 + count * 4)} 點傷害`;
         }
-        if (card.subType === "shield_break") return `碎盾 / ${D(8)} 點傷害`;
+        if (card.subType === "shield_break") {
+            return S.monster.shield > 0 ? `碎 ${S.monster.shield} 點護盾` : `${D(8)} 點傷害`;
+        }
         if (card.subType === "recoil") return `扣7血/${D(28)}點傷害`;
         if (card.subType === "lifesteal") return `${D(14)} 點傷害+回血`;
         if (card.subType === "poison") return `${D(10)} 點傷害+中毒`;
@@ -1709,7 +1728,10 @@ function cardValueText(card) {
             const lost = Math.max(0, S.player.maxHp - S.player.hp);
             return `回 ${Math.min(25, Math.round(lost * 0.4 * healMult))} 點血`;
         }
-        if (card.subType === "low_hp_shield") return `獲得護盾`;
+        if (card.subType === "low_hp_shield") {
+            const isLow = S.player.hp < S.player.maxHp / 2;
+            return `獲得 ${isLow ? 20 : 12} 點護盾`;
+        }
         if (card.subType === "ignis_phoenix") {
             const isLow = S.player.hp < S.player.maxHp * 0.3;
             return isLow ? `回 ${H(30)} 點血` : `回 ${H(15)} 點血`;
@@ -1721,7 +1743,7 @@ function cardValueText(card) {
         return `回 ${H(card.value || 0)} 點血`;
     }
     if (card.subType === "sacrifice") return `扣${card.costHP}血/+${card.buffVal}點攻擊`;
-    if (card.subType === "shield_bash") return `×1.5 點傷害`;
+    if (card.subType === "shield_bash") return `消耗全部護盾 ×1.5 傷`;
     if (card.subType === "reflect") return `10點護盾+反彈`;
     if (card.subType === "skip") return `跳過行動+封印`;
     if (card.subType === "steal_shield") {
@@ -1739,6 +1761,7 @@ function cardValueText(card) {
     if (card.subType === "resurrection") return `抓1張/回${H(10)}血`;
     if (card.subType === "raccoon_search") return `抓攻擊卡/+5攻擊`;
     if (card.subType === "hedgehog_armor") return `22點護盾/+10攻擊`;
+    if (card.subType === "roulette") return `隨機三選一`;
     return "戰術";
 }
 
@@ -1806,7 +1829,7 @@ function getCardDesc(card) {
         case "sacrifice": return `扣除 ${card.costHP} 點生命，下次攻擊傷害 +${card.buffVal} 點。`;
         case "skip": return `跳過魔王 1 次行動，並【封印特質】2 回合。[不可複製]`;
         case "reflect": return `獲得 10 點護盾，下回合被魔王攻擊時反彈 50% 傷害給魔王。[不可疊加]`;
-        case "roulette": return `隨機三選一：回復 ${H(18)} 點生命且生命上限 +10 點（上限 +50） / 獲得 18 點護盾 / 造成 ${D(22)} 點穿透傷害${markTag}。`;
+        case "roulette": return `隨機三選一：回復 ${H(18)} 點生命且生命上限 +10 點（上限 +50）／獲得 18 點護盾／造成 ${D(22)} 點穿透傷害${markTag}。`;
         case "shield_bash": return `消耗全部護盾，每 1 點護盾造成 1.5 點傷害${markTag}。[不可複製]`;
         case "steal_shield": return `偷取魔王 50% 護盾；若魔王無護盾，改為造成 12 點穿透傷害。`;
         case "mark": return `標記魔王 3 回合，期間受到的玩家攻擊傷害 +25%。[不可疊加]`;
@@ -1859,7 +1882,7 @@ function getCardDesc(card) {
             const count = Math.min(5, S ? (S.specialPlayedTotal || 0) : 0);
             return `造成 ${D(16 + count * 4)} 點傷害（本局已使用 ${S ? (S.specialPlayedTotal || 0) : 0} 張特殊卡，每張 +4，最高 +20）。`;
         }
-        case "raccoon_search": return `【不扣行動】檢索 1 張攻擊卡加入手牌，且下次攻擊傷害 +5 點。`;
+        case "raccoon_search": return `【不扣行動】檢索 1 張攻擊卡加入手牌，且下次攻擊傷害 +5 點；若無攻擊卡則改抽 1 張牌。`;
         case "raccoon_flash": {
             const isSpec = S ? S.specialPlayedThisTurn : false;
             return `造成 ${D(isSpec ? 24 : 14)} 點傷害${isSpec ? "（本回合已打出特殊卡，觸發 +10！）" : "（若本回合打出過特殊卡，額外 +10 點）"}。`;
@@ -1964,9 +1987,9 @@ function updateCurrentBossUI() {
     if (b.trait === "standard") traitDetail = "<p>每 3 回合釋放【深淵咆哮】，造成 20 點傷害並施加壓制（下回合抽牌減少）。</p>";
     else if (b.trait === "undying") traitDetail = "<p>首次被擊殺時原地復活，恢復 35 點生命並進入永久狂暴（攻擊 +8 點）。</p>";
     else if (b.trait === "evasion") traitDetail = "<p>被動擁有 27% 閃避率，完全躲開玩家的攻擊。</p>";
-    else if (b.trait === "vampire") traitDetail = "<p>造成穿透傷害時，吸取該傷害 30% 的生命值。</p>";
+    else if (b.trait === "vampire") traitDetail = "<p>造成傷害時，吸取該傷害 30% 的生命值。</p>";
     else if (b.trait === "guardian") traitDetail = "<p>護盾被擊破時對玩家造成 12 點真實傷害（冷卻 2 回合）。</p>";
-    else if (b.trait === "elementalist") traitDetail = `<p>每 2 回合切換形態：🔥烈焰（攻擊+30%）/ 🧊寒冰（受傷-30%）/ ⚡迅雷（閃避率20%）。<br><b>當前形態：${S.monster.elemStance}</b></p>`;
+    else if (b.trait === "elementalist") traitDetail = `<p>每 2 回合切換形態：🔥烈焰（攻擊+30%）／🧊寒冰（受傷-30%）／⚡迅雷（閃避率20%）。<br><b>當前形態：${S.monster.elemStance}</b></p>`;
     else if (b.trait === "time_phantom") traitDetail = "<p>生命首次低於 30% 時觸發【熵增回溯】：生命回升至 40%，並清空雙方所有的護盾、臨時 Buff、Debuff 與定時炸彈！</p>";
 
     body.innerHTML = `
@@ -2208,7 +2231,7 @@ function populateSetupOptions() {
     const heroSelect = document.getElementById("hero-select");
     const bossSelect = document.getElementById("boss-select");
     const modSelect = document.getElementById("modifier-select");
-    
+
     if (heroSelect) {
         const cur = heroSelect.value;
         heroSelect.innerHTML = `<option value="random">🔀 隨機英雄</option>` + heroes.map(h => `<option value="${h.id}">${h.icon} ${h.name}</option>`).join("");
@@ -2233,7 +2256,7 @@ function openSetupModal() {
     document.getElementById("boss-select").value = cfg.boss.value || "random";
     document.getElementById("modifier-select").value = cfg.mod.value || "random";
     document.getElementById("difficulty-select").value = cfg.difficulty || "normal";
-    
+
     const st = loadSettings();
     document.getElementById("sfx-toggle").checked = !!st.sfx;
     document.getElementById("vib-toggle").checked = !!st.vibration;
