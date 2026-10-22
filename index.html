@@ -62,16 +62,16 @@
             <div class="buff-info" id="action-points">剩餘行動：1</div>
         </div>
     </div>
-    
+
     <div class="battle-log" id="log-box">[系統] 戰鬥準備中...<br></div>
-    
+
     <div class="pile-info" id="pile-info" style="display:none;">
         <span class="pile-draw">📚 抽牌堆：<b id="pile-draw-count">0</b> 張 <div class="mini-i" onclick="showPileInfo('draw')">i</div></span>
         <span class="pile-discard">🗑️ 棄牌堆：<b id="pile-discard-count">0</b> 張 <div class="mini-i" onclick="showPileInfo('discard')">i</div></span>
     </div>
-    
+
     <div class="tutorial-prompt" id="tutorial-prompt"></div>
-    
+
     <div class="card-container" id="card-selection"></div>
     <button class="btn-reset" id="reset-btn" onclick="startRandomGame()" style="display:none;">⚔️ 重新開始冒險（隨機）</button>
 </div>
@@ -193,6 +193,12 @@
 <div class="modal-overlay" id="boss-modal"><div class="modal-content"><div class="modal-header"><h2>👹 魔王圖鑑</h2><button class="btn-close" onclick="toggleModal('boss-modal')">關閉</button></div><div id="boss-body"></div></div></div>
 
 <script src="data.js"></script>
+<script src="utils.js"></script>
+<script src="rules.js"></script>
+<script src="cards.js"></script>
+<script src="ai.js"></script>
+<script src="ui.js"></script>
+<script src="config.js"></script>
 <script src="game.js"></script>
 </body>
 </html>
