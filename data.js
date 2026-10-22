@@ -42,7 +42,7 @@ const commonCards = [
     { id: 6, name: "聖光護盾", type: "heal", subType: "shield", category: "回復", rarity: "common", value: 10, shieldVal: 12, desc: "回復 10 點生命，並獲得 12 點護盾。" },
     { id: 10, name: "自然泉源", type: "heal", subType: "regen", category: "回復", rarity: "common", value: 0, desc: "獲得 3 回合【泉源祝福】：每回合回復 6 點生命，且期間受到的傷害減少 3 點。[不可疊加]" },
 
-    { id: 7, name: "血之狂熱", type: "special", subType: "sacrifice", category: "特殊", rarity: "rare", costHP: 10, buffVal: 15, desc: "扣除 10 點生命，下次攻擊傷害 +15 點。" },
+    { id: 7, name: "血之狂熱", type: "special", subType: "sacrifice", category: "特殊", rarity: "rare", freeAction: true, costHP: 8, buffVal: 10, desc: "【不扣行動】扣除 8 點生命，本回合接下來每張攻擊卡傷害 +10 點（可疊加，回合結束失效）。" },
     { id: 21, name: "堅壁清野", type: "heal", subType: "low_hp_shield", category: "回復", rarity: "rare", value: 12, desc: "獲得 12 點護盾；若自身生命低於 50%，改為獲得 20 點護盾。" },
     { id: 20, name: "逆轉治癒", type: "heal", subType: "reverse_heal", category: "回復", rarity: "rare", desc: "回復「已損失生命值 × 0.4」點生命（上限 25 點）。" },
     { id: 17, name: "破釜沉舟", type: "attack", subType: "desperate", category: "攻擊", rarity: "rare", desc: "造成「已損失生命值 × 0.4」點傷害（上限 40 點）。" },
@@ -50,13 +50,13 @@ const commonCards = [
     { id: 14, name: "命運之輪", type: "special", subType: "roulette", category: "特殊", rarity: "rare", desc: "隨機三選一：① 回復 18 點生命且生命上限 +10 點（上限 +50）；② 獲得 18 點護盾；③ 造成 22 點穿透傷害。" },
     { id: 9, name: "反彈護鏡", type: "special", subType: "reflect", category: "特殊", rarity: "rare", desc: "獲得 10 點護盾，下回合被魔王攻擊時反彈 50% 傷害給魔王。[不可疊加]" },
     { id: 16, name: "盾擊破敵", type: "special", subType: "shield_bash", category: "特殊", rarity: "rare", desc: "消耗全部護盾，每 1 點護盾造成 1.5 點傷害。[不可複製]" },
-    { id: 22, name: "偷天換日", type: "special", subType: "steal_shield", category: "特殊", rarity: "rare", desc: "偷取魔王 50% 護盾；若魔王無護盾，改為造成 12 點穿透傷害。" },
+    { id: 22, name: "偷天換日", type: "special", subType: "steal_shield", category: "特殊", rarity: "rare", desc: "偷取魔王全部護盾（上限 15 點）；若魔王無護盾，改為造成 12 點穿透傷害。" },
     { id: 23, name: "弱點標記", type: "special", subType: "mark", category: "特殊", rarity: "rare", desc: "標記魔王 3 回合，期間魔王受到的玩家攻擊傷害 +25%。[不可疊加]" },
     { id: 25, name: "時光沙漏", type: "special", subType: "time_hourglass", category: "特殊", rarity: "rare", desc: "下回合起始行動數 +1。[不可疊加]" },
     { id: 28, name: "深層沉思", type: "special", subType: "deep_meditation", category: "特殊", rarity: "rare", freeAction: true, desc: "【不扣行動】抽 1 張牌，下次攻擊傷害 +8 點。" },
     { id: 29, name: "死者甦生", type: "special", subType: "resurrection", category: "特殊", rarity: "rare", freeAction: true, desc: "【不扣行動】隨機將棄牌堆 1 張卡牌抓回手牌，並回復 10 點生命。[不可複製]" },
 
-    { id: 11, name: "捨身一擊", type: "attack", subType: "recoil", category: "攻擊", rarity: "legendary", value: 28, selfCost: 7, desc: "扣除 7 點生命，造成 28 點傷害。" },
+    { id: 11, name: "捨身一擊", type: "attack", subType: "recoil", category: "攻擊", rarity: "legendary", value: 32, selfCost: 7, desc: "扣除 7 點生命，造成 32 點傷害。" },
     { id: 15, name: "元素引爆", type: "attack", subType: "detonate", category: "攻擊", rarity: "legendary", value: 10, desc: "造成 10 點傷害；若魔王有中毒或冰霜虛弱，額外 +22 點傷害並清除該狀態。" },
     { id: 24, name: "黑暗契約", type: "special", subType: "dark_contract", category: "特殊", rarity: "legendary", desc: "扣除 10 點生命，本局永久 +8 點攻擊（上限 +16 點）。" },
     { id: 19, name: "致命一擊", type: "attack", subType: "finisher", category: "攻擊", rarity: "legendary", value: 10, desc: "造成 10 點傷害；若魔王生命低於 30%，改為造成 30 點穿透傷害。" },
@@ -65,7 +65,7 @@ const commonCards = [
 ];
 
 const heroCards = [
-    { id: "ignis_1", heroId: "ignis", name: "燃血狂怒", type: "attack", subType: "ignis_rage", category: "攻擊", rarity: "rare", desc: "扣除 8 點生命，造成 20 點傷害；自身生命低於 50% 時改為造成 30 點傷害。" },
+    { id: "ignis_1", heroId: "ignis", name: "燃血狂怒", type: "attack", subType: "ignis_rage", category: "攻擊", rarity: "rare", desc: "扣除 8 點生命，造成 26 點傷害；自身生命低於 50% 時改為造成 34 點傷害。" },
     { id: "ignis_2", heroId: "ignis", name: "鳳凰之心", type: "heal", subType: "ignis_phoenix", category: "回復", rarity: "rare", desc: "回復 15 點生命；自身生命低於 30% 時改為回復 30 點生命。" },
     { id: "ignis_3", heroId: "ignis", name: "絕境焚身", type: "attack", subType: "ignis_last", category: "攻擊", rarity: "legendary", desc: "扣除 10 點生命，造成 25 點穿透傷害。" },
 
@@ -113,13 +113,13 @@ const rarityLimit = { common: 2, rare: 1, legendary: 1 };
 const TUTORIAL_STEPS = [
     { intro: `歡迎來到萌寵冒險！你的英雄是 <b>影爪貓</b>。<br>【劇毒爪痕】能讓魔王的中毒回合數 +1。請點擊打出高亮的 <b>【劇毒飛刀】</b>，讓魔王中毒 4 回合！`,
       cards: ["poison", "normal", "crit"], acceptable: ["poison"], highlight: ["poison"] },
-    { intro: `中毒每回合會無視護盾扣除 6 點生命！<br>接下來試試高風險高回報的卡：請打出 <b>【捨身一擊】</b>（扣除 7 點生命，造成 28 × 狂暴磁場 1.2 = 34 點傷害）！`,
+    { intro: `中毒每回合會無視護盾扣除 6 點生命！<br>接下來試試高風險高回報的卡：請打出 <b>【捨身一擊】</b>（扣除 7 點生命，造成 32 × 狂暴磁場 1.2 = 38 點傷害）！`,
       cards: ["recoil", "pierce", "frost"], acceptable: ["recoil"], highlight: ["recoil"] },
     { intro: `⚠️ 第 3 回合！深淵霸主將釋放 <b>【深淵咆哮】</b>（造成 20 點傷害並使你下回合抽牌數 -2）。<br>請打出 <b>【禁錮咒語】</b>，跳過魔王 1 次行動，並封印他的咆哮特質 2 回合！`,
       cards: ["skip", "burst", "shield"], acceptable: ["skip"], highlight: ["skip"] },
     { intro: `禁錮封印成功！接下來，你可以點擊上方「魔王」區塊的 <b>ⓘ</b> 隨時查看他的詳細資訊。<br>請打出 <b>【弱點標記】</b>，讓魔王受到的傷害增加 25%（持續 3 回合）！`,
       cards: ["mark", "normal", "crit"], acceptable: ["mark"], highlight: ["mark"] },
-    { intro: `弱點標記生效！請再次打出 <b>【捨身一擊】</b>，這次傷害會因為弱點標記，從 34 點變成 <b>43 點</b>！`,
+    { intro: `弱點標記生效！請再次打出 <b>【捨身一擊】</b>，這次傷害會因為弱點標記，從 38 點變成 <b>48 點</b>！`,
       cards: ["recoil", "pierce", "frost"], acceptable: ["recoil"], highlight: ["recoil"] },
     { intro: `魔王生命低於 30% 了！使用 <b>【致命一擊】</b> 觸發斬殺，造成 30 × 1.2 × 1.25 = <b>45 點穿透傷害</b>（無視護盾）！`,
       cards: ["finisher", "desperate", "normal"], acceptable: ["finisher"], highlight: ["finisher"] }
